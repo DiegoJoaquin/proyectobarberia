@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Noir & Blade — Barbería de Élite | Santiago</title>
+  <meta name="description" content="Barbería premium en Santiago. Cortes de precisión, perfilado de barba y experiencias de grooming de clase mundial. Reserva tu hora ahora."/>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <!-- EmailJS — envío de correos sin backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════
+       NAV
+  ══════════════════════════════════════════════════════ -->
+  <nav id="main-nav" role="navigation" aria-label="Navegación principal">
+    <a href="#" class="nav-logo">NOIR <span>&</span> BLADE</a>
+    <ul class="nav-links">
+      <li><a href="#hero">Inicio</a></li>
+      <li><a href="#services">Servicios</a></li>
+      <li><a href="#barbers">Equipo</a></li>
+      <li><a href="#footer">Contacto</a></li>
+    </ul>
+    <button class="nav-cta" id="nav-book-btn" aria-label="Agendar hora">Agendar hora</button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════
+       HERO
+  ══════════════════════════════════════════════════════ -->
+  <section id="hero" aria-label="Bienvenida y contacto">
+
+    <!-- Left: Image + headline -->
+    <div class="hero-image-wrapper">
+      <img src="assets/hero.png" alt="Interior de Noir & Blade Barbería" loading="eager"/>
+      <div class="hero-overlay"></div>
+      <div class="hero-text">
+        <p class="hero-eyebrow">Desde 2014 · Santiago</p>
+        <h1 class="hero-title">El Arte<br/>de lo <em>Preciso</em></h1>
+        <p class="hero-subtitle">Más que un corte. Una experiencia de grooming de clase mundial pensada para el hombre que no acepta lo ordinario.</p>
+        <button class="hero-btn" id="hero-book-btn" aria-label="Reservar ahora">
+          Reservar ahora <span class="arrow">→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Info card -->
+    <aside class="hero-card" aria-label="Información del local">
+
+      <!-- Map -->
+      <div>
+        <p class="card-section-label"><i class="fa-solid fa-location-dot" style="color:var(--gold);margin-right:6px;"></i>Ubicación</p>
+        <div class="map-embed">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.658!2d-70.6505!3d-33.4372!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDI2JzEzLjkiUyA3MMKwMzknMDIuMCJX!5e0!3m2!1ses!2scl!4v1699000000000"
+            loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            allowfullscreen title="Mapa Noir & Blade">
+          </iframe>
+        </div>
+        <p class="address-line"><i class="fa-solid fa-map-pin"></i>Av. Providencia 2123, Of. 301<br/>Providencia, Santiago</p>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <p class="card-section-label"><i class="fa-solid fa-phone" style="color:var(--gold);margin-right:6px;"></i>Contacto</p>
+        <div class="contact-btns">
+          <a href="tel:+56229876543" class="contact-btn phone">
+            <i class="fa-solid fa-phone"></i>+56 2 2987 6543
+          </a>
+          <a href="https://wa.me/56987654321" target="_blank" rel="noopener" class="contact-btn whatsapp">
+            <i class="fa-brands fa-whatsapp"></i>Enviar WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <!-- Hours -->
+      <div>
+        <p class="card-section-label"><i class="fa-regular fa-clock" style="color:var(--gold);margin-right:6px;"></i>Horarios</p>
+        <ul class="hours-list">
+          <li><span class="day">Lunes – Viernes</span><span>09:00 – 20:00</span></li>
+          <li><span class="day">Sábado</span><span>09:00 – 18:00</span></li>
+          <li><span class="day">Domingo</span><span class="closed">Cerrado</span></li>
+        </ul>
+      </div>
+
+      <!-- Team avatars -->
+      <div id="barbers">
+        <p class="card-section-label"><i class="fa-solid fa-scissors" style="color:var(--gold);margin-right:6px;"></i>Nuestros Barberos</p>
+        <div class="barbers-row">
+          <div class="barber-item" data-barber="0" role="button" tabindex="0">
+            <img src="assets/barber1.png" alt="Marco Reyes" class="barber-avatar"/>
+            <div class="barber-info">
+              <p class="barber-name">Marco Reyes</p>
+              <p class="barber-title">Master Barber</p>
+            </div>
+            <span class="barber-badge">Fundador</span>
+          </div>
+          <div class="barber-item" data-barber="1" role="button" tabindex="0">
+            <img src="assets/barber2.png" alt="Camilo Torres" class="barber-avatar"/>
+            <div class="barber-info">
+              <p class="barber-name">Camilo Torres</p>
+              <p class="barber-title">Senior Stylist</p>
+            </div>
+          </div>
+          <div class="barber-item" data-barber="2" role="button" tabindex="0">
+            <img src="assets/barber3.png" alt="Sebastián Mora" class="barber-avatar"/>
+            <div class="barber-info">
+              <p class="barber-name">Sebastián Mora</p>
+              <p class="barber-title">Fade Specialist</p>
+            </div>
+          </div>
+          <div class="barber-item" data-barber="3" role="button" tabindex="0">
+            <img src="assets/barber4.png" alt="Ricardo Infante" class="barber-avatar"/>
+            <div class="barber-info">
+              <p class="barber-name">Ricardo Infante</p>
+              <p class="barber-title">Senior Barber</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       SERVICES
+  ══════════════════════════════════════════════════════ -->
+  <section id="services" aria-label="Nuestros servicios">
+    <div class="container">
+
+      <div class="section-divider">
+        <span class="divider-ornament"><i class="fa-solid fa-scissors"></i> Servicios</span>
+      </div>
+
+      <div class="section-header" style="margin-top:48px;">
+        <p class="section-eyebrow">Nuestro menú</p>
+        <h2 class="section-title">Precisión en <em>cada detalle</em></h2>
+        <p class="section-subtitle">Cada servicio está diseñado para realzar tu mejor versión, con productos premium y técnicas de clase mundial.</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="service-tabs" role="tablist" aria-label="Categorías de servicios">
+        <button class="tab-btn active" role="tab" aria-selected="true"  data-tab="corte">Corte</button>
+        <button class="tab-btn"        role="tab" aria-selected="false" data-tab="barba">Barba</button>
+        <button class="tab-btn"        role="tab" aria-selected="false" data-tab="combo">Combo</button>
+        <button class="tab-btn"        role="tab" aria-selected="false" data-tab="premium">Premium</button>
+      </div>
+
+      <!-- ── Corte ── -->
+      <div class="service-panel active" id="panel-corte" role="tabpanel">
+        <div class="service-grid">
+
+          <article class="service-card"
+            data-name="Corte Clásico"
+            data-price="$14.990"
+            data-duration="30 min"
+            data-desc="Corte tradicional con tijera y máquina. Incluye lavado y peinado final con productos de alta gama.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte Clásico</h3>
+              <span class="service-price">$14.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 30 min</p>
+            <p class="service-desc">Corte tradicional con tijera y máquina. Incluye lavado y peinado final con productos de alta gama.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Corte + Lavado"
+            data-price="$18.990"
+            data-duration="45 min"
+            data-desc="Corte de precisión con lavado relajante, masaje de cuero cabelludo y secado profesional con difusor.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte + Lavado</h3>
+              <span class="service-price">$18.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
+            <p class="service-desc">Corte de precisión con lavado relajante, masaje de cuero cabelludo y secado profesional con difusor.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Corte Fade"
+            data-price="$17.990"
+            data-duration="40 min"
+            data-desc="Degradé preciso con distintos niveles: low, mid o high fade. La técnica favorita de nuestros clientes.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte Fade</h3>
+              <span class="service-price">$17.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 40 min</p>
+            <p class="service-desc">Degradé preciso con distintos niveles: low, mid o high fade. La técnica favorita de nuestros clientes.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Diseño de Línea"
+            data-price="$9.990"
+            data-duration="20 min"
+            data-desc="Trazado de líneas y diseños geométricos en el cabello o sien. Ideal como servicio complementario.">
+            <div class="service-card-header">
+              <h3 class="service-name">Diseño de Línea</h3>
+              <span class="service-price">$9.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 20 min</p>
+            <p class="service-desc">Trazado de líneas y diseños geométricos en el cabello o sien. Ideal como servicio complementario.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- ── Barba ── -->
+      <div class="service-panel" id="panel-barba" role="tabpanel">
+        <div class="service-grid">
+
+          <article class="service-card"
+            data-name="Perfilado de Barba"
+            data-price="$12.990"
+            data-duration="30 min"
+            data-desc="Delineado y definición de la barba con navaja. Termina con aceite hidratante y bálsamo relajante.">
+            <div class="service-card-header">
+              <h3 class="service-name">Perfilado de Barba</h3>
+              <span class="service-price">$12.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 30 min</p>
+            <p class="service-desc">Delineado y definición de la barba con navaja. Termina con aceite hidratante y bálsamo relajante.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Afeitado a la Navaja"
+            data-price="$16.990"
+            data-duration="45 min"
+            data-desc="Experiencia de afeitado clásico con toalla caliente, espuma artesanal y navaja de filo alemán. Un ritual.">
+            <div class="service-card-header">
+              <h3 class="service-name">Afeitado a la Navaja</h3>
+              <span class="service-price">$16.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
+            <p class="service-desc">Experiencia de afeitado clásico con toalla caliente, espuma artesanal y navaja de filo alemán. Un ritual.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Hidratación de Barba"
+            data-price="$10.990"
+            data-duration="25 min"
+            data-desc="Tratamiento profundo con aceites esenciales y manteca de karité. Barba suave, nutrida y libre de resequedad.">
+            <div class="service-card-header">
+              <h3 class="service-name">Hidratación de Barba</h3>
+              <span class="service-price">$10.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 25 min</p>
+            <p class="service-desc">Tratamiento profundo con aceites esenciales y manteca de karité. Barba suave, nutrida y libre de resequedad.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- ── Combo ── -->
+      <div class="service-panel" id="panel-combo" role="tabpanel">
+        <div class="service-grid">
+
+          <article class="service-card"
+            data-name="Cabello + Barba"
+            data-price="$24.990"
+            data-duration="1 hr"
+            data-desc="El pack más solicitado. Corte de precisión + perfilado de barba completo. Saldrás impecable de pies a cabeza.">
+            <div class="service-card-header">
+              <h3 class="service-name">Cabello + Barba</h3>
+              <span class="service-price">$24.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">El pack más solicitado. Corte de precisión + perfilado de barba completo. Saldrás impecable de pies a cabeza.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Fade + Barba"
+            data-price="$27.990"
+            data-duration="1 hr 10 min"
+            data-desc="Corte fade con tu degradé favorito más un perfilado de barba con acabado de navaja. Combo letal.">
+            <div class="service-card-header">
+              <h3 class="service-name">Fade + Barba</h3>
+              <span class="service-price">$27.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 10 min</p>
+            <p class="service-desc">Corte fade con tu degradé favorito más un perfilado de barba con acabado de navaja. Combo letal.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Corte + Lavado + Barba"
+            data-price="$30.990"
+            data-duration="1 hr 20 min"
+            data-desc="Experiencia completa: lavado, corte, secado y perfilado de barba. El servicio más completo de nuestra carta.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte + Lavado + Barba</h3>
+              <span class="service-price">$30.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 20 min</p>
+            <p class="service-desc">Experiencia completa: lavado, corte, secado y perfilado de barba. El servicio más completo de nuestra carta.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+        </div>
+      </div>
+
+      <!-- ── Premium ── -->
+      <div class="service-panel" id="panel-premium" role="tabpanel">
+        <div class="service-grid">
+
+          <article class="service-card"
+            data-name="Ritual Negro"
+            data-price="$44.990"
+            data-duration="1 hr 30 min"
+            data-desc="Nuestra experiencia signature. Corte fade, afeitado a la navaja, mascarilla facial de carbón activado y masaje de cuero cabelludo.">
+            <div class="service-card-header">
+              <h3 class="service-name">Ritual Negro</h3>
+              <span class="service-price">$44.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 30 min</p>
+            <p class="service-desc">Nuestra experiencia signature. Corte fade, afeitado a la navaja, mascarilla facial de carbón activado y masaje de cuero cabelludo.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Sesión VIP"
+            data-price="$59.990"
+            data-duration="2 hr"
+            data-desc="Atención privada en cabina exclusiva. Incluye todos los servicios premium, copa de whisky de malt y consulta personalizada.">
+            <div class="service-card-header">
+              <h3 class="service-name">Sesión VIP</h3>
+              <span class="service-price">$59.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 2 hr</p>
+            <p class="service-desc">Atención privada en cabina exclusiva. Incluye todos los servicios premium, copa de whisky de malt y consulta personalizada.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card"
+            data-name="Tratamiento Capilar"
+            data-price="$22.990"
+            data-duration="50 min"
+            data-desc="Diagnóstico capilar + aplicación de keratina hidratante. Cabello brillante, suave y con textura perfecta.">
+            <div class="service-card-header">
+              <h3 class="service-name">Tratamiento Capilar</h3>
+              <span class="service-price">$22.990</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 50 min</p>
+            <p class="service-desc">Diagnóstico capilar + aplicación de keratina hidratante. Cabello brillante, suave y con textura perfecta.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       BOOKING MODAL
+  ══════════════════════════════════════════════════════ -->
+  <div id="booking-modal" role="dialog" aria-modal="true" aria-label="Reservar hora">
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-body">
+
+      <!-- ── Main panel ── -->
+      <div class="modal-main">
+        <button class="modal-close" id="modal-close-btn" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button>
+
+        <!-- Steps indicator -->
+        <div class="steps-indicator" aria-label="Pasos del proceso">
+          <div class="step-dot active" id="dot-1">
+            <div class="step-num">1</div>
+            <span>Fecha &amp; Hora</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-dot" id="dot-2">
+            <div class="step-num">2</div>
+            <span>Profesional</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-dot" id="dot-3">
+            <div class="step-num">3</div>
+            <span>Tus Datos</span>
+          </div>
+        </div>
+
+        <!-- Step 1: Date & Time -->
+        <div class="step-content active" id="step-1">
+          <h2 class="step-title">Elige tu momento</h2>
+          <p class="step-legend">Selecciona el día y la hora que prefieras para tu sesión.</p>
+
+          <div class="day-picker" id="day-picker" role="list" aria-label="Días disponibles"></div>
+
+          <div class="time-section">
+            <p class="time-label">Mañana</p>
+            <div class="time-grid">
+              <button class="time-pill" data-time="09:00">09:00</button>
+              <button class="time-pill" data-time="09:30">09:30</button>
+              <button class="time-pill busy" data-time="10:00">10:00</button>
+              <button class="time-pill" data-time="10:30">10:30</button>
+              <button class="time-pill" data-time="11:00">11:00</button>
+              <button class="time-pill busy" data-time="11:30">11:30</button>
+              <button class="time-pill" data-time="12:00">12:00</button>
+            </div>
+          </div>
+
+          <div class="time-section">
+            <p class="time-label">Tarde</p>
+            <div class="time-grid">
+              <button class="time-pill" data-time="13:00">13:00</button>
+              <button class="time-pill busy" data-time="13:30">13:30</button>
+              <button class="time-pill" data-time="14:00">14:00</button>
+              <button class="time-pill" data-time="14:30">14:30</button>
+              <button class="time-pill busy" data-time="15:00">15:00</button>
+              <button class="time-pill" data-time="15:30">15:30</button>
+              <button class="time-pill" data-time="16:00">16:00</button>
+              <button class="time-pill" data-time="16:30">16:30</button>
+              <button class="time-pill" data-time="17:00">17:00</button>
+              <button class="time-pill" data-time="17:30">17:30</button>
+            </div>
+          </div>
+
+          <div class="time-section">
+            <p class="time-label">Noche</p>
+            <div class="time-grid">
+              <button class="time-pill" data-time="18:00">18:00</button>
+              <button class="time-pill busy" data-time="18:30">18:30</button>
+              <button class="time-pill" data-time="19:00">19:00</button>
+              <button class="time-pill" data-time="19:30">19:30</button>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <div></div>
+            <button class="btn-next" id="s1-next">Continuar →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Professional -->
+        <div class="step-content" id="step-2">
+          <h2 class="step-title">Tu barbero</h2>
+          <p class="step-legend">Elige al profesional que realizará tu sesión.</p>
+
+          <div class="barber-grid" id="barber-picker">
+            <div class="barber-pick-card" data-barber-idx="0">
+              <img src="assets/barber1.png" alt="Marco Reyes"/>
+              <div>
+                <p class="bpc-name">Marco Reyes</p>
+                <p class="bpc-title">Master Barber</p>
+                <p class="bpc-avail">Disponible hoy</p>
+              </div>
+            </div>
+            <div class="barber-pick-card" data-barber-idx="1">
+              <img src="assets/barber2.png" alt="Camilo Torres"/>
+              <div>
+                <p class="bpc-name">Camilo Torres</p>
+                <p class="bpc-title">Senior Stylist</p>
+                <p class="bpc-avail">Disponible hoy</p>
+              </div>
+            </div>
+            <div class="barber-pick-card" data-barber-idx="2">
+              <img src="assets/barber3.png" alt="Sebastián Mora"/>
+              <div>
+                <p class="bpc-name">Sebastián Mora</p>
+                <p class="bpc-title">Fade Specialist</p>
+                <p class="bpc-avail">Disponible hoy</p>
+              </div>
+            </div>
+            <div class="barber-pick-card" data-barber-idx="3">
+              <img src="assets/barber4.png" alt="Ricardo Infante"/>
+              <div>
+                <p class="bpc-name">Ricardo Infante</p>
+                <p class="bpc-title">Senior Barber</p>
+                <p class="bpc-avail">Disponible hoy</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <button class="btn-back" id="s2-back"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+            <button class="btn-next" id="s2-next">Continuar →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Data -->
+        <div class="step-content" id="step-3">
+          <h2 class="step-title">Tus datos</h2>
+          <p class="step-legend">Solo lo necesario para confirmar tu reserva.</p>
+
+          <div class="form-group">
+            <label class="form-label" for="f-name">Nombre completo</label>
+            <input class="form-input" id="f-name" type="text" placeholder="Ej. Diego González" autocomplete="name"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="f-phone">Teléfono</label>
+              <input class="form-input" id="f-phone" type="tel" placeholder="+56 9 XXXX XXXX" autocomplete="tel"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-email">Correo electrónico</label>
+              <input class="form-input" id="f-email" type="email" placeholder="tu@correo.com" autocomplete="email"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-notes">Indicaciones (opcional)</label>
+            <input class="form-input" id="f-notes" type="text" placeholder="Ej. Prefiero fade alto, barba delineada..."/>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" id="f-terms"/>
+            <label for="f-terms">Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de privacidad</a>.</label>
+          </div>
+
+          <div class="step-nav">
+            <button class="btn-back" id="s3-back"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+            <button class="btn-confirm" id="s3-confirm">Confirmar reserva</button>
+          </div>
+        </div>
+
+        <!-- Success -->
+        <div id="success-screen">
+          <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <h2 class="success-title">¡Reserva Confirmada!</h2>
+          <p class="success-msg" id="success-msg">Tu hora ha sido agendada exitosamente.<br/>Te enviaremos un recordatorio por WhatsApp.</p>
+          <button class="btn-next" style="margin-top:28px;padding:14px 40px;" id="success-close">Cerrar</button>
+        </div>
+
+      </div>
+
+      <!-- ── Summary sidebar ── -->
+      <aside class="modal-summary" aria-label="Resumen de reserva">
+        <p class="summary-title">Resumen de reserva</p>
+
+        <p class="summary-service" id="sum-service">—</p>
+        <p class="summary-price" id="sum-price">—</p>
+
+        <div class="summary-divider"></div>
+
+        <div class="summary-row">
+          <span class="summary-row-label">Fecha</span>
+          <span class="summary-row-value" id="sum-date"><span class="summary-placeholder">Sin seleccionar</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-label">Hora</span>
+          <span class="summary-row-value" id="sum-time"><span class="summary-placeholder">Sin seleccionar</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-label">Duración</span>
+          <span class="summary-row-value" id="sum-duration"><span class="summary-placeholder">—</span></span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-label">Barbero</span>
+          <span class="summary-row-value" id="sum-barber"><span class="summary-placeholder">Sin seleccionar</span></span>
+        </div>
+
+        <div class="summary-cta-note">
+          <i class="fa-solid fa-shield-halved"></i> Tu reserva es gratuita. Solo se cobra al momento de tu visita. Cancelación sin costo hasta 2 horas antes.
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════════ -->
+  <footer id="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <p class="brand-name">NOIR <span>&</span> BLADE</p>
+          <p class="footer-tagline">Barbería de élite en el corazón de Providencia. Once años perfeccionando el arte del grooming masculino.</p>
+          <div class="footer-social">
+            <a href="#" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" class="social-btn" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <a href="#" class="social-btn" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+          </div>
+        </div>
+        <div>
+          <p class="footer-col-title">Servicios</p>
+          <ul class="footer-links">
+            <li><a href="#">Cortes de Cabello</a></li>
+            <li><a href="#">Perfilado de Barba</a></li>
+            <li><a href="#">Combos</a></li>
+            <li><a href="#">Experiencias Premium</a></li>
+            <li><a href="#">Tratamientos</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">Nosotros</p>
+          <ul class="footer-links">
+            <li><a href="#">Nuestra Historia</a></li>
+            <li><a href="#">El Equipo</a></li>
+            <li><a href="#">Galería</a></li>
+            <li><a href="#">Prensa</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer-col-title">Contacto</p>
+          <ul class="footer-links">
+            <li><a href="tel:+56229876543">+56 2 2987 6543</a></li>
+            <li><a href="https://wa.me/56987654321">WhatsApp Directo</a></li>
+            <li><a href="#">contacto@noirblade.cl</a></li>
+            <li><a href="#">Providencia, Santiago</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2024 Noir &amp; Blade. Todos los derechos reservados.</span>
+        <span>Diseñado con precisión en Santiago de Chile. · <a href="admin.html" style="color:var(--grey-60);text-decoration:none;">Admin</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
