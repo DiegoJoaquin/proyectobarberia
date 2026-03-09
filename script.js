@@ -1,67 +1,85 @@
 /* ============================================================
-   NOIR & BLADE — script.js  (v2)
-   ► Smart time filtering (past slots disabled in real time)
-   ► localStorage booking persistence
-   ► EmailJS email confirmation to client
+   NOIR & BLADE — script.js  (v3)
+   ► Smart time filtering (past/booked slots auto-disabled)
+   ► Supabase — reservas guardadas en la nube en tiempo real
+   ► localStorage — fallback si Supabase no está configurado
+   ► EmailJS  — correo de confirmación al cliente
    ============================================================ */
 
 'use strict';
 
 /* ──────────────────────────────────────────────────────────────
-   ██  EMAILJS CONFIG
-   ──────────────────────────────────────────────────────────────
-   Para activar los correos de confirmación:
-   1. Crea una cuenta gratuita en https://www.emailjs.com
-   2. Crea un Email Service (Gmail, Outlook, etc.)
-   3. Crea un Email Template con las variables de abajo
-   4. Copia tu Public Key, Service ID y Template ID aquí.
+   ██  EMAILJS
    ────────────────────────────────────────────────────────────── */
 const EMAILJS_CONFIG = {
-  publicKey:  'TU_PUBLIC_KEY',    // ← Tu Public Key de EmailJS
-  serviceId:  'TU_SERVICE_ID',   // ← El ID de tu servicio de correo
-  templateId: 'TU_TEMPLATE_ID',  // ← El ID del template
-  // Variables disponibles en tu template de EmailJS:
-  // {{to_email}}   → correo del cliente
-  // {{to_name}}    → nombre del cliente
-  // {{service}}    → nombre del servicio
-  // {{price}}      → precio del servicio
-  // {{date}}       → fecha seleccionada
-  // {{time}}       → hora seleccionada
-  // {{barber}}     → nombre del barbero
-  // {{phone}}      → teléfono del cliente
-  // {{notes}}      → indicaciones opcionales
+  publicKey:  'HvIa6Fo7CaG8Assxu',
+  serviceId:  'service_c1pe70s',
+  templateId: 'template_27h4qdr',
 };
+emailjs.init(EMAILJS_CONFIG.publicKey);
 
-const EMAIL_ENABLED =
-  EMAILJS_CONFIG.publicKey  !== 'TU_PUBLIC_KEY' &&
-  EMAILJS_CONFIG.serviceId  !== 'TU_SERVICE_ID' &&
-  EMAILJS_CONFIG.templateId !== 'TU_TEMPLATE_ID';
+/* ──────────────────────────────────────────────────────────────
+   ██  SUPABASE
+   Pega aquí tu Project URL y Anon Key desde:
+   Supabase Dashboard → Settings → API
+   ────────────────────────────────────────────────────────────── */
+const SUPABASE_URL = 'https://hgxayxrszmcmmrrwxlxz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
 
-if (EMAIL_ENABLED) {
-  emailjs.init(EMAILJS_CONFIG.publicKey);
-}
+const SUPABASE_ON = SUPABASE_URL !== 'PENDING' && SUPABASE_KEY !== 'PENDING';
+const sb = SUPABASE_ON ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
 /* ──────────────────────────────────────────────────────────────
    STORAGE HELPERS
+   Supabase si está configurado, localStorage de fallback.
    ────────────────────────────────────────────────────────────── */
-const STORAGE_KEY = 'nb_bookings';
+const LS_KEY = 'nb_bookings';
 
-function getBookings() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch { return []; }
+function lsGetAll() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; }
+}
+function lsSave(b) {
+  const all = lsGetAll(); all.push(b);
+  localStorage.setItem(LS_KEY, JSON.stringify(all));
 }
 
-function saveBooking(booking) {
-  const all = getBookings();
-  all.push(booking);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+/** Insert booking. Returns { ok, error } */
+async function persistBooking(booking) {
+  if (SUPABASE_ON) {
+    const { error } = await sb.from('bookings').insert([{
+      name:     booking.name,
+      phone:    booking.phone,
+      email:    booking.email,
+      notes:    booking.notes,
+      service:  booking.service,
+      price:    booking.price,
+      duration: booking.duration,
+      date:     booking.date,
+      time:     booking.time,
+      barber:   booking.barber,
+    }]);
+    if (error) { console.warn('Supabase insert error, falling back to LS:', error); lsSave(booking); return { ok: false, error }; }
+    return { ok: true };
+  }
+  lsSave(booking);
+  return { ok: true };
 }
 
-/** Get booked times for a given display-date string (e.g. "Lun 9 mar") */
-function getBookedTimesForDate(dateStr) {
-  return getBookings()
-    .filter(b => b.date === dateStr)
-    .map(b => b.time);
+/**
+ * Returns array of booked time strings for a given date label
+ * e.g. ['10:00', '14:30'] for "Mar 10 mar"
+ * Async because Supabase is async; refreshTimePills awaits it.
+ */
+async function getBookedTimesForDate(dateStr) {
+  if (SUPABASE_ON) {
+    const { data, error } = await sb
+      .from('bookings')
+      .select('time')
+      .eq('date', dateStr);
+    if (error) { console.warn('Supabase select error:', error); }
+    return (data || []).map(r => r.time);
+  }
+  return lsGetAll().filter(b => b.date === dateStr).map(b => b.time);
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -75,17 +93,12 @@ window.addEventListener('scroll', () => {
 /* ──────────────────────────────────────────────────────────────
    SERVICE TABS
    ────────────────────────────────────────────────────────────── */
-const tabBtns = document.querySelectorAll('.tab-btn');
-const panels  = document.querySelectorAll('.service-panel');
-
-tabBtns.forEach(btn => {
+document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const target = btn.dataset.tab;
-    tabBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
-    panels.forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    btn.setAttribute('aria-selected', 'true');
-    document.getElementById('panel-' + target)?.classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.service-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+    document.getElementById('panel-' + btn.dataset.tab)?.classList.add('active');
   });
 });
 
@@ -93,100 +106,72 @@ tabBtns.forEach(btn => {
    STATE
    ────────────────────────────────────────────────────────────── */
 const state = {
-  service:  null,
-  price:    null,
-  duration: null,
-  date:     null,      // display string, e.g. "Lun 9 mar"
-  dateObj:  null,      // actual Date object
-  time:     null,
-  barber:   null,
+  service: null, price: null, duration: null,
+  date: null,    // display string e.g. "Lun 9 mar"
+  dateObj: null, // Date object
+  time: null,
+  barber: null,
 };
 
 const BARBERS = ['Marco Reyes', 'Camilo Torres', 'Sebastián Mora', 'Ricardo Infante'];
-
-const DAYS   = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const DAYS    = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MONTHS  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
 function updateSummary() {
   document.getElementById('sum-service').textContent = state.service || '—';
   document.getElementById('sum-price').textContent   = state.price   || '—';
-
-  const ph = txt => `<span class="summary-placeholder">${txt}</span>`;
-  document.getElementById('sum-date').innerHTML     = state.date   ? state.date   : ph('Sin seleccionar');
-  document.getElementById('sum-time').innerHTML     = state.time   ? state.time   : ph('Sin seleccionar');
-  document.getElementById('sum-duration').innerHTML = state.duration? state.duration: ph('—');
-  document.getElementById('sum-barber').innerHTML   = state.barber ? state.barber  : ph('Sin seleccionar');
+  const ph = t => `<span class="summary-placeholder">${t}</span>`;
+  document.getElementById('sum-date').innerHTML     = state.date     ? state.date     : ph('Sin seleccionar');
+  document.getElementById('sum-time').innerHTML     = state.time     ? state.time     : ph('Sin seleccionar');
+  document.getElementById('sum-duration').innerHTML = state.duration ? state.duration : ph('—');
+  document.getElementById('sum-barber').innerHTML   = state.barber   ? state.barber   : ph('Sin seleccionar');
 }
 
 /* ──────────────────────────────────────────────────────────────
    TIME FILTERING
    ────────────────────────────────────────────────────────────── */
+function parseHM(str) { const [h,m] = str.split(':').map(Number); return h*60+m; }
 
-/** Parse "HH:MM" into { h, m } */
-function parseTime(str) {
-  const [h, m] = str.split(':').map(Number);
-  return { h, m };
-}
-
-/**
- * Given the currently selected date, refresh all time pills:
- *  - If date is today → disable slots that are in the past (+ 30 min buffer)
- *  - Mark slots already booked for that date
- */
-function refreshTimePills() {
-  const pills      = document.querySelectorAll('.time-pill');
-  const now        = new Date();
-  const isToday    = state.dateObj &&
+async function refreshTimePills() {
+  const pills   = document.querySelectorAll('.time-pill');
+  const now     = new Date();
+  const isToday = state.dateObj &&
     state.dateObj.getFullYear() === now.getFullYear() &&
     state.dateObj.getMonth()    === now.getMonth()    &&
     state.dateObj.getDate()     === now.getDate();
 
-  const bookedTimes = state.date ? getBookedTimesForDate(state.date) : [];
+  // Fetch booked times (Supabase or LS)
+  const bookedTimes = state.date ? await getBookedTimesForDate(state.date) : [];
+  const nowMin = now.getHours()*60 + now.getMinutes() + 30; // 30-min buffer
 
   pills.forEach(pill => {
-    const timeStr = pill.dataset.time;
-    if (!timeStr) return;
+    const t = pill.dataset.time;
+    if (!t) return;
 
-    // Reset classes from dynamic state (keep original .busy if HTML-defined)
-    pill.classList.remove('past', 'booked', 'selected');
+    pill.classList.remove('past','booked','selected');
 
-    // 1) Booked by someone (localStorage)
-    if (bookedTimes.includes(timeStr)) {
-      pill.classList.add('busy');
-      pill.setAttribute('aria-label', `${timeStr} — Reservado`);
-      pill.disabled = true;
+    // 1. Already booked
+    if (bookedTimes.includes(t)) {
+      pill.classList.add('busy'); pill.disabled = true;
+      pill.setAttribute('aria-label', `${t} — Reservado`);
       return;
     }
-
-    // 2) Past time on today's date
-    if (isToday) {
-      const { h, m } = parseTime(timeStr);
-      const slotMinutes = h * 60 + m;
-      // Current time + 30 min buffer
-      const nowMinutes  = now.getHours() * 60 + now.getMinutes() + 30;
-      if (slotMinutes <= nowMinutes) {
-        pill.classList.add('busy', 'past');
-        pill.setAttribute('aria-label', `${timeStr} — No disponible`);
-        pill.disabled = true;
-        return;
-      }
+    // 2. Past time today
+    if (isToday && parseHM(t) <= nowMin) {
+      pill.classList.add('busy','past'); pill.disabled = true;
+      pill.setAttribute('aria-label', `${t} — No disponible`);
+      return;
     }
-
-    // 3) Available
-    pill.classList.remove('busy');
-    pill.disabled = false;
-    pill.setAttribute('aria-label', timeStr);
+    // 3. Available
+    pill.classList.remove('busy'); pill.disabled = false;
+    pill.setAttribute('aria-label', t);
   });
 
-  // Clear selected time if it became unavailable
+  // Deselect if current choice became unavailable
   if (state.time) {
-    const selectedPill = document.querySelector(`.time-pill[data-time="${state.time}"]`);
-    if (!selectedPill || selectedPill.classList.contains('busy')) {
-      state.time = null;
-      updateSummary();
-    } else {
-      selectedPill.classList.add('selected');
-    }
+    const sel = document.querySelector(`.time-pill[data-time="${state.time}"]`);
+    if (!sel || sel.classList.contains('busy')) { state.time = null; updateSummary(); }
+    else sel.classList.add('selected');
   }
 }
 
@@ -199,50 +184,39 @@ function buildDayPicker() {
   const today = new Date();
 
   for (let i = 0; i < 14; i++) {
-    const d = new Date(today);
+    const d   = new Date(today);
     d.setDate(today.getDate() + i);
-
-    const isSunday  = d.getDay() === 0;
-    const dayLabel  = DAYS[d.getDay()];
-    const dateNum   = d.getDate();
-    const monLabel  = MONTHS[d.getMonth()];
-    const displayStr = `${dayLabel} ${dateNum} ${monLabel}`;
+    const sun = d.getDay() === 0;
+    const lbl = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
 
     const pill = document.createElement('button');
-    pill.className = 'day-pill' + (i === 0 ? ' selected' : '') + (isSunday ? ' disabled' : '');
-    pill.disabled  = isSunday;
-    pill.setAttribute('role', 'listitem');
-    pill.setAttribute('aria-label', displayStr + (isSunday ? ' — Cerrado' : ''));
-    pill.innerHTML = `
-      <span>${dayLabel}</span>
-      <span class="day-num">${dateNum}</span>
-      <span style="font-size:0.62rem;color:var(--grey-60)">${monLabel}</span>`;
+    pill.className = 'day-pill' + (i===0?' selected':'') + (sun?' disabled':'');
+    pill.disabled  = sun;
+    pill.setAttribute('role','listitem');
+    pill.setAttribute('aria-label', lbl + (sun?' — Cerrado':''));
+    pill.innerHTML = `<span>${DAYS[d.getDay()]}</span>
+      <span class="day-num">${d.getDate()}</span>
+      <span style="font-size:0.62rem;color:var(--grey-60)">${MONTHS[d.getMonth()]}</span>`;
 
-    if (!isSunday) {
+    if (!sun) {
       pill.addEventListener('click', () => {
         picker.querySelectorAll('.day-pill').forEach(p => p.classList.remove('selected'));
         pill.classList.add('selected');
-        state.date    = displayStr;
-        state.dateObj = d;
+        state.date = lbl; state.dateObj = d;
         updateSummary();
         refreshTimePills();
       });
     }
 
-    if (i === 0) {
-      state.date    = displayStr;
-      state.dateObj = d;
-    }
-
+    if (i === 0) { state.date = lbl; state.dateObj = d; }
     picker.appendChild(pill);
   }
-
   refreshTimePills();
   updateSummary();
 }
 
 /* ──────────────────────────────────────────────────────────────
-   TIME PILLS — click handler
+   TIME PILLS — click
    ────────────────────────────────────────────────────────────── */
 document.querySelectorAll('.time-pill').forEach(pill => {
   pill.addEventListener('click', () => {
@@ -262,62 +236,40 @@ const backdrop = document.getElementById('modal-backdrop');
 const closeBtn = document.getElementById('modal-close-btn');
 
 function openModal(serviceData) {
-  if (serviceData) {
-    state.service  = serviceData.name;
-    state.price    = serviceData.price;
-    state.duration = serviceData.duration;
-  }
-  updateSummary();
-  goToStep(1);
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  if (serviceData) { state.service = serviceData.name; state.price = serviceData.price; state.duration = serviceData.duration; }
+  updateSummary(); goToStep(1);
+  modal.classList.add('open'); document.body.style.overflow = 'hidden';
 }
-
-function closeModal() {
-  modal.classList.remove('open');
-  document.body.style.overflow = '';
-}
+function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
 
 closeBtn.addEventListener('click', closeModal);
 backdrop.addEventListener('click', closeModal);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-/* ── Triggers ── */
-document.getElementById('nav-book-btn').addEventListener('click', () => openModal(null));
+document.getElementById('nav-book-btn').addEventListener('click',  () => openModal(null));
 document.getElementById('hero-book-btn').addEventListener('click', () => openModal(null));
 document.getElementById('success-close').addEventListener('click', closeModal);
 
 document.querySelectorAll('.service-book-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const card = btn.closest('.service-card');
-    openModal({
-      name:     card.dataset.name,
-      price:    card.dataset.price,
-      duration: card.dataset.duration,
-    });
+    const c = btn.closest('.service-card');
+    openModal({ name: c.dataset.name, price: c.dataset.price, duration: c.dataset.duration });
   });
 });
 
 document.querySelectorAll('.barber-item').forEach((item, i) => {
-  item.addEventListener('click', () => {
-    state.barber = BARBERS[i];
-    openModal(null);
-    goToStep(2);
-  });
-  item.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
-  });
+  item.addEventListener('click', () => { state.barber = BARBERS[i]; openModal(null); goToStep(2); });
+  item.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); item.click(); } });
 });
 
 /* ──────────────────────────────────────────────────────────────
-   BARBER PICKER (step 2)
+   BARBER PICKER
    ────────────────────────────────────────────────────────────── */
 document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
   card.addEventListener('click', () => {
     document.querySelectorAll('.barber-pick-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
-    state.barber = BARBERS[i];
-    updateSummary();
+    state.barber = BARBERS[i]; updateSummary();
   });
 });
 
@@ -325,42 +277,28 @@ document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
    STEP NAVIGATION
    ────────────────────────────────────────────────────────────── */
 const stepContents = document.querySelectorAll('.step-content');
-const stepDots     = [
-  document.getElementById('dot-1'),
-  document.getElementById('dot-2'),
-  document.getElementById('dot-3'),
-];
+const stepDots     = ['dot-1','dot-2','dot-3'].map(id => document.getElementById(id));
 
 function goToStep(n) {
-  stepContents.forEach((sc, i) => sc.classList.toggle('active', i + 1 === n));
+  stepContents.forEach((sc,i) => sc.classList.toggle('active', i+1===n));
   document.getElementById('success-screen').classList.remove('visible');
   document.querySelector('.steps-indicator').style.visibility = 'visible';
-
-  stepDots.forEach((dot, i) => {
-    dot.classList.remove('active', 'done');
-    const numEl = dot.querySelector('.step-num');
-    if (i + 1 === n) {
-      dot.classList.add('active');
-      numEl.textContent = i + 1;
-    } else if (i + 1 < n) {
-      dot.classList.add('done');
-      numEl.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>';
-    } else {
-      numEl.textContent = i + 1;
-    }
+  stepDots.forEach((dot,i) => {
+    dot.classList.remove('active','done');
+    const el = dot.querySelector('.step-num');
+    if (i+1===n)    { dot.classList.add('active'); el.textContent = i+1; }
+    else if (i+1<n) { dot.classList.add('done'); el.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>'; }
+    else             { el.textContent = i+1; }
   });
-
-  if (n === 1) buildDayPicker();
+  if (n===1) buildDayPicker();
 }
 
 document.getElementById('s1-next').addEventListener('click', () => {
-  if (!state.time) { showToast('Por favor selecciona un horario disponible.'); return; }
-  goToStep(2);
+  if (!state.time)   { showToast('Por favor selecciona un horario disponible.'); return; } goToStep(2);
 });
 document.getElementById('s2-back').addEventListener('click', () => goToStep(1));
 document.getElementById('s2-next').addEventListener('click', () => {
-  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; }
-  goToStep(3);
+  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; } goToStep(3);
 });
 document.getElementById('s3-back').addEventListener('click', () => goToStep(2));
 
@@ -378,10 +316,8 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
   if (!phone) { showToast('Por favor ingresa tu teléfono.'); return; }
   if (!terms) { showToast('Debes aceptar los términos para continuar.'); return; }
 
-  // Build booking object
   const booking = {
-    id:        Date.now(),
-    name, phone, email, notes,
+    id: Date.now(), name, phone, email, notes,
     service:  state.service  || '(Sin especificar)',
     price:    state.price    || '—',
     duration: state.duration || '—',
@@ -391,56 +327,43 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
     createdAt: new Date().toISOString(),
   };
 
-  // 1) Disable the confirm button to avoid double clicks
   const confirmBtn = document.getElementById('s3-confirm');
   confirmBtn.disabled = true;
   confirmBtn.textContent = 'Guardando...';
 
-  // 2) Save to localStorage
-  saveBooking(booking);
+  // 1) Save to Supabase (or localStorage fallback)
+  await persistBooking(booking);
 
-  // 3) Send email via EmailJS (if configured)
-  if (EMAIL_ENABLED && email) {
+  // 2) Send email via EmailJS
+  if (email) {
     try {
-      await emailjs.send(
-        EMAILJS_CONFIG.serviceId,
-        EMAILJS_CONFIG.templateId,
-        {
-          to_email: email,
-          to_name:  name,
-          service:  booking.service,
-          price:    booking.price,
-          date:     booking.date,
-          time:     booking.time,
-          barber:   booking.barber,
-          phone,
-          notes:    notes || 'Ninguna',
-        }
-      );
+      await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+        to_email: email,
+        to_name:  name,
+        service:  booking.service,
+        price:    booking.price,
+        date:     booking.date,
+        time:     booking.time,
+        barber:   booking.barber,
+        phone,
+        notes:    notes || 'Ninguna',
+      });
     } catch (err) {
-      console.warn('EmailJS error (reserva guardada de todos modos):', err);
+      console.warn('EmailJS send error:', err);
     }
   }
 
-  // 4) Show success screen
+  // 3) Show success
   stepContents.forEach(sc => sc.classList.remove('active'));
   document.querySelector('.steps-indicator').style.visibility = 'hidden';
-  const successScreen = document.getElementById('success-screen');
-  successScreen.classList.add('visible');
-
-  const emailNote = email
-    ? (EMAIL_ENABLED
-        ? `<br/>Enviamos una confirmación a <strong>${email}</strong>.`
-        : `<br/><small style="color:var(--grey-50)">(Configura EmailJS para enviar correos automáticos)</small>`)
-    : '';
-
+  document.getElementById('success-screen').classList.add('visible');
   document.getElementById('success-msg').innerHTML =
     `Hola <strong>${name}</strong>, tu reserva de <strong>${booking.service}</strong>
-    para el <strong>${booking.date}</strong> a las <strong>${booking.time}</strong>
-    con <strong>${booking.barber}</strong> está confirmada.${emailNote}
-    <br/>Te enviaremos un recordatorio por WhatsApp al <strong>${phone}</strong>.`;
+     para el <strong>${booking.date}</strong> a las <strong>${booking.time}</strong>
+     con <strong>${booking.barber}</strong> está confirmada.
+     ${email ? `<br/>Enviamos un comprobante a <strong>${email}</strong>.` : ''}
+     <br/>Te recordaremos por WhatsApp al <strong>${phone}</strong>.`;
 
-  // Reset button
   confirmBtn.disabled = false;
   confirmBtn.textContent = 'Confirmar reserva';
 });
@@ -451,31 +374,20 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
 function showToast(msg) {
   let t = document.getElementById('nb-toast');
   if (!t) {
-    t = document.createElement('div');
-    t.id = 'nb-toast';
+    t = document.createElement('div'); t.id = 'nb-toast';
     Object.assign(t.style, {
-      position: 'fixed', bottom: '32px', left: '50%',
-      transform: 'translateX(-50%) translateY(20px)',
-      background: 'var(--white)', color: 'var(--black)',
-      padding: '14px 28px', borderRadius: '4px',
-      fontFamily: 'var(--font-sans)', fontSize: '0.83rem', fontWeight: '500',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-      zIndex: '9999', opacity: '0',
-      transition: 'opacity 0.25s ease, transform 0.25s ease',
-      whiteSpace: 'nowrap',
+      position:'fixed', bottom:'32px', left:'50%', transform:'translateX(-50%) translateY(20px)',
+      background:'var(--white)', color:'var(--black)', padding:'14px 28px', borderRadius:'4px',
+      fontFamily:'var(--font-sans)', fontSize:'0.83rem', fontWeight:'500',
+      boxShadow:'0 8px 32px rgba(0,0,0,0.5)', zIndex:'9999', opacity:'0',
+      transition:'opacity 0.25s ease, transform 0.25s ease', whiteSpace:'nowrap',
     });
     document.body.appendChild(t);
   }
   t.textContent = msg;
-  requestAnimationFrame(() => {
-    t.style.opacity   = '1';
-    t.style.transform = 'translateX(-50%) translateY(0)';
-  });
+  requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => {
-    t.style.opacity   = '0';
-    t.style.transform = 'translateX(-50%) translateY(20px)';
-  }, 3500);
+  t._timer = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; }, 3500);
 }
 
 /* ──────────────────────────────────────────────────────────────

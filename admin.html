@@ -8,105 +8,75 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
     :root {
-      --black:#0a0a0a; --grey-90:#141414; --grey-80:#1e1e1e; --grey-70:#2a2a2a;
-      --grey-60:#3d3d3d; --grey-50:#5c5c5c; --grey-40:#7a7a7a; --grey-30:#a8a8a8;
-      --grey-20:#d4d4d4; --grey-10:#efefef; --white:#f8f8f8; --gold:#b8975a;
-      --font-serif:'Cormorant Garamond',serif; --font-sans:'Inter',sans-serif;
+      --black:#0a0a0a;--grey-90:#141414;--grey-80:#1e1e1e;--grey-70:#2a2a2a;
+      --grey-60:#3d3d3d;--grey-50:#5c5c5c;--grey-40:#7a7a7a;--grey-30:#a8a8a8;
+      --grey-20:#d4d4d4;--white:#f8f8f8;--gold:#b8975a;
+      --font-serif:'Cormorant Garamond',serif;--font-sans:'Inter',sans-serif;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:var(--font-sans);background:var(--black);color:var(--grey-20);min-height:100vh;}
     header{
       display:flex;align-items:center;justify-content:space-between;
-      padding:20px 40px;
-      border-bottom:1px solid var(--grey-70);
-      background:var(--grey-90);
+      padding:20px 40px;border-bottom:1px solid var(--grey-70);background:var(--grey-90);
     }
     .admin-logo{font-family:var(--font-serif);font-size:1.3rem;color:var(--white);}
     .admin-logo span{color:var(--gold);}
-    .admin-tag{font-size:0.68rem;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--grey-50);}
-    .back-link{font-size:0.78rem;color:var(--grey-50);display:flex;align-items:center;gap:8px;text-decoration:none;transition:color .2s;}
+    .admin-tag{font-size:0.68rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--grey-50);}
+    .back-link{font-size:.78rem;color:var(--grey-50);display:flex;align-items:center;gap:8px;text-decoration:none;transition:color .2s;}
     .back-link:hover{color:var(--white);}
-
-    main{max-width:1100px;margin:0 auto;padding:48px 32px;}
-
+    .source-badge{
+      font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+      padding:3px 10px;border-radius:20px;
+    }
+    .source-badge.supabase{background:rgba(62,207,142,.12);color:#3ECF8E;border:1px solid rgba(62,207,142,.3);}
+    .source-badge.local{background:rgba(184,151,90,.12);color:var(--gold);border:1px solid rgba(184,151,90,.3);}
+    main{max-width:1200px;margin:0 auto;padding:48px 32px;}
     .admin-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:40px;gap:20px;flex-wrap:wrap;}
     .admin-title{font-family:var(--font-serif);font-size:2.2rem;font-weight:400;color:var(--white);}
     .admin-title em{font-style:italic;color:var(--gold);}
     .stats{display:flex;gap:16px;flex-wrap:wrap;}
-    .stat-card{
-      background:var(--grey-90);border:1px solid var(--grey-70);
-      border-radius:4px;padding:16px 24px;min-width:120px;text-align:center;
-    }
+    .stat-card{background:var(--grey-90);border:1px solid var(--grey-70);border-radius:4px;padding:16px 24px;min-width:120px;text-align:center;}
     .stat-num{font-family:var(--font-serif);font-size:2rem;color:var(--gold);}
-    .stat-label{font-size:0.68rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--grey-50);margin-top:4px;}
-
+    .stat-label{font-size:.68rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--grey-50);margin-top:4px;}
     .toolbar{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;align-items:center;}
     .filter-input{
-      flex:1;min-width:200px;
-      padding:10px 16px;background:var(--grey-80);border:1px solid var(--grey-70);
-      border-radius:4px;color:var(--white);font-family:var(--font-sans);font-size:0.85rem;outline:none;
+      flex:1;min-width:200px;padding:10px 16px;background:var(--grey-80);border:1px solid var(--grey-70);
+      border-radius:4px;color:var(--white);font-family:var(--font-sans);font-size:.85rem;outline:none;
     }
     .filter-input:focus{border-color:var(--gold);}
     .filter-input::placeholder{color:var(--grey-50);}
-    .danger-btn{
-      padding:10px 20px;background:transparent;border:1px solid #c0392b;
-      border-radius:4px;color:#c0392b;font-size:0.74rem;font-weight:600;
-      letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
-      transition:background .2s,color .2s;
+    .action-btn{
+      padding:10px 20px;background:var(--grey-80);border:1px solid var(--grey-70);
+      border-radius:4px;color:var(--grey-30);font-size:.74rem;font-weight:600;
+      letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+      transition:border-color .2s,color .2s;font-family:var(--font-sans);
     }
+    .action-btn:hover{border-color:var(--grey-40);color:var(--white);}
+    .danger-btn{padding:10px 20px;background:transparent;border:1px solid #c0392b;border-radius:4px;color:#c0392b;
+      font-size:.74rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+      transition:background .2s,color .2s;font-family:var(--font-sans);}
     .danger-btn:hover{background:#c0392b;color:#fff;}
-
-    /* Table */
     .table-wrap{overflow-x:auto;border:1px solid var(--grey-70);border-radius:4px;}
-    table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+    table{width:100%;border-collapse:collapse;font-size:.82rem;}
     thead{background:var(--grey-80);}
-    th{
-      padding:12px 16px;text-align:left;
-      font-size:0.65rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;
-      color:var(--grey-50);white-space:nowrap;
-      border-bottom:1px solid var(--grey-70);
-    }
+    th{padding:12px 16px;text-align:left;font-size:.65rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--grey-50);white-space:nowrap;border-bottom:1px solid var(--grey-70);}
     td{padding:14px 16px;border-bottom:1px solid var(--grey-70);vertical-align:middle;}
     tr:last-child td{border-bottom:none;}
-    tr:hover td{background:rgba(255,255,255,0.02);}
+    tr:hover td{background:rgba(255,255,255,.02);}
     .td-name{color:var(--white);font-weight:500;}
-    .td-service{color:var(--grey-20);}
     .td-price{color:var(--gold);font-weight:500;}
-    .td-barber{color:var(--grey-30);}
-    .td-date{color:var(--grey-30);white-space:nowrap;}
-    .td-time{
-      display:inline-flex;align-items:center;
-      background:rgba(184,151,90,0.1);border:1px solid rgba(184,151,90,0.3);
-      color:var(--gold);border-radius:20px;padding:3px 10px;font-size:0.75rem;
-    }
-    .td-contact{font-size:0.78rem;color:var(--grey-40);}
+    .td-contact{font-size:.78rem;color:var(--grey-40);}
     .td-contact a{color:var(--grey-30);text-decoration:none;}
     .td-contact a:hover{color:var(--gold);}
-    .delete-row-btn{
-      background:none;border:none;cursor:pointer;
-      color:var(--grey-60);font-size:0.9rem;
-      padding:4px 8px;border-radius:4px;
-      transition:color .2s,background .2s;
-    }
-    .delete-row-btn:hover{color:#e74c3c;background:rgba(231,76,60,0.1);}
-
-    /* Empty state */
-    .empty-state{
-      text-align:center;padding:80px 20px;
-      color:var(--grey-50);
-    }
+    .td-time{display:inline-flex;align-items:center;background:rgba(184,151,90,.1);border:1px solid rgba(184,151,90,.3);
+      color:var(--gold);border-radius:20px;padding:3px 10px;font-size:.75rem;}
+    .delete-row-btn{background:none;border:none;cursor:pointer;color:var(--grey-60);font-size:.9rem;
+      padding:4px 8px;border-radius:4px;transition:color .2s,background .2s;}
+    .delete-row-btn:hover{color:#e74c3c;background:rgba(231,76,60,.1);}
+    .empty-state{text-align:center;padding:80px 20px;color:var(--grey-50);}
     .empty-state i{font-size:2.5rem;margin-bottom:16px;display:block;color:var(--grey-70);}
-    .empty-state p{font-size:0.88rem;line-height:1.8;}
-
-    /* Export link */
-    .export-btn{
-      padding:10px 20px;background:var(--grey-80);border:1px solid var(--grey-70);
-      border-radius:4px;color:var(--grey-30);font-size:0.74rem;font-weight:600;
-      letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;
-      transition:border-color .2s,color .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
-    }
-    .export-btn:hover{border-color:var(--grey-40);color:var(--white);}
-
+    .empty-state p{font-size:.88rem;line-height:1.8;}
+    .loading{text-align:center;padding:60px;color:var(--grey-50);font-size:.85rem;}
     ::-webkit-scrollbar{width:4px;height:4px;}
     ::-webkit-scrollbar-track{background:var(--black);}
     ::-webkit-scrollbar-thumb{background:var(--grey-60);border-radius:10px;}
@@ -115,9 +85,10 @@
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;gap:20px;">
+  <div style="display:flex;align-items:center;gap:16px;">
     <span class="admin-logo">NOIR <span>&</span> BLADE</span>
     <span class="admin-tag"><i class="fa-solid fa-shield-halved" style="margin-right:5px;"></i>Panel de Reservas</span>
+    <span class="source-badge" id="source-badge">cargando...</span>
   </div>
   <a href="index.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Volver al sitio</a>
 </header>
@@ -126,184 +97,206 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">Reservas <em>activas</em></h1>
-      <p style="font-size:0.82rem;color:var(--grey-50);margin-top:8px;">Guardadas en el navegador via localStorage.</p>
+      <p style="font-size:.82rem;color:var(--grey-50);margin-top:8px;" id="data-source-note">Cargando fuente de datos...</p>
     </div>
     <div class="stats">
-      <div class="stat-card">
-        <div class="stat-num" id="stat-total">0</div>
-        <div class="stat-label">Total</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" id="stat-today">0</div>
-        <div class="stat-label">Hoy</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" id="stat-revenue">$0</div>
-        <div class="stat-label">Proyectado</div>
-      </div>
+      <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-today">—</div><div class="stat-label">Hoy</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-revenue">—</div><div class="stat-label">Proyectado</div></div>
     </div>
   </div>
 
   <div class="toolbar">
     <input class="filter-input" id="search-input" type="text" placeholder="Buscar por nombre, servicio, barbero..."/>
-    <a class="export-btn" id="export-btn"><i class="fa-solid fa-file-csv"></i> Exportar CSV</a>
+    <button class="action-btn" id="refresh-btn"><i class="fa-solid fa-rotate-right"></i> Actualizar</button>
+    <button class="action-btn" id="export-btn"><i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
     <button class="danger-btn" id="clear-all-btn"><i class="fa-solid fa-trash"></i> Limpiar todo</button>
   </div>
 
-  <div class="table-wrap">
+  <div id="loading" class="loading"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:8px;"></i>Cargando reservas...</div>
+
+  <div class="table-wrap" id="table-section" style="display:none;">
     <table id="bookings-table">
       <thead>
         <tr>
-          <th>Fecha</th>
-          <th>Hora</th>
-          <th>Cliente</th>
-          <th>Contacto</th>
-          <th>Servicio</th>
-          <th>Precio</th>
-          <th>Barbero</th>
-          <th>Notas</th>
-          <th></th>
+          <th>Fecha</th><th>Hora</th><th>Cliente</th><th>Contacto</th>
+          <th>Servicio</th><th>Precio</th><th>Barbero</th><th>Notas</th><th></th>
         </tr>
       </thead>
-      <tbody id="bookings-tbody">
-      </tbody>
+      <tbody id="bookings-tbody"></tbody>
     </table>
-    <div class="empty-state" id="empty-state" style="display:none;">
-      <i class="fa-regular fa-calendar-xmark"></i>
-      <p>No hay reservas registradas aún.<br/>Las reservas aparecerán aquí en tiempo real cuando alguien agende.</p>
-    </div>
+  </div>
+  <div class="empty-state" id="empty-state" style="display:none;">
+    <i class="fa-regular fa-calendar-xmark"></i>
+    <p>No hay reservas registradas aún.<br/>Aparecerán aquí en tiempo real cuando alguien agende.</p>
   </div>
 </main>
 
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function() {
-  const STORAGE_KEY    = 'nb_bookings';
-  const DAYS_ES        = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const MONTHS_ES      = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  /* ── Config (same as script.js) ── */
+  const SUPABASE_URL = 'https://hgxayxrszmcmmrrwxlxz.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
+  const SUPABASE_ON  = SUPABASE_URL !== 'PENDING' && SUPABASE_KEY !== 'PENDING';
+  const sb = SUPABASE_ON ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  const LS_KEY = 'nb_bookings';
 
-  function getBookings() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch { return []; }
+  const DAYS_ES   = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const MONTHS_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+  let allBookings = [];
+
+  /* ── Source badge ── */
+  const badge = document.getElementById('source-badge');
+  const note  = document.getElementById('data-source-note');
+  if (SUPABASE_ON) {
+    badge.className = 'source-badge supabase'; badge.textContent = '● Supabase';
+    note.textContent = 'Datos almacenados en Supabase (cloud).';
+  } else {
+    badge.className = 'source-badge local'; badge.textContent = '● localStorage';
+    note.textContent = 'Datos almacenados en el navegador (localStorage). Configura Supabase para persistencia real.';
   }
 
-  function saveAll(arr) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  }
-
+  /* ── Helpers ── */
   function todayStr() {
     const d = new Date();
     return `${DAYS_ES[d.getDay()]} ${d.getDate()} ${MONTHS_ES[d.getMonth()]}`;
   }
-
-  function parsePrice(str) {
-    if (!str) return 0;
-    return parseInt(str.replace(/[^0-9]/g, '')) || 0;
+  function parsePrice(str) { return parseInt(String(str||'').replace(/[^0-9]/g,''))||0; }
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function render(filter = '') {
-    const all     = getBookings();
-    const lower   = filter.toLowerCase();
-    const filtered = filter
-      ? all.filter(b =>
-          (b.name    || '').toLowerCase().includes(lower) ||
-          (b.service || '').toLowerCase().includes(lower) ||
-          (b.barber  || '').toLowerCase().includes(lower) ||
-          (b.date    || '').toLowerCase().includes(lower))
-      : all;
+  /* ── Fetch bookings ── */
+  async function fetchBookings() {
+    if (SUPABASE_ON) {
+      const { data, error } = await sb.from('bookings').select('*').order('created_at', { ascending: false });
+      if (error) { console.warn('Supabase fetch error:', error); return []; }
+      return (data || []).map(r => ({
+        id: r.id, name: r.name, phone: r.phone, email: r.email,
+        service: r.service, price: r.price, duration: r.duration,
+        date: r.date, time: r.time, barber: r.barber, notes: r.notes,
+        createdAt: r.created_at,
+      }));
+    }
+    try { return (JSON.parse(localStorage.getItem(LS_KEY)) || []).reverse(); } catch { return []; }
+  }
 
-    // Stats (always on full list)
-    const today = todayStr();
-    document.getElementById('stat-total').textContent = all.length;
-    document.getElementById('stat-today').textContent = all.filter(b => b.date === today).length;
-    const revenue = all.reduce((s, b) => s + parsePrice(b.price), 0);
-    document.getElementById('stat-revenue').textContent =
-      revenue > 0 ? '$' + revenue.toLocaleString('es-CL') : '$0';
-
-    const tbody = document.getElementById('bookings-tbody');
-    tbody.innerHTML = '';
-
-    if (filtered.length === 0) {
-      document.getElementById('empty-state').style.display = 'block';
-      document.getElementById('bookings-table').style.display = 'none';
+  /* ── Delete booking ── */
+  async function deleteBooking(id) {
+    if (SUPABASE_ON) {
+      await sb.from('bookings').delete().eq('id', id);
     } else {
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('bookings-table').style.display = 'table';
-
-      // Sort: most recent first
-      const sorted = [...filtered].sort((a, b) => b.id - a.id);
-
-      sorted.forEach(b => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="td-date">${b.date || '—'}</td>
-          <td><span class="td-time">${b.time || '—'}</span></td>
-          <td class="td-name">${esc(b.name)}</td>
-          <td class="td-contact">
-            <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>
-            ${b.email ? `<br/><a href="mailto:${esc(b.email)}">${esc(b.email)}</a>` : ''}
-          </td>
-          <td class="td-service">${esc(b.service)}</td>
-          <td class="td-price">${esc(b.price)}</td>
-          <td class="td-barber">${esc(b.barber)}</td>
-          <td style="font-size:0.76rem;color:var(--grey-50);">${b.notes ? esc(b.notes) : '—'}</td>
-          <td>
-            <button class="delete-row-btn" data-id="${b.id}" title="Eliminar reserva">
-              <i class="fa-solid fa-xmark"></i>
-            </button>
-          </td>`;
-        tbody.appendChild(tr);
-      });
-
-      // Delete single row
-      tbody.querySelectorAll('.delete-row-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (!confirm('¿Eliminar esta reserva?')) return;
-          const id  = parseInt(btn.dataset.id);
-          const all = getBookings().filter(b => b.id !== id);
-          saveAll(all);
-          render(document.getElementById('search-input').value);
-        });
-      });
+      const arr = JSON.parse(localStorage.getItem(LS_KEY)||'[]').filter(b => b.id !== id);
+      localStorage.setItem(LS_KEY, JSON.stringify(arr));
     }
   }
 
-  function esc(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;');
+  /* ── Clear all ── */
+  async function clearAll() {
+    if (SUPABASE_ON) { await sb.from('bookings').delete().neq('id', 0); }
+    else { localStorage.removeItem(LS_KEY); }
   }
 
-  // Search
-  document.getElementById('search-input').addEventListener('input', e => render(e.target.value));
+  /* ── Render ── */
+  function render(filter = '') {
+    const lower = filter.toLowerCase();
+    const filtered = filter
+      ? allBookings.filter(b =>
+          (b.name   ||'').toLowerCase().includes(lower) ||
+          (b.service||'').toLowerCase().includes(lower) ||
+          (b.barber ||'').toLowerCase().includes(lower) ||
+          (b.date   ||'').toLowerCase().includes(lower))
+      : allBookings;
 
-  // Clear all
-  document.getElementById('clear-all-btn').addEventListener('click', () => {
+    const today = todayStr();
+    document.getElementById('stat-total').textContent   = allBookings.length;
+    document.getElementById('stat-today').textContent   = allBookings.filter(b => b.date===today).length;
+    const rev = allBookings.reduce((s,b)=>s+parsePrice(b.price),0);
+    document.getElementById('stat-revenue').textContent = rev>0 ? '$'+rev.toLocaleString('es-CL') : '$0';
+
+    document.getElementById('loading').style.display = 'none';
+
+    if (filtered.length === 0) {
+      document.getElementById('table-section').style.display = 'none';
+      document.getElementById('empty-state').style.display   = 'block';
+      return;
+    }
+    document.getElementById('empty-state').style.display   = 'none';
+    document.getElementById('table-section').style.display = 'block';
+
+    const tbody = document.getElementById('bookings-tbody');
+    tbody.innerHTML = '';
+    filtered.forEach(b => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--grey-30);white-space:nowrap">${esc(b.date)}</td>
+        <td><span class="td-time">${esc(b.time)}</span></td>
+        <td class="td-name">${esc(b.name)}</td>
+        <td class="td-contact">
+          <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>
+          ${b.email?`<br/><a href="mailto:${esc(b.email)}">${esc(b.email)}</a>`:''}
+        </td>
+        <td style="color:var(--grey-20)">${esc(b.service)}</td>
+        <td class="td-price">${esc(b.price)}</td>
+        <td style="color:var(--grey-30)">${esc(b.barber)}</td>
+        <td style="font-size:.76rem;color:var(--grey-50)">${b.notes?esc(b.notes):'—'}</td>
+        <td><button class="delete-row-btn" data-id="${esc(b.id)}" title="Eliminar"><i class="fa-solid fa-xmark"></i></button></td>`;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.delete-row-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar esta reserva?')) return;
+        await deleteBooking(SUPABASE_ON ? btn.dataset.id : parseInt(btn.dataset.id));
+        await load();
+      });
+    });
+  }
+
+  /* ── Load ── */
+  async function load() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('table-section').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'none';
+    allBookings = await fetchBookings();
+    render(document.getElementById('search-input').value);
+  }
+
+  /* ── Events ── */
+  document.getElementById('search-input').addEventListener('input', e => render(e.target.value));
+  document.getElementById('refresh-btn').addEventListener('click', load);
+
+  document.getElementById('clear-all-btn').addEventListener('click', async () => {
     if (!confirm('¿Eliminar TODAS las reservas? Esta acción no se puede deshacer.')) return;
-    localStorage.removeItem(STORAGE_KEY);
-    render();
+    await clearAll(); await load();
   });
 
-  // Export CSV
   document.getElementById('export-btn').addEventListener('click', () => {
-    const all = getBookings();
-    if (!all.length) { alert('No hay reservas para exportar.'); return; }
-    const header = ['Fecha','Hora','Nombre','Teléfono','Email','Servicio','Precio','Duración','Barbero','Notas','Creado'];
-    const rows = all.map(b => [
-      b.date, b.time, b.name, b.phone, b.email, b.service, b.price, b.duration, b.barber, b.notes,
-      new Date(b.createdAt).toLocaleString('es-CL')
-    ].map(v => '"' + String(v || '').replace(/"/g,'""') + '"').join(','));
-    const csv  = [header.join(','), ...rows].join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    if (!allBookings.length) { alert('No hay reservas para exportar.'); return; }
+    const hdr  = ['Fecha','Hora','Nombre','Teléfono','Email','Servicio','Precio','Duración','Barbero','Notas'];
+    const rows = allBookings.map(b =>
+      [b.date,b.time,b.name,b.phone,b.email,b.service,b.price,b.duration,b.barber,b.notes]
+      .map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+    const csv  = [hdr.join(','),...rows].join('\n');
+    const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = 'reservas_noir_blade.csv'; a.click();
+    a.href=url; a.download='reservas_noir_blade.csv'; a.click();
     URL.revokeObjectURL(url);
   });
 
-  // Auto-refresh every 10s (in case someone books from another tab)
-  render();
-  setInterval(() => render(document.getElementById('search-input').value), 10000);
+  /* ── Init + real-time Supabase subscription ── */
+  load();
+  if (SUPABASE_ON) {
+    sb.channel('bookings-admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => load())
+      .subscribe();
+  } else {
+    setInterval(load, 15000); // Refresh every 15s in localStorage mode
+  }
 })();
 </script>
 </body>
