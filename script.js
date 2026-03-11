@@ -12,8 +12,8 @@
    ██  EMAILJS
    ────────────────────────────────────────────────────────────── */
 const EMAILJS_CONFIG = {
-  publicKey:  'HvIa6Fo7CaG8Assxu',
-  serviceId:  'service_c1pe70s',
+  publicKey: 'HvIa6Fo7CaG8Assxu',
+  serviceId: 'service_c1pe70s',
   templateId: 'template_27h4qdr',
 };
 emailjs.init(EMAILJS_CONFIG.publicKey);
@@ -43,26 +43,85 @@ function lsSave(b) {
   localStorage.setItem(LS_KEY, JSON.stringify(all));
 }
 
-/** Insert booking. Returns { ok, error } */
+/* Points per service (partial match, case-insensitive) */
+const POINTS_MAP = [
+  { keyword: 'premium', pts: 20 },
+  { keyword: 'combo', pts: 15 },
+  { keyword: 'corte', pts: 10 },
+  { keyword: 'barba', pts: 8 },
+];
+function getPointsForService(serviceName) {
+  const s = (serviceName || '').toLowerCase();
+  for (const { keyword, pts } of POINTS_MAP) {
+    if (s.includes(keyword)) return pts;
+  }
+  return 10; // default
+}
+
+/** Insert booking and link to client. Returns { ok, bookingId } */
 async function persistBooking(booking) {
   if (SUPABASE_ON) {
-    const { error } = await sb.from('bookings').insert([{
-      name:     booking.name,
-      phone:    booking.phone,
-      email:    booking.email,
-      notes:    booking.notes,
-      service:  booking.service,
-      price:    booking.price,
+    const { data, error } = await sb.from('bookings').insert([{
+      name: booking.name,
+      phone: booking.phone,
+      email: booking.email,
+      notes: booking.notes,
+      service: booking.service,
+      price: booking.price,
       duration: booking.duration,
-      date:     booking.date,
-      time:     booking.time,
-      barber:   booking.barber,
-    }]);
+      date: booking.date,
+      time: booking.time,
+      barber: booking.barber,
+    }]).select('id').single();
     if (error) { console.warn('Supabase insert error, falling back to LS:', error); lsSave(booking); return { ok: false, error }; }
-    return { ok: true };
+    return { ok: true, bookingId: data?.id };
   }
   lsSave(booking);
   return { ok: true };
+}
+
+/**
+ * Upsert client by phone number.
+ * Creates new client or updates name/email on existing one.
+ * Links the booking to the client.
+ */
+async function upsertClient(booking, bookingId) {
+  if (!SUPABASE_ON) return;
+  try {
+    // Check if client already exists
+    const { data: existing } = await sb
+      .from('clients')
+      .select('id, name, email')
+      .eq('phone', booking.phone)
+      .maybeSingle();
+
+    let clientId;
+    if (existing) {
+      clientId = existing.id;
+      // Update name/email if improved
+      await sb.from('clients').update({
+        name: booking.name || existing.name,
+        email: booking.email || existing.email,
+        updated_at: new Date().toISOString(),
+      }).eq('id', clientId);
+    } else {
+      const { data: newClient } = await sb.from('clients').insert({
+        name: booking.name,
+        phone: booking.phone,
+        email: booking.email || null,
+        points: 0,
+        total_visits: 0,
+      }).select('id').single();
+      clientId = newClient?.id;
+    }
+
+    // Link booking → client
+    if (bookingId && clientId) {
+      await sb.from('bookings').update({ client_id: clientId }).eq('id', bookingId);
+    }
+  } catch (err) {
+    console.warn('upsertClient error (non-critical):', err);
+  }
 }
 
 /**
@@ -95,9 +154,9 @@ window.addEventListener('scroll', () => {
    ────────────────────────────────────────────────────────────── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
     document.querySelectorAll('.service-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+    btn.classList.add('active'); btn.setAttribute('aria-selected', 'true');
     document.getElementById('panel-' + btn.dataset.tab)?.classList.add('active');
   });
 });
@@ -114,41 +173,41 @@ const state = {
 };
 
 const BARBERS = ['Marco Reyes', 'Camilo Torres', 'Sebastián Mora', 'Ricardo Infante'];
-const DAYS    = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-const MONTHS  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 function updateSummary() {
   document.getElementById('sum-service').textContent = state.service || '—';
-  document.getElementById('sum-price').textContent   = state.price   || '—';
+  document.getElementById('sum-price').textContent = state.price || '—';
   const ph = t => `<span class="summary-placeholder">${t}</span>`;
-  document.getElementById('sum-date').innerHTML     = state.date     ? state.date     : ph('Sin seleccionar');
-  document.getElementById('sum-time').innerHTML     = state.time     ? state.time     : ph('Sin seleccionar');
+  document.getElementById('sum-date').innerHTML = state.date ? state.date : ph('Sin seleccionar');
+  document.getElementById('sum-time').innerHTML = state.time ? state.time : ph('Sin seleccionar');
   document.getElementById('sum-duration').innerHTML = state.duration ? state.duration : ph('—');
-  document.getElementById('sum-barber').innerHTML   = state.barber   ? state.barber   : ph('Sin seleccionar');
+  document.getElementById('sum-barber').innerHTML = state.barber ? state.barber : ph('Sin seleccionar');
 }
 
 /* ──────────────────────────────────────────────────────────────
    TIME FILTERING
    ────────────────────────────────────────────────────────────── */
-function parseHM(str) { const [h,m] = str.split(':').map(Number); return h*60+m; }
+function parseHM(str) { const [h, m] = str.split(':').map(Number); return h * 60 + m; }
 
 async function refreshTimePills() {
-  const pills   = document.querySelectorAll('.time-pill');
-  const now     = new Date();
+  const pills = document.querySelectorAll('.time-pill');
+  const now = new Date();
   const isToday = state.dateObj &&
     state.dateObj.getFullYear() === now.getFullYear() &&
-    state.dateObj.getMonth()    === now.getMonth()    &&
-    state.dateObj.getDate()     === now.getDate();
+    state.dateObj.getMonth() === now.getMonth() &&
+    state.dateObj.getDate() === now.getDate();
 
   // Fetch booked times (Supabase or LS)
   const bookedTimes = state.date ? await getBookedTimesForDate(state.date) : [];
-  const nowMin = now.getHours()*60 + now.getMinutes() + 30; // 30-min buffer
+  const nowMin = now.getHours() * 60 + now.getMinutes() + 30; // 30-min buffer
 
   pills.forEach(pill => {
     const t = pill.dataset.time;
     if (!t) return;
 
-    pill.classList.remove('past','booked','selected');
+    pill.classList.remove('past', 'booked', 'selected');
 
     // 1. Already booked
     if (bookedTimes.includes(t)) {
@@ -158,7 +217,7 @@ async function refreshTimePills() {
     }
     // 2. Past time today
     if (isToday && parseHM(t) <= nowMin) {
-      pill.classList.add('busy','past'); pill.disabled = true;
+      pill.classList.add('busy', 'past'); pill.disabled = true;
       pill.setAttribute('aria-label', `${t} — No disponible`);
       return;
     }
@@ -184,16 +243,16 @@ function buildDayPicker() {
   const today = new Date();
 
   for (let i = 0; i < 14; i++) {
-    const d   = new Date(today);
+    const d = new Date(today);
     d.setDate(today.getDate() + i);
     const sun = d.getDay() === 0;
     const lbl = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
 
     const pill = document.createElement('button');
-    pill.className = 'day-pill' + (i===0?' selected':'') + (sun?' disabled':'');
-    pill.disabled  = sun;
-    pill.setAttribute('role','listitem');
-    pill.setAttribute('aria-label', lbl + (sun?' — Cerrado':''));
+    pill.className = 'day-pill' + (i === 0 ? ' selected' : '') + (sun ? ' disabled' : '');
+    pill.disabled = sun;
+    pill.setAttribute('role', 'listitem');
+    pill.setAttribute('aria-label', lbl + (sun ? ' — Cerrado' : ''));
     pill.innerHTML = `<span>${DAYS[d.getDay()]}</span>
       <span class="day-num">${d.getDate()}</span>
       <span style="font-size:0.62rem;color:var(--grey-60)">${MONTHS[d.getMonth()]}</span>`;
@@ -231,7 +290,7 @@ document.querySelectorAll('.time-pill').forEach(pill => {
 /* ──────────────────────────────────────────────────────────────
    MODAL OPEN / CLOSE
    ────────────────────────────────────────────────────────────── */
-const modal    = document.getElementById('booking-modal');
+const modal = document.getElementById('booking-modal');
 const backdrop = document.getElementById('modal-backdrop');
 const closeBtn = document.getElementById('modal-close-btn');
 
@@ -246,7 +305,7 @@ closeBtn.addEventListener('click', closeModal);
 backdrop.addEventListener('click', closeModal);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-document.getElementById('nav-book-btn').addEventListener('click',  () => openModal(null));
+document.getElementById('nav-book-btn').addEventListener('click', () => openModal(null));
 document.getElementById('hero-book-btn').addEventListener('click', () => openModal(null));
 document.getElementById('success-close').addEventListener('click', closeModal);
 
@@ -259,7 +318,7 @@ document.querySelectorAll('.service-book-btn').forEach(btn => {
 
 document.querySelectorAll('.barber-item').forEach((item, i) => {
   item.addEventListener('click', () => { state.barber = BARBERS[i]; openModal(null); goToStep(2); });
-  item.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); item.click(); } });
+  item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); } });
 });
 
 /* ──────────────────────────────────────────────────────────────
@@ -277,24 +336,24 @@ document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
    STEP NAVIGATION
    ────────────────────────────────────────────────────────────── */
 const stepContents = document.querySelectorAll('.step-content');
-const stepDots     = ['dot-1','dot-2','dot-3'].map(id => document.getElementById(id));
+const stepDots = ['dot-1', 'dot-2', 'dot-3'].map(id => document.getElementById(id));
 
 function goToStep(n) {
-  stepContents.forEach((sc,i) => sc.classList.toggle('active', i+1===n));
+  stepContents.forEach((sc, i) => sc.classList.toggle('active', i + 1 === n));
   document.getElementById('success-screen').classList.remove('visible');
   document.querySelector('.steps-indicator').style.visibility = 'visible';
-  stepDots.forEach((dot,i) => {
-    dot.classList.remove('active','done');
+  stepDots.forEach((dot, i) => {
+    dot.classList.remove('active', 'done');
     const el = dot.querySelector('.step-num');
-    if (i+1===n)    { dot.classList.add('active'); el.textContent = i+1; }
-    else if (i+1<n) { dot.classList.add('done'); el.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>'; }
-    else             { el.textContent = i+1; }
+    if (i + 1 === n) { dot.classList.add('active'); el.textContent = i + 1; }
+    else if (i + 1 < n) { dot.classList.add('done'); el.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>'; }
+    else { el.textContent = i + 1; }
   });
-  if (n===1) buildDayPicker();
+  if (n === 1) buildDayPicker();
 }
 
 document.getElementById('s1-next').addEventListener('click', () => {
-  if (!state.time)   { showToast('Por favor selecciona un horario disponible.'); return; } goToStep(2);
+  if (!state.time) { showToast('Por favor selecciona un horario disponible.'); return; } goToStep(2);
 });
 document.getElementById('s2-back').addEventListener('click', () => goToStep(1));
 document.getElementById('s2-next').addEventListener('click', () => {
@@ -306,24 +365,24 @@ document.getElementById('s3-back').addEventListener('click', () => goToStep(2));
    CONFIRM BOOKING
    ────────────────────────────────────────────────────────────── */
 document.getElementById('s3-confirm').addEventListener('click', async () => {
-  const name  = document.getElementById('f-name').value.trim();
+  const name = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const email = document.getElementById('f-email').value.trim();
   const notes = document.getElementById('f-notes').value.trim();
   const terms = document.getElementById('f-terms').checked;
 
-  if (!name)  { showToast('Por favor ingresa tu nombre.'); return; }
+  if (!name) { showToast('Por favor ingresa tu nombre.'); return; }
   if (!phone) { showToast('Por favor ingresa tu teléfono.'); return; }
   if (!terms) { showToast('Debes aceptar los términos para continuar.'); return; }
 
   const booking = {
     id: Date.now(), name, phone, email, notes,
-    service:  state.service  || '(Sin especificar)',
-    price:    state.price    || '—',
+    service: state.service || '(Sin especificar)',
+    price: state.price || '—',
     duration: state.duration || '—',
-    date:     state.date     || '—',
-    time:     state.time     || '—',
-    barber:   state.barber   || '—',
+    date: state.date || '—',
+    time: state.time || '—',
+    barber: state.barber || '—',
     createdAt: new Date().toISOString(),
   };
 
@@ -331,22 +390,23 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
   confirmBtn.disabled = true;
   confirmBtn.textContent = 'Guardando...';
 
-  // 1) Save to Supabase (or localStorage fallback)
-  await persistBooking(booking);
+  // 1) Save to Supabase (or localStorage fallback) + upsert client profile
+  const { bookingId } = await persistBooking(booking);
+  await upsertClient(booking, bookingId);
 
   // 2) Send email via EmailJS
   if (email) {
     try {
       await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
         to_email: email,
-        to_name:  name,
-        service:  booking.service,
-        price:    booking.price,
-        date:     booking.date,
-        time:     booking.time,
-        barber:   booking.barber,
+        to_name: name,
+        service: booking.service,
+        price: booking.price,
+        date: booking.date,
+        time: booking.time,
+        barber: booking.barber,
         phone,
-        notes:    notes || 'Ninguna',
+        notes: notes || 'Ninguna',
       });
     } catch (err) {
       console.warn('EmailJS send error:', err);
@@ -376,18 +436,18 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement('div'); t.id = 'nb-toast';
     Object.assign(t.style, {
-      position:'fixed', bottom:'32px', left:'50%', transform:'translateX(-50%) translateY(20px)',
-      background:'var(--white)', color:'var(--black)', padding:'14px 28px', borderRadius:'4px',
-      fontFamily:'var(--font-sans)', fontSize:'0.83rem', fontWeight:'500',
-      boxShadow:'0 8px 32px rgba(0,0,0,0.5)', zIndex:'9999', opacity:'0',
-      transition:'opacity 0.25s ease, transform 0.25s ease', whiteSpace:'nowrap',
+      position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%) translateY(20px)',
+      background: 'var(--white)', color: 'var(--black)', padding: '14px 28px', borderRadius: '4px',
+      fontFamily: 'var(--font-sans)', fontSize: '0.83rem', fontWeight: '500',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: '9999', opacity: '0',
+      transition: 'opacity 0.25s ease, transform 0.25s ease', whiteSpace: 'nowrap',
     });
     document.body.appendChild(t);
   }
   t.textContent = msg;
-  requestAnimationFrame(() => { t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; });
+  requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; }, 3500);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 3500);
 }
 
 /* ──────────────────────────────────────────────────────────────
