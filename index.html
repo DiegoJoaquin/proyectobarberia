@@ -510,6 +510,19 @@
             <label class="form-label" for="f-notes">Indicaciones (opcional)</label>
             <input class="form-input" id="f-notes" type="text" placeholder="Ej. Prefiero fade alto, barba delineada..."/>
           </div>
+          <div class="form-group" style="margin-bottom:24px;">
+            <label class="form-label">Método de pago preferido</label>
+            <div style="display:flex;gap:12px;margin-top:8px;">
+              <label class="form-check" style="margin-top:0;align-items:center;">
+                <input type="radio" name="f-payment" value="local" checked/>
+                <span>Pagar en el local (Efectivo/Tarjeta)</span>
+              </label>
+              <label class="form-check" style="margin-top:0;align-items:center;">
+                <input type="radio" name="f-payment" value="transferencia"/>
+                <span>Transferencia (Pago anticipado)</span>
+              </label>
+            </div>
+          </div>
           <div class="form-check">
             <input type="checkbox" id="f-terms"/>
             <label for="f-terms">Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de privacidad</a>.</label>
@@ -523,10 +536,20 @@
 
         <!-- Success -->
         <div id="success-screen">
-          <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
-          <h2 class="success-title">¡Reserva Confirmada!</h2>
-          <p class="success-msg" id="success-msg">Tu hora ha sido agendada exitosamente.<br/>Te enviaremos un recordatorio por WhatsApp.</p>
-          <button class="btn-next" style="margin-top:28px;padding:14px 40px;" id="success-close">Cerrar</button>
+          <div class="success-icon" style="color:#25D366;"><i class="fa-brands fa-whatsapp"></i></div>
+          <h2 class="success-title">¡Reserva Guardada!</h2>
+          <p class="success-msg" id="success-msg">Paso final: Envíanos un WhatsApp para confirmar tu hora y asegurar tu espacio en la agenda.</p>
+          <div id="transfer-info" style="display:none;background:rgba(255,255,255,0.05);border:1px solid var(--grey-70);padding:16px;border-radius:6px;margin-top:20px;text-align:left;font-size:0.8rem;color:var(--grey-30);">
+            <p style="color:var(--gold);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em;font-size:0.7rem;">Datos para transferencia</p>
+            <p>Banco Estado, Cuenta RUT</p>
+            <p>19.123.456-7</p>
+            <p>Noir & Blade SPA</p>
+            <p>pagos@noirblade.cl</p>
+          </div>
+          <a href="#" id="wa-confirm-btn" target="_blank" class="btn-next" style="display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366;">
+            <i class="fa-brands fa-whatsapp" style="font-size:1.1rem;"></i> Confirmar vía WhatsApp
+          </a>
+          <button id="success-close" style="display:block;margin:24px auto 0;color:var(--grey-50);font-size:0.8rem;text-decoration:underline;background:none;border:none;">Cerrar sin confirmar</button>
         </div>
 
       </div>

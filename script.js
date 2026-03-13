@@ -375,8 +375,12 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
   if (!phone) { showToast('Por favor ingresa tu teléfono.'); return; }
   if (!terms) { showToast('Debes aceptar los términos para continuar.'); return; }
 
+  const payment = document.querySelector('input[name="f-payment"]:checked').value;
+  const paymentText = payment === 'transferencia' ? 'Transferencia (Pago anticipado)' : 'Pago en el local';
+  const finalNotes = notes ? `${notes} | Pago: ${paymentText}` : `Pago: ${paymentText}`;
+
   const booking = {
-    id: Date.now(), name, phone, email, notes,
+    id: Date.now(), name, phone, email, notes: finalNotes,
     service: state.service || '(Sin especificar)',
     price: state.price || '—',
     duration: state.duration || '—',
@@ -394,35 +398,27 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
   const { bookingId } = await persistBooking(booking);
   await upsertClient(booking, bookingId);
 
-  // 2) Send email via EmailJS
-  if (email) {
-    try {
-      await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
-        to_email: email,
-        to_name: name,
-        service: booking.service,
-        price: booking.price,
-        date: booking.date,
-        time: booking.time,
-        barber: booking.barber,
-        phone,
-        notes: notes || 'Ninguna',
-      });
-    } catch (err) {
-      console.warn('EmailJS send error:', err);
-    }
-  }
+  // 2) Generate WhatsApp message
+  const waPhone = '56987654321'; // Número de la barbería
+  const waText = `Hola Noir&Blade 💈\n\nAcabo de agendar una hora:\n👤 Nombre: ${name}\n✂️ Servicio: ${booking.service}\n📅 Fecha: ${booking.date}\n⏰ Hora: ${booking.time}\n💈 Barbero: ${booking.barber}\n💵 Método de pago: ${paymentText}\n\n¡Por favor confirmen mi reserva!`;
+  
+  const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(waText)}`;
+  document.getElementById('wa-confirm-btn').href = waUrl;
 
-  // 3) Show success
+  // 3) Show success & transfer info if needed
   stepContents.forEach(sc => sc.classList.remove('active'));
   document.querySelector('.steps-indicator').style.visibility = 'hidden';
   document.getElementById('success-screen').classList.add('visible');
+  
+  const transferInfoStr = payment === 'transferencia' 
+    ? `<br/><span style="color:var(--gold);">Has elegido pago anticipado por transferencia. Los datos están más abajo.</span>` 
+    : '';
+
   document.getElementById('success-msg').innerHTML =
-    `Hola <strong>${name}</strong>, tu reserva de <strong>${booking.service}</strong>
-     para el <strong>${booking.date}</strong> a las <strong>${booking.time}</strong>
-     con <strong>${booking.barber}</strong> está confirmada.
-     ${email ? `<br/>Enviamos un comprobante a <strong>${email}</strong>.` : ''}
-     <br/>Te recordaremos por WhatsApp al <strong>${phone}</strong>.`;
+    `Hola <strong>${name}</strong>, hemos guardado tu solicitud para el <strong>${booking.date} a las ${booking.time}</strong>.
+     ${transferInfoStr}`;
+
+  document.getElementById('transfer-info').style.display = payment === 'transferencia' ? 'block' : 'none';
 
   confirmBtn.disabled = false;
   confirmBtn.textContent = 'Confirmar reserva';
