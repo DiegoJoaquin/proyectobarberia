@@ -3,24 +3,31 @@
    Design System & Styles
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
 /* ── Variables ─────────────────────────────────────────────── */
 :root {
-  --black: #0a0a0a;
-  --grey-90: #141414;
-  --grey-80: #1e1e1e;
-  --grey-70: #2a2a2a;
-  --grey-60: #3d3d3d;
-  --grey-50: #5c5c5c;
-  --grey-40: #7a7a7a;
-  --grey-30: #a8a8a8;
-  --grey-20: #d4d4d4;
-  --grey-10: #efefef;
-  --white: #f8f8f8;
-  --gold: #b8975a;
-  --gold-dim: #9a7d47;
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --black: #0f0f12;
+  --grey-90: #161619;
+  --grey-80: #1d1d21;
+  --grey-70: #2b2b30;
+  --grey-60: #3e3e44;
+  --grey-50: #5f5f66;
+  --grey-40: #81818a;
+  --grey-30: #a3a3ab;
+  --grey-20: #c5c5cb;
+  --grey-10: #e6e4e0;
+  --white: #f4f2ee;
+  
+  /* Secundario: Bronce Envejecido */
+  --gold: #B67A43;
+  --gold-dim: #8c5d33;
+  
+  /* Fuerza: Rojo Lacedemonio (Sangre de Toro) */
+  --red: #7f1d1d;
+  --red-hover: #601414;
+
+  --font-serif: 'Cinzel', Georgia, serif;
   --font-sans: 'Inter', system-ui, sans-serif;
   --radius: 4px;
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -588,6 +595,7 @@ button {
 
 .service-card {
   background: var(--grey-90);
+  background-image: radial-gradient(circle at top right, rgba(255,255,255,0.02) 0%, transparent 60%), linear-gradient(135deg, rgba(0,0,0,0.4) 0%, transparent 100%);
   border: 1px solid var(--grey-70);
   border-radius: var(--radius);
   padding: 28px;
@@ -1133,12 +1141,12 @@ button {
 }
 
 .btn-confirm {
-  background: var(--gold);
-  color: var(--black);
+  background: var(--red);
+  color: var(--white);
 }
 
 .btn-confirm:hover {
-  background: var(--gold-dim);
+  background: var(--red-hover);
   transform: translateY(-1px);
 }
 
