@@ -795,7 +795,9 @@
     <div class="login-box">
       <div class="login-icon"><i class="fa-solid fa-scissors"></i></div>
       <p class="login-logo">NOIR <span>&</span> BLADE</p>
-      <p class="login-subtitle">Acceso exclusivo — Administración</p>
+      <label class="login-label" for="email-input">Correo electrónico</label>
+      <input class="login-input" id="email-input" style="margin-bottom:12px;" type="email" placeholder="admin@nuestrabarberia.com" autocomplete="username" />
+      
       <label class="login-label" for="pwd-input">Contraseña</label>
       <input class="login-input" id="pwd-input" type="password" placeholder="••••••••"
         autocomplete="current-password" />
@@ -943,8 +945,8 @@
     /* ══ LOGIN SEGURO CON SUPABASE AUTH ══════════════════════════════ */
     (function () {
       const gate = document.getElementById('login-gate');
+      const emailInput = document.getElementById('email-input');
       const input = document.getElementById('pwd-input');
-      const ADMIN_EMAIL = 'admin@nuestrabarberia.com';
       const loginBtn = document.getElementById('login-btn');
       const errEl = document.getElementById('login-error');
       const logoutBtn = document.getElementById('logout-btn');
@@ -989,13 +991,18 @@
 
       // 3. Login
       loginBtn.addEventListener('click', async () => {
+        const email = emailInput.value.trim();
         const pwd = input.value.trim();
-        if (!pwd) return;
+        if (!email || !pwd) {
+          errEl.textContent = 'Ingresa correo y contraseña.';
+          setTimeout(() => { errEl.textContent = ''; }, 3000);
+          return;
+        }
 
         loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Iniciando...';
 
         const { data, error } = await sb.auth.signInWithPassword({
-          email: ADMIN_EMAIL,
+          email: email,
           password: pwd
         });
 
