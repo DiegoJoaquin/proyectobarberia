@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SPARTAN BARBER CO. — La Forja del Estilo | Machalí</title>
-  <meta name="description" content="Spartan Barber Co., la barbería premium en Machalí. Cortes de precisión, disciplina militar y grooming de clase mundial. Reserva tu espacio."/>
-  <link rel="stylesheet" href="styles.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <meta name="description"
+    content="Spartan Barber Co., la barbería premium en Machalí. Cortes de precisión, disciplina militar y grooming de clase mundial. Reserva tu espacio." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <!-- EmailJS — envío de correos sin backend -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
+
 <body>
 
   <!-- ══════════════════════════════════════════════════════
@@ -33,16 +36,16 @@
 
     <!-- Left: Image + headline -->
     <div class="hero-image-wrapper">
-      <img src="assets/hero.png" alt="Interior de Noir & Blade Barbería" loading="eager"/>
+      <img src="assets/hero.png" alt="Interior de Noir & Blade Barbería" loading="eager" />
       <div class="hero-overlay"></div>
       <div class="hero-text">
         <p class="hero-eyebrow">La Élite del Grooming</p>
-        <h1 class="hero-title">Forja tu Estilo<br/>con <em>Leyenda</em></h1>
+        <h1 class="hero-title">Forja tu Estilo<br />con <em>Leyenda</em></h1>
         <p class="hero-subtitle">Disciplina, precisión y el corte de los guerreros en Machalí.</p>
         <button class="hero-btn" id="hero-book-btn" aria-label="Reservar ahora">
           Reservar ahora <span class="arrow">→</span>
         </button>
-    </section>
+  </section>
 
   <!-- ══════════════════════════════════════════════════════
        SERVICES
@@ -55,48 +58,33 @@
       </div>
 
       <div class="section-header" style="margin-top:48px;">
-        <p class="section-eyebrow">Nuestro menú</p>
+        <p class="section-eyebrow">Nuestros servicios</p>
         <h2 class="section-title">Precisión en <em>cada detalle</em></h2>
-        <p class="section-subtitle">Cada servicio está diseñado para realzar tu mejor versión, con productos premium y técnicas de clase mundial.</p>
+        <p class="section-subtitle">Cada servicio está diseñado para realzar tu mejor versión, con productos premium y
+          técnicas de clase mundial.</p>
       </div>
 
       <!-- Tabs -->
       <div class="service-tabs" role="tablist" aria-label="Categorías de servicios">
-        <button class="tab-btn active" role="tab" aria-selected="true"  data-tab="corte">Corte</button>
-        <button class="tab-btn"        role="tab" aria-selected="false" data-tab="barba">Barba</button>
-        <button class="tab-btn"        role="tab" aria-selected="false" data-tab="combo">Combos</button>
-        <button class="tab-btn"        role="tab" aria-selected="false" data-tab="premium">Facial & Premium</button>
+        <button class="tab-btn active" role="tab" aria-selected="true" data-tab="corte">Corte</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="barba">Barba</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="combo">Combos</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="premium">Facial & Premium</button>
       </div>
 
       <!-- ── Corte ── -->
       <div class="service-panel active" id="panel-corte" role="tabpanel">
         <div class="service-grid">
 
-          <article class="service-card"
-            data-name="Corte de Cabello"
-            data-price="$15.000"
-            data-duration="40 min"
-            data-desc="Precisión militar y estilo impecable. Incluye lavado, corte estructurado y peinado con productos de alta gama.">
+          <article class="service-card" data-name="Corte de Cabello" data-price="$16.690" data-duration="45 min"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible.">
             <div class="service-card-header">
               <h3 class="service-name">Corte de Cabello</h3>
-              <span class="service-price">$15.000</span>
+              <span class="service-price">$16.690</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 40 min</p>
-            <p class="service-desc">Precisión militar y estilo impecable. Incluye lavado, corte estructurado y peinado con productos de alta gama.</p>
-            <button class="service-book-btn">Agendar servicio</button>
-          </article>
-
-          <article class="service-card"
-            data-name="Perfilado de Cejas"
-            data-price="$5.000"
-            data-duration="15 min"
-            data-desc="Detalle y limpieza geométrica para enmarcar la mirada con simetría perfecta.">
-            <div class="service-card-header">
-              <h3 class="service-name">Perfilado de Cejas</h3>
-              <span class="service-price">$5.000</span>
-            </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 15 min</p>
-            <p class="service-desc">Detalle y limpieza geométrica para enmarcar la mirada con simetría perfecta.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
@@ -107,31 +95,29 @@
       <div class="service-panel" id="panel-barba" role="tabpanel">
         <div class="service-grid">
 
-          <article class="service-card"
-            data-name="Retoque de Barba"
-            data-price="$10.000"
-            data-duration="30 min"
-            data-desc="Alineación y pulido de barba con navaja, finalizado con aceites esenciales para un aspecto disciplinado.">
+          <article class="service-card" data-name="Retoque de Barba" data-price="$12.500" data-duration="30 min"
+            data-desc="Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos.">
             <div class="service-card-header">
               <h3 class="service-name">Retoque de Barba</h3>
-              <span class="service-price">$10.000</span>
+              <span class="service-price">$12.500</span>
             </div>
             <p class="service-meta"><i class="fa-regular fa-clock"></i> 30 min</p>
-            <p class="service-desc">Alineación y pulido de barba con navaja, finalizado con aceites esenciales para un aspecto disciplinado.</p>
+            <p class="service-desc">Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca
+              estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Ritual de Barba Premium"
-            data-price="$18.000"
-            data-duration="45 min"
-            data-desc="La experiencia del general. Toallas calientes, vapor ozono, perfilado a navaja, exfoliación y bálsamos.">
+          <article class="service-card" data-name="Ritual de Barba Premium" data-price="$16.500" data-duration="30 min"
+            data-desc="Servicio de Barba Premium, primer paso: perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible, pre shaver, tohalla caliente esterilizada y navaja.">
             <div class="service-card-header">
               <h3 class="service-name">Ritual de Barba Premium</h3>
-              <span class="service-price">$18.000</span>
+              <span class="service-price">$16.500</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
-            <p class="service-desc">La experiencia del general. Toallas calientes, vapor ozono, perfilado a navaja, exfoliación y bálsamos.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 30 min</p>
+            <p class="service-desc">Servicio de Barba Premium, primer paso: perfilado de bellos de barba solo con
+              máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos,
+              segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible, pre
+              shaver, tohalla caliente esterilizada y navaja.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
@@ -142,59 +128,57 @@
       <div class="service-panel" id="panel-combo" role="tabpanel">
         <div class="service-grid">
 
-          <article class="service-card"
-            data-name="Corte + Retoque de Barba"
-            data-price="$22.000"
-            data-duration="1 hr"
-            data-desc="El estándar de la falange. Cabello y barba esculpidos en una sola sesión para un look inquebrantable.">
+          <article class="service-card" data-name="Corte + Retoque de Barba" data-price="$27.190" data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible. Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos.">
             <div class="service-card-header">
               <h3 class="service-name">Corte + Retoque Barba</h3>
-              <span class="service-price">$22.000</span>
+              <span class="service-price">$27.190</span>
             </div>
             <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
-            <p class="service-desc">El estándar de la falange. Cabello y barba esculpidos en una sola sesión para un look inquebrantable.</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible. Servicio de perfilado de bellos de barba solo con máquina,
+              idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Corte + Ritual de Barba Premium"
-            data-price="$30.000"
-            data-duration="1 hr 15 min"
-            data-desc="Armadura completa. El mejor corte sumado a la máxima experiencia de cuidado para tu barba.">
+          <article class="service-card" data-name="Corte + Ritual de Barba Premium" data-price="$31.190"
+            data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible. Servicio de Barba Premium, primero: perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos, segundo: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible, pre shaver, toalla caliente esterilizada.">
             <div class="service-card-header">
               <h3 class="service-name">Corte + Ritual Premium</h3>
-              <span class="service-price">$30.000</span>
+              <span class="service-price">$31.190</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 15 min</p>
-            <p class="service-desc">Armadura completa. El mejor corte sumado a la máxima experiencia de cuidado para tu barba.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible. Servicio de Barba Premium, primero: perfilado de bellos de barba
+              solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y
+              pómulos, segundo: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible,
+              pre shaver, toalla caliente esterilizada.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Corte + Limpieza Facial"
-            data-price="$30.000"
-            data-duration="1 hr 15 min"
-            data-desc="Renovación total. Estilo impecable en el cabello y un rostro limpio y purificado.">
+          <article class="service-card" data-name="Corte + Limpieza Facial" data-price="$27.190" data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la mejor calidad disponible. Aplicación de vapor con tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.">
             <div class="service-card-header">
               <h3 class="service-name">Corte + Facial</h3>
-              <span class="service-price">$30.000</span>
+              <span class="service-price">$27.190</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 15 min</p>
-            <p class="service-desc">Renovación total. Estilo impecable en el cabello y un rostro limpio y purificado.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la
+              mejor calidad disponible. Aplicación de vapor con tohalla caliente para la apertura de poros del rostro,
+              primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Corte + Perfilado Cejas"
-            data-price="$18.000"
-            data-duration="45 min"
-            data-desc="Corte de precisión acompañado de un marco facial limpio y definido.">
+          <article class="service-card" data-name="Corte + Perfilado Cejas" data-price="$19.690" data-duration="45 min"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro.">
             <div class="service-card-header">
               <h3 class="service-name">Corte + Cejas</h3>
-              <span class="service-price">$18.000</span>
+              <span class="service-price">$19.690</span>
             </div>
             <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
-            <p class="service-desc">Corte de precisión acompañado de un marco facial limpio y definido.</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
@@ -205,76 +189,105 @@
       <div class="service-panel" id="panel-premium" role="tabpanel">
         <div class="service-grid">
 
-          <article class="service-card"
-            data-name="Limpieza Facial"
-            data-price="$20.000"
-            data-duration="45 min"
-            data-desc="Purificación profunda. Exfoliación, mascarilla de carbón y cremas hidratantes para una piel renovada y resistente.">
+          <article class="service-card" data-name="Limpieza Facial" data-price="$12.500" data-duration="15 min"
+            data-desc="Aplicación de vapor con toalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.">
             <div class="service-card-header">
               <h3 class="service-name">Limpieza Facial</h3>
-              <span class="service-price">$20.000</span>
+              <span class="service-price">$12.500</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
-            <p class="service-desc">Purificación profunda. Exfoliación, mascarilla de carbón y cremas hidratantes para una piel renovada y resistente.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 15 min</p>
+            <p class="service-desc">Aplicación de vapor con tohalla caliente para la apertura de poros del rostro,
+              primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+          <article class="service-card" data-name="Corte de Cabello + Ritual de Barba Premium + Limpieza Facial"
+            data-price="$41.690" data-duration="1 hr 15 min"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible, pre shaver, toalla caliente">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte de Cabello + Ritual de Barba Premium + Limpieza Facial</h3>
+              <span class="service-price">$41.690</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 15 min</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de
+              barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el
+              cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta
+              calidad disponible, pre shaver, toalla caliente</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Rituales de Barba Premium + Limpieza Facial"
-            data-price="$35.000"
-            data-duration="1 hr"
+          <article class="service-card" data-name="Rituales de Barba Premium + Limpieza Facial" data-price="$27.000"
+            data-duration="45 min"
             data-desc="Cuidado facial absoluto. Barba majestuosa y piel revitalizada en un solo ritual.">
             <div class="service-card-header">
               <h3 class="service-name">Ritual + Facial</h3>
-              <span class="service-price">$35.000</span>
+              <span class="service-price">$27.000</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
             <p class="service-desc">Cuidado facial absoluto. Barba majestuosa y piel revitalizada en un solo ritual.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Corte + Retoque de Barba + Limpieza Facial"
-            data-price="$40.000"
-            data-duration="1 hr 30 min"
-            data-desc="El honor del guerrero. Un servicio integral que cubre cabello, barba y cuidado facial profundo.">
+          <article class="service-card" data-name="Corte + Retoque de Barba + Limpieza Facial" data-price="$41.690"
+            data-duration="1 hr 15 min"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible, pre shaver, toalla caliente.">
             <div class="service-card-header">
-              <h3 class="service-name">Honor del Guerrero</h3>
-              <span class="service-price">$40.000</span>
+              <h3 class="service-name">Corte + Retoque de Barba + Limpieza Facial</h3>
+              <span class="service-price">$41.690</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 30 min</p>
-            <p class="service-desc">El honor del guerrero. Un servicio integral que cubre cabello, barba y cuidado facial profundo.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 15 min</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de
+              barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el
+              cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta
+              calidad disponible, pre shaver, toalla caliente.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Corte + Ritual de Barba + Limpieza Facial"
-            data-price="$48.000"
-            data-duration="1 hr 45 min"
-            data-desc="El Alto Mando. Nuestro servicio más exclusivo para una transformación total de pies a cabeza.">
+          <article class="service-card" data-name="Corte de Cabello+ Retoque de Barba + Perfilado de Cejas"
+            data-price="$30.190" data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la mejor calidad disponible.Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos. Definir con navaja las cejas, de acuerdo a el rostro.">
             <div class="service-card-header">
-              <h3 class="service-name">El Alto Mando</h3>
-              <span class="service-price">$48.000</span>
+              <h3 class="service-name">Corte de Cabello+ Retoque de Barba + Perfilado de Cejas</h3>
+              <span class="service-price">$30.190</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 45 min</p>
-            <p class="service-desc">El Alto Mando. Nuestro servicio más exclusivo para una transformación total de pies a cabeza.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la
+              mejor calidad disponible.Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca
+              estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos. Definir con navaja las cejas,
+              de acuerdo a el rostro.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
-          <article class="service-card"
-            data-name="Corte + Ritual de Barba + Perfilado de Cejas"
-            data-price="$42.000"
-            data-duration="1 hr 30 min"
-            data-desc="Simetría absoluta. Cabello, barba y cejas alineadas con exactitud milimétrica.">
+          <article class="service-card" data-name="Corte de Cabello + Perfilado de Cejas + Limpieza Facial"
+            data-price="$30.690" data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro. Aplicación de vapor con tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.">
             <div class="service-card-header">
-              <h3 class="service-name">Simetría Absoluta</h3>
-              <span class="service-price">$42.000</span>
+              <h3 class="service-name">Corte de Cabello + Perfilado de Cejas + Limpieza Facial</h3>
+              <span class="service-price">$30.690</span>
             </div>
-            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 30 min</p>
-            <p class="service-desc">Simetría absoluta. Cabello, barba y cejas alineadas con exactitud milimétrica.</p>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la
+              mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro. Aplicación de vapor con
+              tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo
+              aplicación de crema de limpieza.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
 
+          <article class="service-card" data-name="Corte de Cabello + Retoque de Barba + Limpieza Facial"
+            data-price="$37.690" data-duration="1 hr 15 min"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la mejor calidad disponible. Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos. Aplicación de vapor con tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte de Cabello + Retoque de Barba + Limpieza Facial</h3>
+              <span class="service-price">$37.690</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 15 min</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la
+              mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro. Aplicación de vapor con
+              tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo
+              aplicación de crema de limpieza.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
         </div>
       </div>
 
@@ -287,23 +300,25 @@
   <section id="info" aria-label="Información del local">
     <div class="container">
       <div class="info-grid">
-        
+
         <!-- Map -->
         <div>
-          <p class="card-section-label"><i class="fa-solid fa-location-dot" style="color:var(--gold);margin-right:6px;"></i>Ubicación</p>
+          <p class="card-section-label"><i class="fa-solid fa-location-dot"
+              style="color:var(--gold);margin-right:6px;"></i>Ubicación</p>
           <div class="map-embed">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.658!2d-70.6505!3d-33.4372!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDI2JzEzLjkiUyA3MMKwMzknMDIuMCJX!5e0!3m2!1ses!2scl!4v1699000000000"
-              loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-              allowfullscreen title="Mapa Spartan Barber">
+              loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen title="Mapa Spartan Barber">
             </iframe>
           </div>
-          <p class="address-line"><i class="fa-solid fa-map-pin"></i>Av. Padre Alberto Hurtado 03, Local 22<br/>Machalí</p>
+          <p class="address-line"><i class="fa-solid fa-map-pin"></i>Av. Padre Alberto Hurtado 03, Local 22<br />Machalí
+          </p>
         </div>
 
         <!-- Contact -->
         <div>
-          <p class="card-section-label"><i class="fa-solid fa-phone" style="color:var(--gold);margin-right:6px;"></i>Contacto</p>
+          <p class="card-section-label"><i class="fa-solid fa-phone"
+              style="color:var(--gold);margin-right:6px;"></i>Contacto</p>
           <div class="contact-btns">
             <a href="tel:+56982679620" class="contact-btn phone">
               <i class="fa-solid fa-phone"></i>+56 9 8267 9620
@@ -316,7 +331,8 @@
 
         <!-- Hours -->
         <div>
-          <p class="card-section-label"><i class="fa-regular fa-clock" style="color:var(--gold);margin-right:6px;"></i>Horarios</p>
+          <p class="card-section-label"><i class="fa-regular fa-clock"
+              style="color:var(--gold);margin-right:6px;"></i>Horarios</p>
           <ul class="hours-list">
             <li><span class="day">Lunes – Viernes</span><span>09:00 – 20:00</span></li>
             <li><span class="day">Sábado</span><span>09:00 – 18:00</span></li>
@@ -326,24 +342,25 @@
 
         <!-- Team avatars -->
         <div id="barbers">
-          <p class="card-section-label"><i class="fa-solid fa-scissors" style="color:var(--gold);margin-right:6px;"></i>Nuestros Barberos</p>
+          <p class="card-section-label"><i class="fa-solid fa-scissors"
+              style="color:var(--gold);margin-right:6px;"></i>Nuestros Barberos</p>
           <div class="barbers-row">
             <div class="barber-item" data-barber="0" role="button" tabindex="0">
-              <img src="assets/barber1.png" alt="Emanuel" class="barber-avatar"/>
+              <img src="assets/barber1.png" alt="Emanuel" class="barber-avatar" />
               <div class="barber-info">
                 <p class="barber-name">Emanuel</p>
                 <p class="barber-title">Master Barber</p>
               </div>
             </div>
             <div class="barber-item" data-barber="1" role="button" tabindex="0">
-              <img src="assets/barber2.png" alt="Matías Nuñez" class="barber-avatar"/>
+              <img src="assets/barber2.png" alt="Matías Nuñez" class="barber-avatar" />
               <div class="barber-info">
                 <p class="barber-name">Matías Nuñez</p>
                 <p class="barber-title">Senior Stylist</p>
               </div>
             </div>
             <div class="barber-item" data-barber="2" role="button" tabindex="0">
-              <img src="assets/barber3.png" alt="Ángel" class="barber-avatar"/>
+              <img src="assets/barber3.png" alt="Ángel" class="barber-avatar" />
               <div class="barber-info">
                 <p class="barber-name">Ángel</p>
                 <p class="barber-title">Fade Specialist</p>
@@ -444,7 +461,7 @@
 
           <div class="barber-grid" id="barber-picker">
             <div class="barber-pick-card" data-barber-idx="0">
-              <img src="assets/barber1.png" alt="Emanuel"/>
+              <img src="assets/barber1.png" alt="Emanuel" />
               <div>
                 <p class="bpc-name">Emanuel</p>
                 <p class="bpc-title">Master Barber</p>
@@ -452,7 +469,7 @@
               </div>
             </div>
             <div class="barber-pick-card" data-barber-idx="1">
-              <img src="assets/barber2.png" alt="Matías Nuñez"/>
+              <img src="assets/barber2.png" alt="Matías Nuñez" />
               <div>
                 <p class="bpc-name">Matías Nuñez</p>
                 <p class="bpc-title">Senior Stylist</p>
@@ -460,7 +477,7 @@
               </div>
             </div>
             <div class="barber-pick-card" data-barber-idx="2">
-              <img src="assets/barber3.png" alt="Ángel"/>
+              <img src="assets/barber3.png" alt="Ángel" />
               <div>
                 <p class="bpc-name">Ángel</p>
                 <p class="bpc-title">Fade Specialist</p>
@@ -482,38 +499,40 @@
 
           <div class="form-group">
             <label class="form-label" for="f-name">Nombre completo</label>
-            <input class="form-input" id="f-name" type="text" placeholder="Ej. Diego González" autocomplete="name"/>
+            <input class="form-input" id="f-name" type="text" placeholder="Ej. Diego González" autocomplete="name" />
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="f-phone">Teléfono</label>
-              <input class="form-input" id="f-phone" type="tel" placeholder="+56 9 XXXX XXXX" autocomplete="tel"/>
+              <input class="form-input" id="f-phone" type="tel" placeholder="+56 9 XXXX XXXX" autocomplete="tel" />
             </div>
             <div class="form-group">
               <label class="form-label" for="f-email">Correo electrónico</label>
-              <input class="form-input" id="f-email" type="email" placeholder="tu@correo.com" autocomplete="email"/>
+              <input class="form-input" id="f-email" type="email" placeholder="tu@correo.com" autocomplete="email" />
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="f-notes">Indicaciones (opcional)</label>
-            <input class="form-input" id="f-notes" type="text" placeholder="Ej. Prefiero fade alto, barba delineada..."/>
+            <input class="form-input" id="f-notes" type="text"
+              placeholder="Ej. Prefiero fade alto, barba delineada..." />
           </div>
           <div class="form-group" style="margin-bottom:24px;">
             <label class="form-label">Método de pago preferido</label>
             <div style="display:flex;gap:12px;margin-top:8px;">
               <label class="form-check" style="margin-top:0;align-items:center;">
-                <input type="radio" name="f-payment" value="local" checked/>
+                <input type="radio" name="f-payment" value="local" checked />
                 <span>Pagar en el local (Efectivo/Tarjeta)</span>
               </label>
               <label class="form-check" style="margin-top:0;align-items:center;">
-                <input type="radio" name="f-payment" value="transferencia"/>
+                <input type="radio" name="f-payment" value="transferencia" />
                 <span>Transferencia (Pago anticipado)</span>
               </label>
             </div>
           </div>
           <div class="form-check">
-            <input type="checkbox" id="f-terms"/>
-            <label for="f-terms">Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de privacidad</a>.</label>
+            <input type="checkbox" id="f-terms" />
+            <label for="f-terms">Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de
+                privacidad</a>.</label>
           </div>
 
           <div class="step-nav">
@@ -526,18 +545,25 @@
         <div id="success-screen">
           <div class="success-icon" style="color:#25D366;"><i class="fa-brands fa-whatsapp"></i></div>
           <h2 class="success-title">¡Reserva Guardada!</h2>
-          <p class="success-msg" id="success-msg">Paso final: Envíanos un WhatsApp para confirmar tu hora y asegurar tu espacio en la agenda.</p>
-          <div id="transfer-info" style="display:none;background:rgba(255,255,255,0.05);border:1px solid var(--grey-70);padding:16px;border-radius:6px;margin-top:20px;text-align:left;font-size:0.8rem;color:var(--grey-30);">
-            <p style="color:var(--gold);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em;font-size:0.7rem;">Datos para transferencia</p>
+          <p class="success-msg" id="success-msg">Paso final: Envíanos un WhatsApp para confirmar tu hora y asegurar tu
+            espacio en la agenda.</p>
+          <div id="transfer-info"
+            style="display:none;background:rgba(255,255,255,0.05);border:1px solid var(--grey-70);padding:16px;border-radius:6px;margin-top:20px;text-align:left;font-size:0.8rem;color:var(--grey-30);">
+            <p
+              style="color:var(--gold);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em;font-size:0.7rem;">
+              Datos para transferencia</p>
             <p>Banco Estado, Cuenta RUT</p>
             <p>19.123.456-7</p>
             <p>Spartan Barber SPA</p>
             <p>pagos@spartanbarber.cl</p>
           </div>
-          <a href="#" id="wa-confirm-btn" target="_blank" class="btn-next" style="display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366;">
+          <a href="#" id="wa-confirm-btn" target="_blank" class="btn-next"
+            style="display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366;">
             <i class="fa-brands fa-whatsapp" style="font-size:1.1rem;"></i> Confirmar vía WhatsApp
           </a>
-          <button id="success-close" style="display:block;margin:24px auto 0;color:var(--grey-50);font-size:0.8rem;text-decoration:underline;background:none;border:none;">Cerrar sin confirmar</button>
+          <button id="success-close"
+            style="display:block;margin:24px auto 0;color:var(--grey-50);font-size:0.8rem;text-decoration:underline;background:none;border:none;">Cerrar
+            sin confirmar</button>
         </div>
 
       </div>
@@ -565,11 +591,13 @@
         </div>
         <div class="summary-row">
           <span class="summary-row-label">Barbero</span>
-          <span class="summary-row-value" id="sum-barber"><span class="summary-placeholder">Sin seleccionar</span></span>
+          <span class="summary-row-value" id="sum-barber"><span class="summary-placeholder">Sin
+              seleccionar</span></span>
         </div>
 
         <div class="summary-cta-note">
-          <i class="fa-solid fa-shield-halved"></i> Tu reserva es gratuita. Solo se cobra al momento de tu visita. Cancelación sin costo hasta 2 horas antes.
+          <i class="fa-solid fa-shield-halved"></i> Tu reserva es gratuita. Solo se cobra al momento de tu visita.
+          Cancelación sin costo hasta 2 horas antes.
         </div>
       </aside>
 
@@ -584,7 +612,8 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <p class="brand-name">SPARTAN <span>BARBER</span></p>
-          <p class="footer-tagline">Barbería de élite en el corazón de Providencia. Disciplina, precisión y el arte del grooming militar.</p>
+          <p class="footer-tagline">Barbería de élite en el corazón de Providencia. Disciplina, precisión y el arte del
+            grooming militar.</p>
           <div class="footer-social">
             <a href="#" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
             <a href="#" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
@@ -623,7 +652,8 @@
       </div>
       <div class="footer-bottom">
         <span>© 2024 Spartan Barber. Todos los derechos reservados.</span>
-        <span>Diseñado con precisión en Santiago de Chile. · <a href="admin.html" style="color:var(--grey-60);text-decoration:none;">Admin</a></span>
+        <span>Diseñado con precisión en Santiago de Chile. · <a href="admin.html"
+            style="color:var(--grey-60);text-decoration:none;">Admin</a></span>
       </div>
     </div>
   </footer>
@@ -632,4 +662,5 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
