@@ -940,14 +940,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    /* ══ LOGIN ══════════════════════════════════════════════════════
-       Cambia ADMIN_PASSWORD para actualizar la contraseña.
-    ══════════════════════════════════════════════════════════════ */
+    /* ══ LOGIN SEGURO CON SUPABASE AUTH ══════════════════════════════ */
     (function () {
-      const ADMIN_PASSWORD = 'noir2024';   // ← CAMBIA ESTA CONTRASEÑA
-      const KEY = 'nb_admin_auth';
       const gate = document.getElementById('login-gate');
       const input = document.getElementById('pwd-input');
+      const ADMIN_EMAIL = 'admin@nuestrabarberia.com';
       const loginBtn = document.getElementById('login-btn');
       const errEl = document.getElementById('login-error');
       const logoutBtn = document.getElementById('logout-btn');
@@ -956,8 +953,7 @@
       const header = document.querySelector('header');
       const nav = document.querySelector('nav.tab-nav');
 
-      function unlock() {
-        sessionStorage.setItem(KEY, '1');
+      function unlockUI() {
         gate.style.opacity = '0';
         setTimeout(() => {
           gate.style.display = 'none';
@@ -969,8 +965,8 @@
           sessionPill.style.display = 'inline-flex';
         }, 380);
       }
-      function lock() {
-        sessionStorage.removeItem(KEY);
+
+      function lockUI() {
         gate.style.display = 'flex';
         main.style.display = nav.style.display = header.style.display = 'none';
         logoutBtn.style.display = sessionPill.style.display = 'none';
@@ -978,20 +974,45 @@
       }
 
       main.style.display = header.style.display = nav.style.display = 'none';
-      if (sessionStorage.getItem(KEY) === '1') { unlock(); }
 
-      loginBtn.addEventListener('click', () => {
-        if (input.value === ADMIN_PASSWORD) {
-          loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Iniciando...';
-          setTimeout(unlock, 400);
-        } else {
-          errEl.textContent = 'Contraseña incorrecta.';
+      // 1. Verificar sesión existente
+      sb.auth.getSession().then(({ data: { session } }) => {
+        if (session) { unlockUI(); }
+        else { lockUI(); }
+      });
+
+      // 2. Escuchar cambios de estado
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN') { unlockUI(); }
+        if (event === 'SIGNED_OUT') { lockUI(); }
+      });
+
+      // 3. Login
+      loginBtn.addEventListener('click', async () => {
+        const pwd = input.value.trim();
+        if (!pwd) return;
+
+        loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Iniciando...';
+
+        const { data, error } = await sb.auth.signInWithPassword({
+          email: ADMIN_EMAIL,
+          password: pwd
+        });
+
+        if (error) {
+          errEl.textContent = 'Credenciales incorrectas.';
+          loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión';
           input.value = ''; input.focus();
           setTimeout(() => { errEl.textContent = ''; }, 3000);
         }
       });
+
       input.addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn.click(); });
-      logoutBtn.addEventListener('click', lock);
+
+      // 4. Logout
+      logoutBtn.addEventListener('click', async () => {
+        await sb.auth.signOut();
+      });
     })();
   </script>
 

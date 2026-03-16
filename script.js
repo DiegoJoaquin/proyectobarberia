@@ -58,7 +58,7 @@ function getPointsForService(serviceName) {
   return 10; // default
 }
 
-/** Insert booking and link to client. Returns { ok, bookingId } */
+/** Insert booking and link to client. Returns { ok, bookingId, collision } */
 async function persistBooking(booking) {
   if (SUPABASE_ON) {
     const { data, error } = await sb.from('bookings').insert([{
@@ -73,7 +73,13 @@ async function persistBooking(booking) {
       time: booking.time,
       barber: booking.barber,
     }]).select('id').single();
-    if (error) { console.warn('Supabase insert error, falling back to LS:', error); lsSave(booking); return { ok: false, error }; }
+    
+    if (error) { 
+      if (error.code === '23505') { return { ok: false, collision: true }; }
+      console.warn('Supabase insert error, falling back to LS:', error); 
+      lsSave(booking); 
+      return { ok: false, error }; 
+    }
     return { ok: true, bookingId: data?.id };
   }
   lsSave(booking);
@@ -395,7 +401,16 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
   confirmBtn.textContent = 'Guardando...';
 
   // 1) Save to Supabase (or localStorage fallback) + upsert client profile
-  const { bookingId } = await persistBooking(booking);
+  const result = await persistBooking(booking);
+  
+  if (!result.ok && result.collision) {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Confirmar reserva';
+    alert("Lo sentimos, esa hora acaba de ser tomada por otro cliente hace unos instantes. Por favor, vuelve al paso 1 y elige una hora distinta.");
+    return; // Frenar ejecución
+  }
+
+  const bookingId = result.bookingId;
   await upsertClient(booking, bookingId);
 
   // 2) Generate WhatsApp message
