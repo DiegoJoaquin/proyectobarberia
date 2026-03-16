@@ -178,9 +178,6 @@ button {
    ============================================================ */
 #hero {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 0;
   position: relative;
 }
 
@@ -281,15 +278,18 @@ button {
   font-size: 1rem;
 }
 
-/* ── Info Card ──────────────────────────────────────────────── */
-.hero-card {
+/* ── Info & Equipment ─────────────────────────────────────── */
+#info {
+  padding: 80px 0;
   background: var(--grey-90);
-  border-left: 1px solid var(--grey-70);
-  display: flex;
-  flex-direction: column;
-  padding: 100px 36px 40px;
-  gap: 36px;
-  overflow-y: auto;
+  border-top: 1px solid var(--grey-70);
+  border-bottom: 1px solid var(--grey-70);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 40px;
 }
 
 .card-section-label {
