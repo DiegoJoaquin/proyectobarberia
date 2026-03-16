@@ -942,6 +942,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
+    /* ══ SUPABASE INIT GLOBALLY ══════════════════════════════════════ */
+    const SUPABASE_URL = 'https://hgxayxrszmcmmrrwxlxz.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
+    window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  </script>
+
+  <script>
     /* ══ LOGIN SEGURO CON SUPABASE AUTH ══════════════════════════════ */
     (function () {
       const gate = document.getElementById('login-gate');
@@ -1038,9 +1045,7 @@
   <script>
     /* ══ SUPABASE DATA ═════════════════════════════════════════════ */
     (function () {
-      const SUPABASE_URL = 'https://hgxayxrszmcmmrrwxlxz.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
-      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const sb = window.sb;
       const LS = 'nb_bookings';
       const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
       const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
