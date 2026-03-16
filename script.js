@@ -178,7 +178,7 @@ const state = {
   barber: null,
 };
 
-const BARBERS = ['Marco Reyes', 'Camilo Torres', 'Sebastián Mora', 'Ricardo Infante'];
+const BARBERS = ['Emanuel', 'Matías Nuñez', 'Ángel'];
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 

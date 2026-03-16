@@ -7,25 +7,25 @@
 
 /* ── Variables ─────────────────────────────────────────────── */
 :root {
-  --black: #0f0f12;
-  --grey-90: #161619;
-  --grey-80: #1d1d21;
-  --grey-70: #2b2b30;
-  --grey-60: #3e3e44;
-  --grey-50: #5f5f66;
-  --grey-40: #81818a;
-  --grey-30: #a3a3ab;
-  --grey-20: #c5c5cb;
-  --grey-10: #e6e4e0;
-  --white: #f4f2ee;
+  --black: #030712; /* bg-gray-950 */
+  --grey-90: #111827; /* bg-gray-900 */
+  --grey-80: #1f2937;
+  --grey-70: #374151;
+  --grey-60: #4b5563;
+  --grey-50: #6b7280;
+  --grey-40: #9ca3af;
+  --grey-30: #d1d5db;
+  --grey-20: #e5e7eb;
+  --grey-10: #f3f4f6;
+  --white: #e7e5e4; /* text-stone-200 */
   
   /* Secundario: Bronce Envejecido */
-  --gold: #B67A43;
-  --gold-dim: #8c5d33;
+  --gold: #b45309; /* text-amber-700 */
+  --gold-dim: #78350f; /* border-amber-900 */
   
   /* Fuerza: Rojo Lacedemonio (Sangre de Toro) */
-  --red: #7f1d1d;
-  --red-hover: #601414;
+  --red: #450a0a; /* bg-red-950 */
+  --red-hover: #7f1d1d;
 
   --font-serif: 'Cinzel', Georgia, serif;
   --font-sans: 'Inter', system-ui, sans-serif;
