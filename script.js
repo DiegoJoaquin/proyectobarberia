@@ -147,6 +147,52 @@ async function getBookedTimesForDate(dateStr) {
   return lsGetAll().filter(b => b.date === dateStr).map(b => b.time);
 }
 
+/**
+ * Returns barber blocks for a given JS Date object.
+ * Each block: { barber_name, block_type, start_time?, end_time? }
+ */
+async function getBarberBlocksForDate(dateObj) {
+  if (!SUPABASE_ON || !dateObj) return [];
+  const iso = dateObj.toLocaleDateString('en-CA'); // "YYYY-MM-DD"
+  const { data, error } = await sb
+    .from('barber_blocks')
+    .select('barber_name, block_type, start_time, end_time')
+    .eq('block_date', iso);
+  if (error) { console.warn('Blocks fetch error:', error); return []; }
+  return data || [];
+}
+
+/**
+ * Given the blocks for today, hides/disables blocked barber cards
+ * and blocks specific time pills for barbers blocked by hours.
+ */
+function applyBarberBlocks(blocks) {
+  // --- 1. Barber cards (step 2 picker) ---
+  document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
+    const barberName = BARBERS[i];
+    const fullDayBlock = blocks.find(b => b.barber_name === barberName && b.block_type === 'full_day');
+    if (fullDayBlock) {
+      card.style.opacity = '0.3';
+      card.style.pointerEvents = 'none';
+      card.title = 'No disponible este día';
+      // Add overlay badge
+      if (!card.querySelector('.block-badge')) {
+        const badge = document.createElement('span');
+        badge.className = 'block-badge';
+        badge.textContent = 'No disponible';
+        badge.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#f87171;font-size:.7rem;font-weight:700;letter-spacing:.05em;border-radius:inherit;cursor:not-allowed;';
+        card.style.position = 'relative';
+        card.appendChild(badge);
+      }
+    } else {
+      card.style.opacity = '';
+      card.style.pointerEvents = '';
+      card.title = '';
+      card.querySelector('.block-badge')?.remove();
+    }
+  });
+}
+
 /* ──────────────────────────────────────────────────────────────
    NAV SCROLL
    ────────────────────────────────────────────────────────────── */
@@ -270,12 +316,15 @@ function buildDayPicker() {
       <span style="font-size:0.62rem;color:var(--grey-60)">${MONTHS[d.getMonth()]}</span>`;
 
     if (!sun) {
-      pill.addEventListener('click', () => {
+      pill.addEventListener('click', async () => {
         picker.querySelectorAll('.day-pill').forEach(p => p.classList.remove('selected'));
         pill.classList.add('selected');
         state.date = lbl; state.dateObj = d;
         updateSummary();
         refreshTimePills();
+        // Aplicar bloqueos de barberos para este día
+        const blocks = await getBarberBlocksForDate(d);
+        applyBarberBlocks(blocks);
       });
     }
 
@@ -284,6 +333,8 @@ function buildDayPicker() {
   }
   refreshTimePills();
   updateSummary();
+  // Aplicar bloqueos para el día inicial
+  getBarberBlocksForDate(state.dateObj).then(blocks => applyBarberBlocks(blocks));
 }
 
 /* ──────────────────────────────────────────────────────────────

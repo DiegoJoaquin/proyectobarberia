@@ -840,7 +840,9 @@
     <button class="tab-nav-btn" data-tab="finanzas">
       <i class="fa-solid fa-sack-dollar"></i> Finanzas
     </button>
-    <!-- Módulos Originales -->
+    <button class="tab-nav-btn" data-tab="disponibilidad">
+      <i class="fa-solid fa-user-clock"></i> Disponibilidad
+    </button>
     <button class="tab-nav-btn" data-tab="crm">
       <i class="fa-solid fa-users"></i> CRM
     </button>
@@ -1305,6 +1307,87 @@
           <button id="wi-save-btn" class="btn btn-gold" style="width:100%;justify-content:center;padding:13px;font-size:.84rem;">
             <i class="fa-solid fa-check"></i> Registrar como Atendido
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: DISPONIBILIDAD ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-disponibilidad">
+      <div class="section-header flex justify-between items-end">
+        <div>
+          <h1 class="section-title">Disponibilidad <em>Barberos</em></h1>
+          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Bloquea días completos o rangos de horas por barbero.</p>
+        </div>
+      </div>
+
+      <!-- Formulario de nuevo bloqueo -->
+      <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 mb-6">
+        <p class="text-[--white] font-serif text-base mb-5 border-b border-[#2b2b30] pb-3">Agregar Bloqueo</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
+            <select id="bl-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
+              <option value="Emanuel">Emanuel</option>
+              <option value="Matías Nuñez">Matías Nuñez</option>
+              <option value="Ángel">Ángel</option>
+              <option value="Benjamín">Benjamín</option>
+              <option value="Gonzalo">Gonzalo</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Fecha</label>
+            <input id="bl-date" type="date" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" />
+          </div>
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Tipo de Bloqueo</label>
+            <select id="bl-type" onchange="document.getElementById('bl-hour-fields').style.display = this.value === 'hours' ? 'grid' : 'none';" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
+              <option value="full_day">Día completo</option>
+              <option value="hours">Rango de horas</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Motivo (opcional)</label>
+            <input id="bl-reason" type="text" placeholder="ej: Feriado, vacaciones..." style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" />
+          </div>
+        </div>
+
+        <!-- Rango horario (oculto por defecto) -->
+        <div id="bl-hour-fields" style="display:none;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Desde</label>
+            <input id="bl-from" type="time" min="09:00" max="20:00" value="09:00" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" />
+          </div>
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Hasta</label>
+            <input id="bl-to" type="time" min="09:00" max="20:00" value="13:00" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;margin-top:20px;">
+          <button id="bl-save-btn" class="btn btn-gold"><i class="fa-solid fa-ban"></i> Aplicar Bloqueo</button>
+          <p id="bl-error" style="color:#e74c3c;font-size:.75rem;"></p>
+        </div>
+      </div>
+
+      <!-- Lista de bloqueos activos -->
+      <div class="bg-[#161619] border border-[#2b2b30] rounded p-6">
+        <p class="text-[--white] font-serif text-base mb-4 border-b border-[#2b2b30] pb-3">Bloqueos Registrados</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Barbero</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Horario</th>
+                <th>Motivo</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="blocks-tbody">
+              <tr><td colspan="6" class="text-center py-8" style="color:var(--grey-50);">Cargando...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1800,6 +1883,97 @@
       loadAll();
       sb.channel('admin-bookings-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => loadAll()).subscribe();
       sb.channel('admin-clients-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => loadAll()).subscribe();
+    })();
+  </script>
+
+  <script>
+    /* ══ BLOQUEOS DE BARBEROS ════════════════════════════ */
+    (function () {
+      const sb = window.sb;
+
+      function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+      async function fetchBlocks() {
+        const { data, error } = await sb.from('barber_blocks').select('*').order('block_date', { ascending: true });
+        if (error) { console.warn('Blocks fetch error:', error); return []; }
+        return data || [];
+      }
+
+      async function renderBlocks() {
+        const tbody = document.getElementById('blocks-tbody');
+        if (!tbody) return;
+        const blocks = await fetchBlocks();
+        if (!blocks.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8" style="color:var(--grey-50);"><i class="fa-solid fa-check-circle" style="font-size:1.5rem;display:block;margin-bottom:8px;color:var(--green);"></i>No hay bloqueos registrados.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        blocks.forEach(b => {
+          const tr = document.createElement('tr');
+          const isPast = b.block_date < new Date().toISOString().slice(0,10);
+          const typeBadge = b.block_type === 'full_day'
+            ? `<span style="background:rgba(127,29,29,.2);color:#f87171;border:1px solid rgba(127,29,29,.4);border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:600;white-space:nowrap;">Día completo</span>`
+            : `<span style="background:rgba(184,151,90,.12);color:var(--gold);border:1px solid rgba(184,151,90,.3);border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:600;white-space:nowrap;">Por horas</span>`;
+          const schedule = b.block_type === 'full_day' ? '— Todo el día —' : `${b.start_time || ''} → ${b.end_time || ''}`;
+          tr.style.opacity = isPast ? '0.45' : '1';
+          tr.innerHTML = `
+            <td style="font-weight:600;color:var(--white);">${esc(b.barber_name)}</td>
+            <td style="color:var(--grey-30);white-space:nowrap;">${esc(b.block_date)}</td>
+            <td>${typeBadge}</td>
+            <td style="color:var(--grey-40);font-size:.8rem;">${esc(schedule)}</td>
+            <td style="color:var(--grey-50);font-size:.78rem;font-style:italic;">${esc(b.reason || '—')}</td>
+            <td><button class="del-btn del-block-btn" data-id="${esc(b.id)}" title="Eliminar bloqueo"><i class="fa-solid fa-xmark"></i></button></td>`;
+          tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('.del-block-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('¿Eliminar este bloqueo?')) return;
+            await sb.from('barber_blocks').delete().eq('id', btn.dataset.id);
+            await renderBlocks();
+          });
+        });
+      }
+
+      document.getElementById('bl-save-btn')?.addEventListener('click', async () => {
+        const barber_name = document.getElementById('bl-barber').value;
+        const block_date = document.getElementById('bl-date').value;
+        const block_type = document.getElementById('bl-type').value;
+        const reason = document.getElementById('bl-reason').value.trim();
+        const errEl = document.getElementById('bl-error');
+
+        if (!block_date) { errEl.textContent = 'Selecciona una fecha.'; return; }
+        errEl.textContent = '';
+
+        const payload = { barber_name, block_date, block_type, reason };
+        if (block_type === 'hours') {
+          payload.start_time = document.getElementById('bl-from').value;
+          payload.end_time = document.getElementById('bl-to').value;
+        }
+
+        const saveBtn = document.getElementById('bl-save-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+
+        const { error } = await sb.from('barber_blocks').insert(payload);
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Aplicar Bloqueo';
+
+        if (error) { errEl.textContent = 'Error: ' + error.message; return; }
+        document.getElementById('bl-date').value = '';
+        document.getElementById('bl-reason').value = '';
+        await renderBlocks();
+      });
+
+      // Render al entrar a la pestaña
+      document.querySelectorAll('.tab-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.tab === 'disponibilidad') renderBlocks();
+        });
+      });
+
+      // Suscribir en tiempo real
+      sb.channel('admin-blocks-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'barber_blocks' }, () => renderBlocks()).subscribe();
     })();
   </script>
   <script>
