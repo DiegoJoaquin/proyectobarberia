@@ -170,25 +170,32 @@ function applyBarberBlocks(blocks) {
   // --- 1. Barber cards (step 2 picker) ---
   document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
     const barberName = BARBERS[i];
+    card.querySelector('.block-badge')?.remove();
+    card.style.opacity = '';
+    card.style.pointerEvents = '';
+    card.title = '';
+
     const fullDayBlock = blocks.find(b => b.barber_name === barberName && b.block_type === 'full_day');
+    const hourBlock    = blocks.find(b => b.barber_name === barberName && b.block_type === 'hours');
+
     if (fullDayBlock) {
       card.style.opacity = '0.3';
       card.style.pointerEvents = 'none';
       card.title = 'No disponible este día';
-      // Add overlay badge
-      if (!card.querySelector('.block-badge')) {
-        const badge = document.createElement('span');
-        badge.className = 'block-badge';
-        badge.textContent = 'No disponible';
-        badge.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#f87171;font-size:.7rem;font-weight:700;letter-spacing:.05em;border-radius:inherit;cursor:not-allowed;';
-        card.style.position = 'relative';
-        card.appendChild(badge);
-      }
-    } else {
-      card.style.opacity = '';
-      card.style.pointerEvents = '';
-      card.title = '';
-      card.querySelector('.block-badge')?.remove();
+      const badge = document.createElement('span');
+      badge.className = 'block-badge';
+      badge.textContent = 'No disponible';
+      badge.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65);color:#f87171;font-size:.7rem;font-weight:700;letter-spacing:.05em;border-radius:inherit;cursor:not-allowed;';
+      card.style.position = 'relative';
+      card.appendChild(badge);
+    } else if (hourBlock) {
+      card.title = `Disponible fuera de ${hourBlock.start_time}–${hourBlock.end_time}`;
+      const badge = document.createElement('span');
+      badge.className = 'block-badge';
+      badge.textContent = `⏱ ${hourBlock.start_time}–${hourBlock.end_time} bloqueado`;
+      badge.style.cssText = 'position:absolute;bottom:6px;left:0;right:0;text-align:center;background:rgba(127,29,29,.75);color:#fca5a5;font-size:.6rem;font-weight:700;letter-spacing:.04em;padding:3px 6px;cursor:default;';
+      card.style.position = 'relative';
+      card.appendChild(badge);
     }
   });
 }
@@ -419,8 +426,28 @@ document.getElementById('s1-next').addEventListener('click', () => {
   if (!state.time) { showToast('Por favor selecciona un horario disponible.'); return; } goToStep(2);
 });
 document.getElementById('s2-back').addEventListener('click', () => goToStep(1));
-document.getElementById('s2-next').addEventListener('click', () => {
-  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; } goToStep(3);
+document.getElementById('s2-next').addEventListener('click', async () => {
+  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; }
+
+  // Validar bloqueo por horas del barbero seleccionado
+  if (state.dateObj && state.time && SUPABASE_ON) {
+    const blocks = await getBarberBlocksForDate(state.dateObj);
+    const hourBlock = blocks.find(b =>
+      b.barber_name === state.barber &&
+      b.block_type === 'hours' &&
+      b.start_time && b.end_time
+    );
+    if (hourBlock) {
+      function hm(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+      const chosenMin = hm(state.time);
+      if (chosenMin >= hm(hourBlock.start_time) && chosenMin < hm(hourBlock.end_time)) {
+        showToast(`${state.barber} no está disponible de ${hourBlock.start_time} a ${hourBlock.end_time}. Por favor elige otro horario o barbero.`);
+        return;
+      }
+    }
+  }
+
+  goToStep(3);
 });
 document.getElementById('s3-back').addEventListener('click', () => goToStep(2));
 
