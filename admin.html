@@ -4,8 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Reservas | Spartan Barber</title>
+  <title>AdminCentro de Mando | SPARTAN BARBER CO.</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Tailwind CSS puro para componentes nuevos (los antiguos usarán CSS vanilla) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart JS para Dashboard -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -293,6 +297,7 @@
     /* ── TAB NAV ────────────────────────────────────────────── */
     .tab-nav {
       display: flex;
+      flex-wrap: wrap;
       gap: 0;
       border-bottom: 1px solid var(--grey-70);
       background: var(--grey-90);
@@ -826,19 +831,271 @@
 
   <!-- TAB NAV -->
   <nav class="tab-nav">
-    <button class="tab-nav-btn active" data-tab="bookings">
-      <i class="fa-regular fa-calendar"></i> Reservas
+    <button class="tab-nav-btn active" data-tab="tab-dashboard">
+      <i class="fa-solid fa-chart-line"></i> Dashboard
     </button>
-    <button class="tab-nav-btn" data-tab="clients">
-      <i class="fa-solid fa-users"></i> Clientes & Puntos
+    <button class="tab-nav-btn" data-tab="tab-agenda">
+      <i class="fa-solid fa-calendar-days"></i> Agenda
+    </button>
+    <button class="tab-nav-btn" data-tab="tab-finanzas">
+      <i class="fa-solid fa-sack-dollar"></i> Finanzas
+    </button>
+    <!-- Módulos Originales -->
+    <button class="tab-nav-btn" data-tab="tab-crm">
+      <i class="fa-solid fa-users"></i> CRM
+    </button>
+    <button class="tab-nav-btn" data-tab="tab-reservas">
+      <i class="fa-solid fa-list-check"></i> Reservas
     </button>
   </nav>
 
   <!-- MAIN -->
   <main>
 
-    <!-- ══ TAB: RESERVAS ════════════════════════════════════════ -->
-    <div class="tab-panel active" id="tab-bookings">
+    <!-- ══ TAB: DASHBOARD (NUEVO) ════════════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-dashboard">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Centro de <em>Mando</em></h1>
+          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Visión global de Spartan Barber Co.</p>
+        </div>
+      </div>
+      
+      <!-- KPIs -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
+          <p class="text-[--gold] font-serif text-2xl" id="kpi-today">$145.500</p>
+          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Ingresos de Hoy</p>
+        </div>
+        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
+          <p class="text-[--gold] font-serif text-2xl" id="kpi-month">$2.85M</p>
+          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Ingresos del Mes</p>
+        </div>
+        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
+          <p class="text-[--gold] font-serif text-2xl" id="kpi-new">34</p>
+          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Nuevos Clientes (Mes)</p>
+        </div>
+        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
+          <p class="text-[--gold] font-serif text-2xl" id="kpi-ticket">$18.990</p>
+          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Ticket Promedio</p>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Chart 1: Evolución -->
+        <div class="lg:col-span-2 bg-[#161619] border border-[#2b2b30] rounded p-6">
+          <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Evolución de Rendimiento (6 Meses)</p>
+          <div class="relative h-64 w-full">
+            <canvas id="chart-evolution"></canvas>
+          </div>
+        </div>
+
+        <!-- Columna Derecha (Doughnuts) -->
+        <div class="flex flex-col gap-6">
+          <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 flex-1">
+            <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Actividad por Barbero</p>
+            <div class="relative h-44 w-full flex justify-center">
+              <canvas id="chart-barbers"></canvas>
+            </div>
+          </div>
+          <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 flex-1">
+            <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Estado de Citas (Mes)</p>
+            <div class="relative h-44 w-full flex justify-center">
+              <canvas id="chart-status"></canvas>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- ══ TAB: AGENDA (NUEVO) ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-agenda">
+      <div class="section-header flex justify-between items-end">
+        <div>
+          <h1 class="section-title">Agenda <em>Visual</em></h1>
+          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Time-blocking por barbero</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost"><i class="fa-solid fa-chevron-left"></i> Hoy</button>
+          <button class="btn btn-ghost"><i class="fa-solid fa-calendar-day"></i> 17 de Marzo</button>
+          <button class="btn btn-ghost"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+      
+      <!-- Agenda Grid Container -->
+      <div class="bg-[#161619] border border-[#2b2b30] rounded overflow-x-auto">
+        <div class="min-w-[800px]">
+          <!-- Header Row (Barbers) -->
+          <div class="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] border-b border-[#2b2b30] bg-[#1d1d21]">
+            <div class="p-3 text-center border-r border-[#2b2b30] flex items-center justify-center text-[--grey-40] text-xs font-semibold tracking-widest uppercase">Hora</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold">Emanuel</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold">Matías N.</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold">Ángel</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold">Benjamín</div>
+            <div class="p-3 text-center text-[--white] font-semibold">Gonzalo</div>
+          </div>
+
+          <!-- Time Rows Structure -->
+          <div class="relative bg-[#0f0f12]">
+            <!-- Current Time Line (Dummy) -->
+            <div class="absolute top-[35%] left-0 w-full border-t-2 border-[--gold] z-10 flex items-center">
+              <span class="absolute -left-2 bg-[--gold] text-[--black] text-[0.6rem] font-bold px-1 rounded">13:30</span>
+            </div>
+
+            <!-- CSS Grid Rows (9:00 to 20:00 every 1 hour for structure) -->
+            <div class="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] relative">
+              
+              <!-- 09:00 -->
+              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">09:00</div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
+                <div class="absolute top-1 left-1 right-1 h-[72px] bg-[--grey-80] border border-[--grey-60] rounded p-2 overflow-hidden flex flex-col justify-center cursor-pointer hover:border-[--gold] transition-colors">
+                  <p class="text-[--white] text-xs font-bold leading-tight">Juan Pérez</p>
+                  <p class="text-[--gold] text-[0.65rem]">Corte + Barba</p>
+                </div>
+              </div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+
+              <!-- 10:00 -->
+              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">10:00</div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
+                <div class="absolute top-1 left-1 right-1 h-[72px] bg-red-950 border border-red-800 rounded p-2 overflow-hidden flex flex-col justify-center opacity-70 cursor-pointer">
+                  <p class="text-white text-xs font-bold leading-tight">Miguel S.</p>
+                  <p class="text-red-300 text-[0.65rem]">Cancelado</p>
+                </div>
+              </div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
+                <div class="absolute top-1 left-1 right-1 h-[36px] bg-[rgba(182,122,67,0.15)] border border-[--gold] rounded p-2 overflow-hidden flex flex-col justify-center cursor-pointer">
+                  <p class="text-[--white] text-xs font-bold flex justify-between">Carlos V. <span class="text-[--green]"><i class="fa-solid fa-check"></i></span></p>
+                </div>
+              </div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+
+              <!-- 11:00 -->
+              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">11:00</div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
+                <div class="absolute top-1 left-1 right-1 h-[110px] bg-[--grey-80] border border-[--grey-60] rounded p-2 overflow-hidden flex flex-col cursor-pointer z-[5]">
+                  <p class="text-[--white] text-xs font-bold">Fernando A.</p>
+                  <p class="text-[--gold] text-[0.65rem]">VIP Falange</p>
+                  <p class="text-[--grey-40] text-[0.6rem] mt-auto">11:00 - 12:30</p>
+                </div>
+              </div>
+              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+
+              <!-- 12:00 -->
+              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">12:00</div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative">
+                <div class="absolute top-[40px] left-1 right-1 h-[36px] bg-[--grey-80] border border-[--grey-60] rounded p-1 overflow-hidden flex flex-col justify-center cursor-pointer">
+                  <p class="text-[--white] text-xs font-bold pl-1">Luis Rojas</p>
+                </div>
+              </div>
+
+              <!-- 13:00 to 20:00 (Empty Structure for visualization) -->
+              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">13:00</div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
+              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
+              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
+
+              <div class="border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">14:00</div>
+              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative opacity-40">...</div>
+              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
+              <div class="border-dashed p-1 h-20 relative"></div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: FINANZAS (NUEVO) ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-finanzas">
+      <div class="section-header flex justify-between items-end">
+        <div>
+          <h1 class="section-title">Control de <em>Caja</em></h1>
+          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Flujo de dinero y registro de gastos diarios</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost" style="color:var(--green);border-color:var(--green);"><i class="fa-solid fa-lock-open"></i> Caja Abierta</button>
+          <button class="btn btn-danger"><i class="fa-solid fa-lock"></i> Cerrar Caja</button>
+        </div>
+      </div>
+
+      <!-- Resumen de Flujo -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-[#161619] border-l-4 border-[--green] rounded p-4">
+          <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Efectivo en Caja</p>
+          <p class="text-[--white] font-serif text-2xl">$42.000</p>
+        </div>
+        <div class="bg-[#161619] border-l-4 border-[--gold] rounded p-4">
+          <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Tarjetas / Transf.</p>
+          <p class="text-[--white] font-serif text-2xl">$103.500</p>
+        </div>
+        <div class="bg-[#161619] border-l-4 border-[#7f1d1d] rounded p-4">
+          <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Citas NO Pagadas</p>
+          <p class="text-red-400 font-serif text-2xl">$16.690</p>
+          <p class="text-[--grey-50] text-[0.65rem] mt-1">1 cita pendiente de cobro</p>
+        </div>
+      </div>
+
+      <!-- Tabla de Gastos -->
+      <div class="bg-[#161619] border border-[#2b2b30] rounded p-6">
+        <div class="flex justify-between items-center mb-6 border-b border-[#2b2b30] pb-4">
+          <p class="text-[--white] font-serif text-lg">Registro de Egresos</p>
+          <button class="btn btn-ghost text-xs"><i class="fa-solid fa-plus"></i> Añadir Gasto</button>
+        </div>
+        
+        <div class="table-wrap">
+          <table class="w-full text-left">
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Concepto / Descripción</th>
+                <th>Monto</th>
+                <th>Método</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-[#a3a3ab]">11:30</td>
+                <td class="text-white font-medium">Compra de Insumos (Papel Cuello, Navajas)</td>
+                <td class="text-red-400 font-semibold">-$15.000</td>
+                <td><span class="bg-[#2b2b30] text-[#c5c5cb] px-2 py-1 rounded text-xs">Efectivo (Caja)</span></td>
+              </tr>
+              <tr>
+                <td class="text-[#a3a3ab]">14:15</td>
+                <td class="text-white font-medium">Pago Aseo local</td>
+                <td class="text-red-400 font-semibold">-$20.000</td>
+                <td><span class="bg-[#2b2b30] text-[#c5c5cb] px-2 py-1 rounded text-xs">Efectivo (Caja)</span></td>
+              </tr>
+              <tr class="opacity-50 text-sm">
+                <td colspan="4" class="text-center py-6 text-[#81818a]"><i class="fa-solid fa-receipt block text-xl mb-2"></i> No se han registrado más gastos hoy</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: RESERVAS (Original Movido) ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-reservas">
       <div class="section-header">
         <div>
           <h1 class="section-title">Reservas <em>activas</em></h1>
@@ -1340,6 +1597,114 @@
       sb.channel('admin-bookings-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => loadAll()).subscribe();
       sb.channel('admin-clients-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => loadAll()).subscribe();
     })();
+  </script>
+  <script>
+    /* ══ CHART.JS DASHBOARD DUMMY DATA ═════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', () => {
+      // Configuración de colores globales
+      Chart.defaults.color = '#a3a3ab';
+      Chart.defaults.font.family = "'Inter', sans-serif";
+      
+      const gold = '#B67A43';
+      const red = '#7f1d1d';
+      const green = '#3ECF8E';
+      const darkBorder = '#2b2b30';
+
+      // 1. Gráfico de Evolución (Líneas)
+      const ctxEvo = document.getElementById('chart-evolution')?.getContext('2d');
+      if (ctxEvo) {
+        new Chart(ctxEvo, {
+          type: 'line',
+          data: {
+            labels: ['Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar'],
+            datasets: [
+              {
+                label: 'Ingresos',
+                data: [1.2, 1.5, 2.1, 1.8, 2.3, 2.85],
+                borderColor: gold,
+                backgroundColor: 'rgba(182, 122, 67, 0.1)',
+                tension: 0.4,
+                fill: true
+              },
+              {
+                label: 'Utilidad',
+                data: [0.7, 0.9, 1.3, 1.0, 1.4, 1.8],
+                borderColor: green,
+                borderDash: [5, 5],
+                tension: 0.4
+              },
+              {
+                label: 'Gastos',
+                data: [0.5, 0.6, 0.8, 0.8, 0.9, 1.05],
+                borderColor: red,
+                tension: 0.4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom' }
+            },
+            scales: {
+              y: { grid: { color: darkBorder }, ticks: { callback: (v) => '$' + v + 'M' } },
+              x: { grid: { color: darkBorder } }
+            }
+          }
+        });
+      }
+
+      // 2. Gráfico por Barbero (Doughnut)
+      const ctxBarbers = document.getElementById('chart-barbers')?.getContext('2d');
+      if (ctxBarbers) {
+        new Chart(ctxBarbers, {
+          type: 'doughnut',
+          data: {
+            labels: ['Emanuel', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo'],
+            datasets: [{
+              data: [30, 25, 20, 15, 10],
+              backgroundColor: ['#B67A43', '#9A6331', '#7F4D21', '#633713', '#482408'],
+              borderWidth: 0,
+              hoverOffset: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'right', labels: { boxWidth: 12 } }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+
+      // 3. Gráfico Estado de Citas (Doughnut)
+      const ctxStatus = document.getElementById('chart-status')?.getContext('2d');
+      if (ctxStatus) {
+        new Chart(ctxStatus, {
+          type: 'doughnut',
+          data: {
+            labels: ['Atendidos', 'Pendientes', 'No Llegó', 'Anulados'],
+            datasets: [{
+              data: [65, 20, 10, 5],
+              backgroundColor: [green, gold, '#5f5f66', red],
+              borderWidth: 0,
+              hoverOffset: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'right', labels: { boxWidth: 12 } }
+            },
+            cutout: '70%'
+          }
+        });
+      }
+    });
   </script>
 </body>
 
