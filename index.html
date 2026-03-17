@@ -309,8 +309,8 @@
               style="color:var(--gold);margin-right:6px;"></i>Ubicación</p>
           <div class="map-embed">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.658!2d-70.6505!3d-33.4372!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDI2JzEzLjkiUyA3MMKwMzknMDIuMCJX!5e0!3m2!1ses!2scl!4v1699000000000"
-              loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen title="Mapa Spartan Barber">
+              src="https://maps.google.com/maps?q=-34.1771831,-70.6953254&z=16&output=embed"
+              loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen title="Mapa Spartan Barber Machalí">
             </iframe>
           </div>
           <p class="address-line"><i class="fa-solid fa-map-pin"></i>Av. Padre Alberto Hurtado 03, Local 22<br />Machalí
@@ -628,20 +628,29 @@
   ══════════════════════════════════════════════════════ -->
   <footer id="footer">
     <div class="container">
-      <div class="footer-grid" style="grid-template-columns: 2fr 1fr 1fr; gap: 40px;">
-        <!-- Brand & Description & Socials -->
-        <div class="footer-brand">
-          <p class="brand-name">SPARTAN <span>BARBER</span></p>
-          <p class="footer-tagline" style="max-width: 400px; margin-bottom: 24px;">Barbería de élite en el corazón de Machalí. Disciplina, precisión y el arte del grooming militar.</p>
+
+      <!-- Divisor dorado superior -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:48px;">
+        <div style="flex:1;height:1px;background:linear-gradient(to right, transparent, var(--gold));"></div>
+        <span style="font-family:var(--font-serif);color:var(--gold);font-size:1.4rem;letter-spacing:.15em;">S</span>
+        <div style="flex:1;height:1px;background:linear-gradient(to left, transparent, var(--gold));"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr;gap:48px;">
+
+        <!-- Brand -->
+        <div>
+          <p class="brand-name" style="margin-bottom:12px;">SPARTAN <span>BARBER</span></p>
+          <p style="font-size:.82rem;color:var(--grey-50);line-height:1.7;max-width:300px;margin-bottom:24px;">Barbería de élite en el corazón de Machalí. Disciplina, precisión y el arte del grooming de la guardia espartana.</p>
           <div class="footer-social">
             <a href="#" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
             <a href="#" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
             <a href="#" class="social-btn" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-            <a href="#" class="social-btn" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+            <a href="https://wa.me/56982679620" class="social-btn" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
           </div>
         </div>
-        
-        <!-- Services -->
+
+        <!-- Servicios -->
         <div>
           <p class="footer-col-title">Servicios</p>
           <ul class="footer-links">
@@ -652,22 +661,42 @@
           </ul>
         </div>
         
-        <!-- Contact -->
+        <!-- Horarios -->
+        <div>
+          <p class="footer-col-title">Horarios</p>
+          <ul class="footer-links" style="gap:10px;">
+            <li style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--grey-50);">Lun &ndash; Vie</span><span>09:00 &ndash; 20:00</span></li>
+            <li style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--grey-50);">Sábado</span><span>09:00 &ndash; 18:00</span></li>
+            <li style="display:flex;justify-content:space-between;gap:12px;"><span style="color:var(--grey-50);">Domingo</span><span style="color:#7f1d1d;">Cerrado</span></li>
+          </ul>
+        </div>
+
+        <!-- Contacto -->
         <div>
           <p class="footer-col-title">Contacto</p>
           <ul class="footer-links">
-            <li><a href="tel:+56982679620">+56 9 8267 9620</a></li>
-            <li><a href="https://wa.me/56982679620">WhatsApp Directo</a></li>
-            <li><a href="mailto:contacto@spartanbarber.cl">contacto@spartanbarber.cl</a></li>
-            <li><a href="#">Machalí</a></li>
+            <li><i class="fa-solid fa-map-pin" style="color:var(--gold);margin-right:8px;width:14px;"></i>Av. P. Alberto Hurtado 03, Local 22, Machalí</li>
+            <li>
+              <a href="tel:+56982679620" style="display:flex;align-items:center;gap:8px;">
+                <i class="fa-solid fa-phone" style="color:var(--gold);width:14px;"></i>+56 9 8267 9620
+              </a>
+            </li>
+            <li>
+              <a href="https://wa.me/56982679620" style="display:flex;align-items:center;gap:8px;color:#25D366;">
+                <i class="fa-brands fa-whatsapp" style="width:14px;"></i>WhatsApp Directo
+              </a>
+            </li>
           </ul>
         </div>
+
       </div>
-      <div class="footer-bottom">
-        <span>© 2024 Spartan Barber. Todos los derechos reservados.</span>
-        <span>Diseñado con precisión en Santiago de Chile. · <a href="admin.html"
-            style="color:var(--grey-60);text-decoration:none;">Admin</a></span>
+
+      <!-- Línea inferior -->
+      <div class="footer-bottom" style="margin-top:48px;border-top:1px solid rgba(184,151,90,.15);padding-top:24px;">
+        <span style="color:var(--grey-60);font-size:.75rem;">&copy; 2025 Spartan Barber Co. Todos los derechos reservados.</span>
+        <span style="color:var(--grey-60);font-size:.75rem;">Machalí, Región del Libertador &middot; <a href="admin.html" style="color:var(--grey-60);text-decoration:none;opacity:.6;">Acceso Admin</a></span>
       </div>
+
     </div>
   </footer>
 
