@@ -497,27 +497,13 @@ document.getElementById('s3-confirm').addEventListener('click', async () => {
   const bookingId = result.bookingId;
   await upsertClient(booking, bookingId);
 
-  // 2) Generate WhatsApp message
-  const waPhone = '56987654321'; // Número de la barbería
-  const waText = `Hola Noir&Blade 💈\n\nAcabo de agendar una hora:\n👤 Nombre: ${name}\n✂️ Servicio: ${booking.service}\n📅 Fecha: ${booking.date}\n⏰ Hora: ${booking.time}\n💈 Barbero: ${booking.barber}\n💵 Método de pago: ${paymentText}\n\n¡Por favor confirmen mi reserva!`;
-  
-  const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(waText)}`;
-  document.getElementById('wa-confirm-btn').href = waUrl;
-
-  // 3) Show success & transfer info if needed
+  // 2) Mostrar pantalla de éxito (el WhatsApp llega automáticamente via Supabase + Twilio)
   stepContents.forEach(sc => sc.classList.remove('active'));
   document.querySelector('.steps-indicator').style.visibility = 'hidden';
   document.getElementById('success-screen').classList.add('visible');
-  
-  const transferInfoStr = payment === 'transferencia' 
-    ? `<br/><span style="color:var(--gold);">Has elegido pago anticipado por transferencia. Los datos están más abajo.</span>` 
-    : '';
 
   document.getElementById('success-msg').innerHTML =
-    `Hola <strong>${name}</strong>, hemos guardado tu solicitud para el <strong>${booking.date} a las ${booking.time}</strong>.
-     ${transferInfoStr}`;
-
-  document.getElementById('transfer-info').style.display = payment === 'transferencia' ? 'block' : 'none';
+    `Tu hora está reservada. En breve recibirás todos los detalles por <strong>WhatsApp</strong> al número que ingresaste.`;
 
   confirmBtn.disabled = false;
   confirmBtn.textContent = 'Confirmar reserva';
