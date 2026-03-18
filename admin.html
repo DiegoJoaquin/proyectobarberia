@@ -1584,10 +1584,21 @@
          const payBadge = b.payment_method
            ? `<span style="font-size:.7rem;background:rgba(184,151,90,.1);border:1px solid rgba(184,151,90,.25);color:var(--gold);border-radius:20px;padding:2px 8px;white-space:nowrap;">${payMethodIcons[b.payment_method] || ''} ${esc(b.payment_method)}</span>`
            : `<span style="font-size:.7rem;color:var(--grey-50);">—</span>`;
+         // Badge de puntos del cliente recurrente
+          const clientData = b.client_id
+            ? allClients.find(c => c.id === b.client_id)
+            : allClients.find(c => c.phone && c.phone === b.phone);
+          const clientPts = clientData ? (clientData.points || 0) : null;
+          const ptsReady  = clientPts !== null && clientPts >= POINTS_GOAL;
+          const ptsBadge  = clientPts !== null && clientPts > 0
+            ? (ptsReady
+                ? `<span style="display:inline-block;margin-top:3px;font-size:.64rem;font-weight:700;background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.3);color:var(--green);border-radius:20px;padding:2px 7px;white-space:nowrap"><i class="fa-solid fa-trophy"></i> ${clientPts} pts — ¡Corte gratis!</span>`
+                : `<span style="display:inline-block;margin-top:3px;font-size:.64rem;font-weight:700;background:rgba(182,122,67,.08);border:1px solid rgba(182,122,67,.2);color:var(--gold);border-radius:20px;padding:2px 7px;white-space:nowrap"><i class="fa-solid fa-star"></i> ${clientPts} pts</span>`)
+            : '';
          tr.innerHTML = `
         <td style="color:var(--grey-30);white-space:nowrap">${esc(b.date)}</td>
         <td><span class="td-time">${esc(b.time)}</span></td>
-        <td class="td-name">${esc(b.name)}</td>
+        <td class="td-name">${esc(b.name)}${ptsBadge ? `<br>${ptsBadge}` : ''}</td>
         <td class="td-contact">
           <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a>
           ${b.email ? `<br/><a href="mailto:${esc(b.email)}">${esc(b.email)}</a>` : ''}
