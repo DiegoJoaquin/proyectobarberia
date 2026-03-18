@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spartan Barber — Importar Clientes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- SheetJS para leer Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --card: #181818;
+      --border: #2a2a2a;
+      --gold: #c9a96e;
+      --gold-dim: #a07840;
+      --text: #f0ece4;
+      --muted: #888;
+      --success: #4caf50;
+      --error: #f44336;
+      --warning: #ff9800;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    header h1 span { color: var(--gold); }
+
+    header p {
+      color: var(--muted);
+      margin-top: .5rem;
+      font-size: .9rem;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--gold);
+      background: rgba(201, 169, 110, .05);
+    }
+
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+
+    .upload-zone .icon {
+      font-size: 3rem;
+      margin-bottom: .8rem;
+    }
+
+    .upload-zone p { color: var(--muted); font-size: .9rem; }
+    .upload-zone strong { color: var(--gold); }
+
+    /* ── STATS BAR ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-box .num {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .stat-box .lbl {
+      font-size: .75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-top: .2rem;
+    }
+
+    /* ── TABLE PREVIEW ── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+
+    thead th {
+      background: var(--surface);
+      color: var(--gold);
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      padding: .75rem 1rem;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+    tbody td { padding: .6rem 1rem; color: var(--text); }
+
+    .badge {
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+    .badge-ok { background: rgba(76,175,80,.15); color: var(--success); }
+    .badge-warn { background: rgba(255,152,0,.15); color: var(--warning); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .75rem 1.5rem;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #000;
+    }
+    .btn-primary:hover { background: #e0bc84; }
+    .btn-primary:disabled {
+      opacity: .4; cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    /* ── PROGRESS ── */
+    .progress-wrap {
+      display: none;
+      margin-top: 1.5rem;
+    }
+    .progress-bar-bg {
+      background: var(--border);
+      border-radius: 20px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 20px;
+      transition: width .3s;
+      width: 0%;
+    }
+    .progress-label {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: .5rem;
+      text-align: center;
+    }
+
+    /* ── LOG ── */
+    .log {
+      display: none;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: .78rem;
+    }
+    .log-entry { padding: .2rem 0; border-bottom: 1px solid #1a1a1a; }
+    .log-ok { color: var(--success); }
+    .log-err { color: var(--error); }
+    .log-info { color: var(--muted); }
+
+    /* ── RESULT BANNER ── */
+    .result-banner {
+      display: none;
+      padding: 1.2rem;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+    .result-banner.success {
+      background: rgba(76,175,80,.15);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+    .result-banner.error {
+      background: rgba(244,67,54,.1);
+      border: 1px solid var(--error);
+      color: var(--error);
+    }
+
+    /* ── MAPPING INFO ── */
+    .mapping-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: .5rem 1rem;
+      align-items: center;
+      font-size: .82rem;
+    }
+    .mapping-grid .from { color: var(--muted); }
+    .mapping-grid .arrow { color: var(--gold); text-align: center; }
+    .mapping-grid .to { color: var(--text); font-weight: 500; }
+
+    /* ── HIDDEN ── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <h1>⚔ <span>Spartan Barber</span> ⚔</h1>
+      <p>Importador de base de datos de clientes · Excel → Supabase</p>
+    </header>
+
+    <!-- STEP 1: Upload -->
+    <div class="card" id="step-upload">
+      <h2>📂 1. Seleccionar archivo Excel</h2>
+      <div class="upload-zone" id="drop-zone">
+        <input type="file" id="file-input" accept=".xlsx,.xls,.csv" />
+        <div class="icon">📊</div>
+        <p><strong>Arrastrar el archivo Excel aquí</strong></p>
+        <p>o hacer clic para seleccionar</p>
+        <p style="margin-top:.5rem; font-size:.75rem;">Soporta .xlsx, .xls, .csv</p>
+      </div>
+    </div>
+
+    <!-- STEP 2: Preview (hidden initially) -->
+    <div class="card hidden" id="step-preview">
+      <h2>👥 2. Vista previa — Clientes a importar</h2>
+
+      <div class="stats" id="stats-bar">
+        <div class="stat-box">
+          <div class="num" id="stat-total">0</div>
+          <div class="lbl">Total filas</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="stat-valid">0</div>
+          <div class="lbl">Con nombre</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="stat-phone">0</div>
+          <div class="lbl">Con teléfono</div>
+        </div>
+        <div class="stat-box">
+          <div class="num" id="stat-email">0</div>
+          <div class="lbl">Con email</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre completo</th>
+              <th>Teléfono</th>
+              <th>Email</th>
+              <th>Puntos</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-import" onclick="startImport()">
+          ⬆ Importar a Supabase
+        </button>
+        <button class="btn btn-secondary" onclick="resetTool()">
+          🔄 Cargar otro archivo
+        </button>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-label" id="progress-label">Importando...</div>
+      </div>
+
+      <!-- Log -->
+      <div class="log" id="import-log"></div>
+
+      <!-- Result -->
+      <div class="result-banner" id="result-banner"></div>
+    </div>
+
+    <!-- Mapping reference -->
+    <div class="card">
+      <h2>🗺 Mapeo de columnas</h2>
+      <div class="mapping-grid">
+        <span class="from">Nombre + Apellido paterno + Apellido materno</span>
+        <span class="arrow">→</span>
+        <span class="to">name</span>
+
+        <span class="from">e-mail electrónico</span>
+        <span class="arrow">→</span>
+        <span class="to">email</span>
+
+        <span class="from">Teléfono móvil (o Teléfono)</span>
+        <span class="arrow">→</span>
+        <span class="to">phone</span>
+
+        <span class="from">Puntaje</span>
+        <span class="arrow">→</span>
+        <span class="to">points</span>
+
+        <span class="from">RUT</span>
+        <span class="arrow">→</span>
+        <span class="to">rut (referencia)</span>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <script>
+    /* ──────────── CONFIG SUPABASE ──────────── */
+    const SUPABASE_URL = 'https://hgxayxrszmcmmrrwxlxz.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    /* ──────────── STATE ──────────── */
+    let parsedClients = [];
+
+    /* ──────────── DRAG & DROP ──────────── */
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) processFile(file);
+    });
+    fileInput.addEventListener('change', e => {
+      if (e.target.files[0]) processFile(e.target.files[0]);
+    });
+
+    /* ──────────── PROCESS FILE ──────────── */
+    function processFile(file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const wb   = XLSX.read(data, { type: 'array' });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          parsedClients = rows.map(mapRow).filter(c => c.name && c.name.trim().length > 1);
+          renderPreview();
+        } catch(err) {
+          alert('Error al leer el archivo: ' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    /* ──────────── COLUMN MAPPER ──────────── */
+    function mapRow(row) {
+      // Helper: busca la columna por coincidencia parcial insensible a tildes/mayúsculas
+      const get = (...keys) => {
+        for (const k of keys) {
+          const found = Object.keys(row).find(col =>
+            col.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+              .includes(k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""))
+          );
+          if (found && row[found] !== '' && row[found] !== undefined) return String(row[found]).trim();
+        }
+        return '';
+      };
+
+      const firstName = get('Nombre');
+      const lastP     = get('Apellido paterno', 'paterno');
+      const lastM     = get('Apellido materno', 'materno');
+      const fullName  = [firstName, lastP, lastM].filter(Boolean).join(' ').trim();
+
+      const phoneMobile = get('movil', 'móvil', 'celular', 'Teléfono mo');
+      const phoneFixed  = get('Teléfono', 'telefono');
+      const phone       = cleanPhone(phoneMobile || phoneFixed);
+
+      const email  = get('e-mail', 'email', 'correo', 'electronico', 'electrónico');
+      const points = parseInt(get('Puntaje', 'puntaje', 'puntos')) || 0;
+      const rut    = get('RUT', 'Rut');
+
+      return {
+        name:   fullName,
+        phone:  phone,
+        email:  email.toLowerCase(),
+        points: points,
+        rut:    rut,
+        _raw:   row
+      };
+    }
+
+    function cleanPhone(raw) {
+      if (!raw) return '';
+      // Eliminar caracteres no numéricos excepto "+"
+      let p = String(raw).replace(/[^\d+]/g, '');
+      // Si empieza con 9 y tiene 9 dígitos → agregar +569
+      if (/^9\d{8}$/.test(p)) p = '+569' + p;
+      // Si empieza con 56 sin + → agregar +
+      else if (/^56\d{9}$/.test(p)) p = '+' + p;
+      return p;
+    }
+
+    /* ──────────── RENDER PREVIEW ──────────── */
+    function renderPreview() {
+      const allRows = parsedClients;
+      const withPhone = allRows.filter(c => c.phone).length;
+      const withEmail = allRows.filter(c => c.email).length;
+
+      document.getElementById('stat-total').textContent  = allRows.length;
+      document.getElementById('stat-valid').textContent  = allRows.length;
+      document.getElementById('stat-phone').textContent  = withPhone;
+      document.getElementById('stat-email').textContent  = withEmail;
+
+      const tbody = document.getElementById('preview-body');
+      tbody.innerHTML = '';
+
+      // Mostrar primeras 100 en preview
+      const preview = allRows.slice(0, 100);
+      preview.forEach((c, i) => {
+        const hasContact = c.phone || c.email;
+        const badge = hasContact
+          ? '<span class="badge badge-ok">OK</span>'
+          : '<span class="badge badge-warn">Sin contacto</span>';
+        tbody.innerHTML += `
+          <tr>
+            <td style="color:var(--muted)">${i + 1}</td>
+            <td>${c.name || '—'}</td>
+            <td>${c.phone || '<span style="color:var(--muted)">—</span>'}</td>
+            <td>${c.email || '<span style="color:var(--muted)">—</span>'}</td>
+            <td>${c.points}</td>
+            <td>${badge}</td>
+          </tr>`;
+      });
+
+      if (allRows.length > 100) {
+        tbody.innerHTML += `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem">...y ${allRows.length - 100} clientes más</td></tr>`;
+      }
+
+      document.getElementById('step-upload').classList.add('hidden');
+      document.getElementById('step-preview').classList.remove('hidden');
+    }
+
+    /* ──────────── IMPORT ──────────── */
+    async function startImport() {
+      const btn = document.getElementById('btn-import');
+      const progressWrap = document.getElementById('progress-wrap');
+      const progressFill = document.getElementById('progress-fill');
+      const progressLabel = document.getElementById('progress-label');
+      const log = document.getElementById('import-log');
+      const banner = document.getElementById('result-banner');
+
+      btn.disabled = true;
+      progressWrap.style.display = 'block';
+      log.style.display = 'block';
+      banner.style.display = 'none';
+      log.innerHTML = '';
+
+      const clients = parsedClients;
+      const BATCH_SIZE = 50;
+      let inserted = 0;
+      let errors = 0;
+
+      addLog('info', `Iniciando importación de ${clients.length} clientes...`);
+
+      for (let i = 0; i < clients.length; i += BATCH_SIZE) {
+        const batch = clients.slice(i, i + BATCH_SIZE).map(c => ({
+          name:   c.name,
+          phone:  c.phone  || null,
+          email:  c.email  || null,
+          points: c.points || 0,
+        }));
+
+        const { error } = await sb
+          .from('clients')
+          .upsert(batch, { onConflict: 'phone', ignoreDuplicates: true });
+
+        if (error) {
+          errors += batch.length;
+          addLog('err', `Lote ${Math.floor(i/BATCH_SIZE)+1}: ${error.message}`);
+        } else {
+          inserted += batch.length;
+          addLog('ok', `Lote ${Math.floor(i/BATCH_SIZE)+1}: ${batch.length} clientes importados ✓`);
+        }
+
+        // Actualizar progreso
+        const pct = Math.round(((i + batch.length) / clients.length) * 100);
+        progressFill.style.width = pct + '%';
+        progressLabel.textContent = `${Math.min(i + batch.length, clients.length)} / ${clients.length} clientes procesados`;
+
+        // Pequeña pausa para no sobrecargar la API
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Resultado final
+      btn.disabled = false;
+      if (errors === 0) {
+        banner.className = 'result-banner success';
+        banner.textContent = `✅ ¡Importación completada! ${inserted} clientes agregados a Supabase.`;
+        addLog('ok', `=== FINALIZADO: ${inserted} importados, ${errors} errores ===`);
+      } else {
+        banner.className = 'result-banner error';
+        banner.textContent = `⚠️ Importación completada con ${errors} errores y ${inserted} éxitos. Revisar log.`;
+      }
+      banner.style.display = 'block';
+    }
+
+    function addLog(type, msg) {
+      const log = document.getElementById('import-log');
+      const line = document.createElement('div');
+      line.className = `log-entry log-${type}`;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    /* ──────────── RESET ──────────── */
+    function resetTool() {
+      parsedClients = [];
+      document.getElementById('preview-body').innerHTML = '';
+      document.getElementById('progress-wrap').style.display = 'none';
+      document.getElementById('import-log').style.display = 'none';
+      document.getElementById('result-banner').style.display = 'none';
+      document.getElementById('file-input').value = '';
+      document.getElementById('step-upload').classList.remove('hidden');
+      document.getElementById('step-preview').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
