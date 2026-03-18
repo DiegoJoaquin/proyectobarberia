@@ -566,33 +566,34 @@
 
       for (let i = 0; i < clients.length; i += BATCH_SIZE) {
         // Separar: con teléfono → upsert; sin teléfono → insert simple
-        const withPhone    = clients.slice(i, i + BATCH_SIZE).filter(c => c.phone);
-        const withoutPhone = clients.slice(i, i + BATCH_SIZE).filter(c => !c.phone);
+        const sliceWithPhone    = clients.slice(i, i + BATCH_SIZE).filter(c => c.phone);
+        const sliceWithoutPhone = clients.slice(i, i + BATCH_SIZE).filter(c => !c.phone);
+        const batchSize = sliceWithPhone.length + sliceWithoutPhone.length;
         let error = null;
 
-        if (withPhone.length > 0) {
-          const batch = withPhone.map(c => ({ name: c.name, phone: c.phone, email: c.email || null, points: c.points || 0 }));
+        if (sliceWithPhone.length > 0) {
+          const batch = sliceWithPhone.map(c => ({ name: c.name, phone: c.phone, email: c.email || null, points: c.points || 0 }));
           const res = await sb.from('clients').upsert(batch, { onConflict: 'phone', ignoreDuplicates: true });
           if (res.error) error = res.error;
         }
-        if (withoutPhone.length > 0) {
-          const batch = withoutPhone.map(c => ({ name: c.name, phone: null, email: c.email || null, points: c.points || 0 }));
+        if (sliceWithoutPhone.length > 0) {
+          const batch = sliceWithoutPhone.map(c => ({ name: c.name, phone: null, email: c.email || null, points: c.points || 0 }));
           const res = await sb.from('clients').insert(batch);
           if (res.error && !error) error = res.error;
         }
 
         if (error) {
-          errors += batch.length;
+          errors += batchSize;
           addLog('err', `Lote ${Math.floor(i/BATCH_SIZE)+1}: ${error.message}`);
         } else {
-          inserted += batch.length;
-          addLog('ok', `Lote ${Math.floor(i/BATCH_SIZE)+1}: ${batch.length} clientes importados ✓`);
+          inserted += batchSize;
+          addLog('ok', `Lote ${Math.floor(i/BATCH_SIZE)+1}: ${batchSize} clientes importados ✓`);
         }
 
         // Actualizar progreso
-        const pct = Math.round(((i + batch.length) / clients.length) * 100);
+        const pct = Math.round(((i + batchSize) / clients.length) * 100);
         progressFill.style.width = pct + '%';
-        progressLabel.textContent = `${Math.min(i + batch.length, clients.length)} / ${clients.length} clientes procesados`;
+        progressLabel.textContent = `${Math.min(i + batchSize, clients.length)} / ${clients.length} clientes procesados`;
 
         await new Promise(r => setTimeout(r, 300));
       }
