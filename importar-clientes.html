@@ -329,20 +329,24 @@
       <div class="stats" id="stats-bar">
         <div class="stat-box">
           <div class="num" id="stat-total">0</div>
-          <div class="lbl">Total filas</div>
-        </div>
-        <div class="stat-box">
-          <div class="num" id="stat-valid">0</div>
-          <div class="lbl">Con nombre</div>
+          <div class="lbl">Total en Excel</div>
         </div>
         <div class="stat-box">
           <div class="num" id="stat-phone">0</div>
-          <div class="lbl">Con teléfono</div>
+          <div class="lbl">Ya importados ✓</div>
+        </div>
+        <div class="stat-box" style="border-color: var(--gold)">
+          <div class="num" id="stat-nophone" style="color:var(--gold)">0</div>
+          <div class="lbl">Se importarán ahora</div>
         </div>
         <div class="stat-box">
           <div class="num" id="stat-email">0</div>
           <div class="lbl">Con email</div>
         </div>
+      </div>
+
+      <div style="background:rgba(201,169,110,.08);border:1px solid var(--gold-dim);border-radius:8px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;color:var(--gold)">
+        ⚡ Esta pasada importa <strong>solo los clientes sin teléfono</strong>. Los que ya tienen teléfono registrado no se tocarán.
       </div>
 
       <div class="table-wrap">
@@ -507,37 +511,37 @@
     /* ──────────── RENDER PREVIEW ──────────── */
     function renderPreview() {
       const allRows = parsedClients;
-      const withPhone = allRows.filter(c => c.phone).length;
-      const withEmail = allRows.filter(c => c.email).length;
+      const withPhone   = allRows.filter(c => c.phone).length;
+      const withoutPhone = allRows.filter(c => !c.phone).length;
+      const withEmail   = allRows.filter(c => c.email).length;
 
-      document.getElementById('stat-total').textContent  = allRows.length;
-      document.getElementById('stat-valid').textContent  = allRows.length;
-      document.getElementById('stat-phone').textContent  = withPhone;
-      document.getElementById('stat-email').textContent  = withEmail;
+      document.getElementById('stat-total').textContent   = allRows.length;
+      document.getElementById('stat-phone').textContent   = withPhone;
+      document.getElementById('stat-nophone').textContent = withoutPhone;
+      document.getElementById('stat-email').textContent   = withEmail;
 
       const tbody = document.getElementById('preview-body');
       tbody.innerHTML = '';
 
-      // Mostrar primeras 100 en preview
-      const preview = allRows.slice(0, 100);
-      preview.forEach((c, i) => {
-        const hasContact = c.phone || c.email;
-        const badge = hasContact
-          ? '<span class="badge badge-ok">OK</span>'
+      // Mostrar solo los que SE VAN A IMPORTAR (sin teléfono), hasta 100
+      const toShow = allRows.filter(c => !c.phone).slice(0, 100);
+      toShow.forEach((c, i) => {
+        const badge = c.email
+          ? '<span class="badge badge-ok">Con email</span>'
           : '<span class="badge badge-warn">Sin contacto</span>';
         tbody.innerHTML += `
           <tr>
             <td style="color:var(--muted)">${i + 1}</td>
             <td>${c.name || '—'}</td>
-            <td>${c.phone || '<span style="color:var(--muted)">—</span>'}</td>
+            <td><span style="color:var(--muted)">—</span></td>
             <td>${c.email || '<span style="color:var(--muted)">—</span>'}</td>
             <td>${c.points}</td>
             <td>${badge}</td>
           </tr>`;
       });
 
-      if (allRows.length > 100) {
-        tbody.innerHTML += `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem">...y ${allRows.length - 100} clientes más</td></tr>`;
+      if (withoutPhone > 100) {
+        tbody.innerHTML += `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem">...y ${withoutPhone - 100} clientes más sin teléfono</td></tr>`;
       }
 
       document.getElementById('step-upload').classList.add('hidden');
@@ -559,24 +563,26 @@
       banner.style.display = 'none';
       log.innerHTML = '';
 
-      const clients = parsedClients;
+      // ⚡ Solo importar los que NO tienen teléfono (los con phone ya están)
+      const clients = parsedClients.filter(c => !c.phone);
       const BATCH_SIZE = 50;
       let inserted = 0;
       let errors = 0;
 
-      addLog('info', `Iniciando importación de ${clients.length} clientes...`);
+      addLog('info', `Importando ${clients.length} clientes sin teléfono (los con teléfono ya están en BD)...`);
 
       for (let i = 0; i < clients.length; i += BATCH_SIZE) {
         const batch = clients.slice(i, i + BATCH_SIZE).map(c => ({
           name:   c.name,
-          phone:  c.phone  || null,
-          email:  c.email  || null,
+          phone:  null,          // sin teléfono
+          email:  c.email || null,
           points: c.points || 0,
         }));
 
+        // Usar insert normal (no upsert por phone, ya que es null)
         const { error } = await sb
           .from('clients')
-          .upsert(batch, { onConflict: 'phone', ignoreDuplicates: true });
+          .insert(batch, { ignoreDuplicates: true });
 
         if (error) {
           errors += batch.length;
@@ -591,7 +597,6 @@
         progressFill.style.width = pct + '%';
         progressLabel.textContent = `${Math.min(i + batch.length, clients.length)} / ${clients.length} clientes procesados`;
 
-        // Pequeña pausa para no sobrecargar la API
         await new Promise(r => setTimeout(r, 300));
       }
 
@@ -599,11 +604,11 @@
       btn.disabled = false;
       if (errors === 0) {
         banner.className = 'result-banner success';
-        banner.textContent = `✅ ¡Importación completada! ${inserted} clientes agregados a Supabase.`;
+        banner.textContent = `✅ ¡Listo! ${inserted} clientes sin teléfono agregados. Los 350 anteriores (con teléfono) no fueron tocados.`;
         addLog('ok', `=== FINALIZADO: ${inserted} importados, ${errors} errores ===`);
       } else {
         banner.className = 'result-banner error';
-        banner.textContent = `⚠️ Importación completada con ${errors} errores y ${inserted} éxitos. Revisar log.`;
+        banner.textContent = `⚠️ Importación con ${errors} errores y ${inserted} éxitos. Revisar log.`;
       }
       banner.style.display = 'block';
     }
