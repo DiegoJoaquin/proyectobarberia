@@ -562,27 +562,21 @@
 
         <!-- Success -->
         <div id="success-screen">
-          <div class="success-icon" style="color:#25D366;"><i class="fa-brands fa-whatsapp"></i></div>
-          <h2 class="success-title">¡Reserva Guardada!</h2>
-          <p class="success-msg" id="success-msg">Paso final: Envíanos un WhatsApp para confirmar tu hora y asegurar tu
-            espacio en la agenda.</p>
-          <div id="transfer-info"
-            style="display:none;background:rgba(255,255,255,0.05);border:1px solid var(--grey-70);padding:16px;border-radius:6px;margin-top:20px;text-align:left;font-size:0.8rem;color:var(--grey-30);">
-            <p
-              style="color:var(--gold);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em;font-size:0.7rem;">
-              Datos para transferencia</p>
-            <p>Banco Estado, Cuenta RUT</p>
-            <p>19.123.456-7</p>
-            <p>Spartan Barber SPA</p>
-            <p>pagos@spartanbarber.cl</p>
+          <div class="success-icon" style="color:var(--gold);font-size:2.8rem;margin-bottom:12px;">
+            <i class="fa-solid fa-shield-halved"></i>
           </div>
-          <a href="#" id="wa-confirm-btn" target="_blank" class="btn-next"
-            style="display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:14px 28px;background:#25D366;color:#fff;border-color:#25D366;">
-            <i class="fa-brands fa-whatsapp" style="font-size:1.1rem;"></i> Confirmar vía WhatsApp
-          </a>
+          <h2 class="success-title">¡Reserva Confirmada!</h2>
+          <p class="success-msg" id="success-msg">
+            Tu hora está reservada. En breve recibirás todos los detalles por <strong>WhatsApp</strong> al número que ingresaste.
+          </p>
+          <p style="font-size:.75rem;color:var(--grey-60);margin-top:8px;">
+            <i class="fa-brands fa-whatsapp" style="color:#25D366;margin-right:4px;"></i>
+            El mensaje llega automáticamente en unos segundos.
+          </p>
           <button id="success-close"
-            style="display:block;margin:24px auto 0;color:var(--grey-50);font-size:0.8rem;text-decoration:underline;background:none;border:none;">Cerrar
-            sin confirmar</button>
+            style="display:inline-flex;align-items:center;gap:8px;margin-top:28px;padding:13px 28px;background:var(--gold);color:#0a0a0a;border:none;border-radius:4px;font-family:var(--font-body);font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;">
+            <i class="fa-solid fa-arrow-left"></i> Volver al sitio
+          </button>
         </div>
 
       </div>
