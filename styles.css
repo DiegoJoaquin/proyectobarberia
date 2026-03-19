@@ -45,8 +45,6 @@
 
 html, body {
   overflow-x: hidden;
-  width: 100%;
-  max-width: 100vw;
 }
 
 html {
@@ -551,9 +549,9 @@ button {
 .service-tabs {
   display: flex;
   justify-content: center;
-  gap: 4px;
   flex-wrap: wrap;
-  margin-bottom: 52px;
+  gap: 16px;
+  margin-bottom: 60px;
   padding: 4px;
   background: var(--grey-90);
   border-radius: var(--radius);
