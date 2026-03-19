@@ -420,37 +420,91 @@
           <h2 class="step-title">Elige tu servicio</h2>
           <p class="step-legend">Selecciona el tratamiento que deseas agendar con nosotros.</p>
 
-          <div class="barber-grid" id="service-picker" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
-            <!-- Corte -->
+          <div class="barber-grid" id="service-picker" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); max-height: 55vh; overflow-y: auto; padding-right: 8px;">
+            <!-- 1. Corte -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello" data-srv-price="$16.690" data-srv-duration="45 min">
               <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-scissors"></i></div>
-              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte Clásico / Fade</p>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte de Cabello</p>
               <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$16.690 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span></p>
             </div>
-            <!-- Barba -->
+            <!-- 2. Barba -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Retoque de Barba" data-srv-price="$12.500" data-srv-duration="30 min">
               <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-khanda"></i></div>
-              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Perfilado de Barba</p>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Retoque de Barba</p>
               <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$12.500 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span></p>
             </div>
-            <!-- Combo 1 -->
-            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Retoque de Barba" data-srv-price="$27.190" data-srv-duration="1h 15m" style="border-color:rgba(184,151,90,.4);">
+            <!-- 3. Ritual Barba -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Ritual de Barba Premium" data-srv-price="$16.500" data-srv-duration="30 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-khanda"></i><i class="fa-solid fa-star" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Ritual Barba Premium</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$16.500 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span></p>
+            </div>
+            <!-- 4. Corte + Cejas -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Perfilado Cejas" data-srv-price="$19.690" data-srv-duration="45 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-scissors"></i><i class="fa-solid fa-eye" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Cejas</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$19.690 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span></p>
+            </div>
+            <!-- 5. Corte + Barba -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Retoque de Barba" data-srv-price="$27.190" data-srv-duration="1 hr" style="border-color:rgba(184,151,90,.4);">
               <div style="position:absolute;top:-8px;right:10px;background:var(--gold);color:var(--black);font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.1em;">Popular</div>
               <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-bolt"></i></div>
-              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Barba</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$27.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 15m</span></p>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Retoque Barba</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$27.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span></p>
             </div>
-            <!-- Combo Premium -->
-            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Ritual de Barba Premium" data-srv-price="$31.190" data-srv-duration="1h 30m">
+            <!-- 6. Corte + Facial -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Limpieza Facial" data-srv-price="$27.190" data-srv-duration="1 hr">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-scissors"></i><i class="fa-solid fa-spa" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Limpieza Facial</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$27.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span></p>
+            </div>
+            <!-- 7. Corte + Ritual -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Ritual de Barba Premium" data-srv-price="$31.190" data-srv-duration="1 hr">
               <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-crown"></i></div>
               <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Ritual Premium</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$31.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 30m</span></p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$31.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span></p>
             </div>
-            <!-- Limpieza Facial -->
-            <div class="barber-pick-card modal-service-card" data-srv-name="Limpieza Facial" data-srv-price="$12.500" data-srv-duration="30 min">
+            <!-- 8. Limpieza Facial -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Limpieza Facial" data-srv-price="$12.500" data-srv-duration="15 min">
               <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-spa"></i></div>
               <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Limpieza Facial</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$12.500 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span></p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$12.500 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 15 min</span></p>
+            </div>
+            <!-- 9. Ritual + Facial -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Rituales de Barba Premium + Limpieza Facial" data-srv-price="$27.000" data-srv-duration="45 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-khanda"></i><i class="fa-solid fa-spa" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Ritual Barba + Facial</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$27.000 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span></p>
+            </div>
+            <!-- 10. Corte + Barba + Cejas -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello+ Retoque de Barba + Perfilado de Cejas" data-srv-price="$30.190" data-srv-duration="1 hr">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-bolt"></i><i class="fa-solid fa-eye" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Barba + Cejas</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$30.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span></p>
+            </div>
+            <!-- 11. Corte + Cejas + Facial -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello + Perfilado de Cejas + Limpieza Facial" data-srv-price="$30.690" data-srv-duration="1 hr">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-scissors"></i><i class="fa-solid fa-spa" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Cejas + Facial</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$30.690 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span></p>
+            </div>
+            <!-- 12. Corte + Ritual + Cejas -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello + Ritual de Barba Premium + Perfilado de Cejas" data-srv-price="$34.190" data-srv-duration="1 hr">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-crown"></i><i class="fa-solid fa-eye" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Ritual + Cejas</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$34.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span></p>
+            </div>
+            <!-- 13. Corte + Barba + Facial -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Retoque de Barba + Limpieza Facial" data-srv-price="$37.690" data-srv-duration="1 hr 15 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-bolt"></i><i class="fa-solid fa-spa" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Barba + Facial</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$37.690 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 15m</span></p>
+            </div>
+            <!-- 14. Corte + Ritual + Facial -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello + Ritual de Barba Premium + Limpieza Facial" data-srv-price="$41.690" data-srv-duration="1 hr 15 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-crown"></i><i class="fa-solid fa-spa" style="font-size:1rem;margin-left:4px;"></i></div>
+              <p class="bpc-name" style="font-size:.85rem;margin-bottom:2px;line-height:1.2;">Corte + Ritual Premium + Facial</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$41.690 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 15m</span></p>
             </div>
           </div>
 
