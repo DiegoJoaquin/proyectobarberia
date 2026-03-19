@@ -481,7 +481,7 @@
 
       const email  = get('e-mail', 'email', 'correo', 'electronico', 'electrónico');
       const points = parseInt(get('Puntaje', 'puntaje', 'puntos')) || 0;
-      const rut    = get('RUT', 'Rut');
+      const rut    = get('rut', 'run', 'documento', 'identificaci');
 
       return {
         name:   fullName,
@@ -577,7 +577,13 @@
             if (r?.length > 1) r = r.slice(0, -1) + '-' + r.slice(-1); else if (!r) r = null;
             return { name: c.name, phone: c.phone, email: c.email || null, rut: r, points: c.points || 0 };
           });
-          const res = await sb.from('clients').upsert(batch, { onConflict: 'phone', ignoreDuplicates: true });
+          
+          // Deduplicar localmente por celular para evitar "ON CONFLICT DO UPDATE cannot affect row a second time"
+          const uniqueBatchMap = new Map();
+          batch.forEach(b => uniqueBatchMap.set(b.phone, b));
+          const uniqueBatch = Array.from(uniqueBatchMap.values());
+
+          const res = await sb.from('clients').upsert(uniqueBatch, { onConflict: 'phone', ignoreDuplicates: false });
           if (res.error) error = res.error;
         }
         if (sliceWithoutPhone.length > 0) {
@@ -596,8 +602,14 @@
             
           const existingNames = new Set(existing ? existing.map(e => e.name.toLowerCase()) : []);
           
-          // Filtramos descartando los que ya existen en la base de datos
+          // Filtramos descartando los que ya existen en la base de datos para no duplicarlos
           const toInsert = batch.filter(b => !existingNames.has(b.name.toLowerCase()));
+          
+          // Pero los que ya existen y ahora traen RUT, los actualizamos
+          const toUpdate = batch.filter(b => existingNames.has(b.name.toLowerCase()) && b.rut);
+          for (const u of toUpdate) {
+             await sb.from('clients').update({ rut: u.rut }).eq('name', u.name).is('phone', null);
+          }
 
           if (toInsert.length > 0) {
             const res = await sb.from('clients').insert(toInsert);
