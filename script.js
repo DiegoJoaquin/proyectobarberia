@@ -415,9 +415,9 @@ document.querySelectorAll('.modal-service-card').forEach(card => {
 /* ──────────────────────────────────────────────────────────────
    BARBER PICKER
    ────────────────────────────────────────────────────────────── */
-document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
+document.querySelectorAll('#barber-picker .barber-pick-card').forEach((card, i) => {
   card.addEventListener('click', () => {
-    document.querySelectorAll('.barber-pick-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('#barber-picker .barber-pick-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
     state.barber = BARBERS[i]; updateSummary();
   });
