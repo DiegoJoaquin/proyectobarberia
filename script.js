@@ -108,6 +108,7 @@ async function upsertClient(booking, bookingId) {
       await sb.from('clients').update({
         name: booking.name || existing.name,
         email: booking.email || existing.email,
+        rut: booking.rut || existing.rut,
         updated_at: new Date().toISOString(),
       }).eq('id', clientId);
     } else {
@@ -115,6 +116,7 @@ async function upsertClient(booking, bookingId) {
         name: booking.name,
         phone: booking.phone,
         email: booking.email || null,
+        rut: booking.rut || null,
         points: 0,
         total_visits: 0,
       }).select('id').single();
@@ -482,25 +484,62 @@ document.getElementById('s3-next').addEventListener('click', async () => {
 document.getElementById('s4-back').addEventListener('click', () => goToStep(3));
 
 /* ──────────────────────────────────────────────────────────────
+   RUT VALIDATION & FORMATTING
+   ────────────────────────────────────────────────────────────── */
+function validateRUT(rut) {
+  if (typeof rut !== 'string') return false;
+  let clean = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (clean.length < 2) return false;
+  let dv = clean.slice(-1);
+  let rutNum = clean.slice(0, -1);
+  let sum = 0;
+  let mul = 2;
+  for (let i = rutNum.length - 1; i >= 0; i--) {
+    sum += parseInt(rutNum[i]) * mul;
+    mul = mul === 7 ? 2 : mul + 1;
+  }
+  let res = 11 - (sum % 11);
+  let expectedDv = res === 11 ? '0' : res === 10 ? 'K' : res.toString();
+  return dv === expectedDv;
+}
+
+function formatRUT(rut) {
+  let clean = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (clean.length < 2) return clean;
+  let dv = clean.slice(-1);
+  let rutNum = clean.slice(0, -1);
+  return rutNum.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+}
+
+document.getElementById('f-rut')?.addEventListener('input', function(e) {
+  this.value = this.value.replace(/[^0-9kK\.\-]/g, '').toUpperCase();
+});
+
+/* ──────────────────────────────────────────────────────────────
    CONFIRM BOOKING
    ────────────────────────────────────────────────────────────── */
 document.getElementById('s4-confirm').addEventListener('click', async () => {
   const name = document.getElementById('f-name').value.trim();
+  const rut = document.getElementById('f-rut').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const email = document.getElementById('f-email').value.trim();
   const notes = document.getElementById('f-notes').value.trim();
   const terms = document.getElementById('f-terms').checked;
 
   if (!name) { showToast('Por favor ingresa tu nombre.'); return; }
+  if (!rut) { showToast('Por favor ingresa tu RUT.'); return; }
+  if (!validateRUT(rut)) { showToast('El RUT ingresado no es válido.'); return; }
   if (!phone) { showToast('Por favor ingresa tu teléfono.'); return; }
   if (!terms) { showToast('Debes aceptar los términos para continuar.'); return; }
+  
+  const cleanRut = formatRUT(rut);
 
   const payment = document.querySelector('input[name="f-payment"]:checked').value;
   const paymentText = payment === 'transferencia' ? 'Transferencia (Pago anticipado)' : 'Pago en el local';
   const finalNotes = notes ? `${notes} | Pago: ${paymentText}` : `Pago: ${paymentText}`;
 
   const booking = {
-    id: Date.now(), name, phone, email, notes: finalNotes,
+    id: Date.now(), name, rut: cleanRut, phone, email, notes: finalNotes,
     service: state.service || '(Sin especificar)',
     price: state.price || '—',
     duration: state.duration || '—',
@@ -510,7 +549,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     createdAt: new Date().toISOString(),
   };
 
-  const confirmBtn = document.getElementById('s3-confirm');
+  const confirmBtn = document.getElementById('s4-confirm');
   confirmBtn.disabled = true;
   confirmBtn.textContent = 'Guardando...';
 
