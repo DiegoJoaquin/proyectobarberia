@@ -266,7 +266,7 @@ async function refreshTimePills() {
 
   // Fetch booked times (Supabase or LS)
   const bookedTimes = state.date ? await getBookedTimesForDate(state.date) : [];
-  const nowMin = now.getHours() * 60 + now.getMinutes() + 30; // 30-min buffer
+  const nowMin = now.getHours() * 60 + now.getMinutes() + 45; // 45-min buffer
 
   pills.forEach(pill => {
     const t = pill.dataset.time;
@@ -365,8 +365,15 @@ const backdrop = document.getElementById('modal-backdrop');
 const closeBtn = document.getElementById('modal-close-btn');
 
 function openModal(serviceData) {
-  if (serviceData) { state.service = serviceData.name; state.price = serviceData.price; state.duration = serviceData.duration; }
-  updateSummary(); goToStep(1);
+  if (serviceData) { 
+    state.service = serviceData.name; state.price = serviceData.price; state.duration = serviceData.duration; 
+    // Si viene con servicio (desde tarjetas inicio), ir al Paso 2
+    goToStep(2);
+  } else {
+    // Si viene boton general, ir al Paso 1
+    goToStep(1);
+  }
+  updateSummary();
   modal.classList.add('open'); document.body.style.overflow = 'hidden';
 }
 function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
@@ -387,8 +394,22 @@ document.querySelectorAll('.service-book-btn').forEach(btn => {
 });
 
 document.querySelectorAll('.barber-item').forEach((item, i) => {
-  item.addEventListener('click', () => { state.barber = BARBERS[i]; openModal(null); goToStep(2); });
+  item.addEventListener('click', () => { state.barber = BARBERS[i]; openModal(null); goToStep(3); });
   item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); } });
+});
+
+/* ──────────────────────────────────────────────────────────────
+   SERVICE PICKER (STEP 1)
+   ────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.modal-service-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.modal-service-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    state.service = card.dataset.srvName;
+    state.price = card.dataset.srvPrice;
+    state.duration = card.dataset.srvDuration;
+    updateSummary();
+  });
 });
 
 /* ──────────────────────────────────────────────────────────────
@@ -406,27 +427,35 @@ document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
    STEP NAVIGATION
    ────────────────────────────────────────────────────────────── */
 const stepContents = document.querySelectorAll('.step-content');
-const stepDots = ['dot-1', 'dot-2', 'dot-3'].map(id => document.getElementById(id));
+const stepDots = ['dot-1', 'dot-2', 'dot-3', 'dot-4'].map(id => document.getElementById(id));
 
 function goToStep(n) {
   stepContents.forEach((sc, i) => sc.classList.toggle('active', i + 1 === n));
   document.getElementById('success-screen').classList.remove('visible');
   document.querySelector('.steps-indicator').style.visibility = 'visible';
   stepDots.forEach((dot, i) => {
+    if (!dot) return;
     dot.classList.remove('active', 'done');
     const el = dot.querySelector('.step-num');
     if (i + 1 === n) { dot.classList.add('active'); el.textContent = i + 1; }
     else if (i + 1 < n) { dot.classList.add('done'); el.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>'; }
     else { el.textContent = i + 1; }
   });
-  if (n === 1) buildDayPicker();
+  if (n === 2) buildDayPicker();
 }
 
+// Nav events for Step 1 -> 4
 document.getElementById('s1-next').addEventListener('click', () => {
-  if (!state.time) { showToast('Por favor selecciona un horario disponible.'); return; } goToStep(2);
+  if (!state.service) { showToast('Por favor selecciona un servicio.'); return; } goToStep(2);
 });
+
 document.getElementById('s2-back').addEventListener('click', () => goToStep(1));
-document.getElementById('s2-next').addEventListener('click', async () => {
+document.getElementById('s2-next').addEventListener('click', () => {
+  if (!state.time) { showToast('Por favor selecciona un horario disponible.'); return; } goToStep(3);
+});
+
+document.getElementById('s3-back').addEventListener('click', () => goToStep(2));
+document.getElementById('s3-next').addEventListener('click', async () => {
   if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; }
 
   // Validar bloqueo por horas del barbero seleccionado
@@ -447,14 +476,15 @@ document.getElementById('s2-next').addEventListener('click', async () => {
     }
   }
 
-  goToStep(3);
+  goToStep(4);
 });
-document.getElementById('s3-back').addEventListener('click', () => goToStep(2));
+
+document.getElementById('s4-back').addEventListener('click', () => goToStep(3));
 
 /* ──────────────────────────────────────────────────────────────
    CONFIRM BOOKING
    ────────────────────────────────────────────────────────────── */
-document.getElementById('s3-confirm').addEventListener('click', async () => {
+document.getElementById('s4-confirm').addEventListener('click', async () => {
   const name = document.getElementById('f-name').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
   const email = document.getElementById('f-email').value.trim();

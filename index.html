@@ -396,63 +396,61 @@
         <div class="steps-indicator" aria-label="Pasos del proceso">
           <div class="step-dot active" id="dot-1">
             <div class="step-num">1</div>
-            <span>Fecha &amp; Hora</span>
+            <span>Servicio</span>
           </div>
           <div class="step-line"></div>
           <div class="step-dot" id="dot-2">
             <div class="step-num">2</div>
-            <span>Profesional</span>
+            <span>Fecha &amp; Hora</span>
           </div>
           <div class="step-line"></div>
           <div class="step-dot" id="dot-3">
             <div class="step-num">3</div>
+            <span>Profesional</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-dot" id="dot-4">
+            <div class="step-num">4</div>
             <span>Tus Datos</span>
           </div>
         </div>
 
-        <!-- Step 1: Date & Time -->
+        <!-- Step 1: Service Selection -->
         <div class="step-content active" id="step-1">
-          <h2 class="step-title">Elige tu momento</h2>
-          <p class="step-legend">Selecciona el día y la hora que prefieras para tu sesión.</p>
+          <h2 class="step-title">Elige tu servicio</h2>
+          <p class="step-legend">Selecciona el tratamiento que deseas agendar con nosotros.</p>
 
-          <div class="day-picker" id="day-picker" role="list" aria-label="Días disponibles"></div>
-
-          <div class="time-section">
-            <p class="time-label">Mañana</p>
-            <div class="time-grid">
-              <button class="time-pill" data-time="09:00">09:00</button>
-              <button class="time-pill" data-time="09:30">09:30</button>
-              <button class="time-pill busy" data-time="10:00">10:00</button>
-              <button class="time-pill" data-time="10:30">10:30</button>
-              <button class="time-pill" data-time="11:00">11:00</button>
-              <button class="time-pill busy" data-time="11:30">11:30</button>
-              <button class="time-pill" data-time="12:00">12:00</button>
+          <div class="barber-grid" id="service-picker" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+            <!-- Corte -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello" data-srv-price="$16.690" data-srv-duration="45 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-scissors"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte Clásico / Fade</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$16.690 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span></p>
             </div>
-          </div>
-
-          <div class="time-section">
-            <p class="time-label">Tarde</p>
-            <div class="time-grid">
-              <button class="time-pill" data-time="13:00">13:00</button>
-              <button class="time-pill busy" data-time="13:30">13:30</button>
-              <button class="time-pill" data-time="14:00">14:00</button>
-              <button class="time-pill" data-time="14:30">14:30</button>
-              <button class="time-pill busy" data-time="15:00">15:00</button>
-              <button class="time-pill" data-time="15:30">15:30</button>
-              <button class="time-pill" data-time="16:00">16:00</button>
-              <button class="time-pill" data-time="16:30">16:30</button>
-              <button class="time-pill" data-time="17:00">17:00</button>
-              <button class="time-pill" data-time="17:30">17:30</button>
+            <!-- Barba -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Retoque de Barba" data-srv-price="$12.500" data-srv-duration="30 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-khanda"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Perfilado de Barba</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$12.500 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span></p>
             </div>
-          </div>
-
-          <div class="time-section">
-            <p class="time-label">Noche</p>
-            <div class="time-grid">
-              <button class="time-pill" data-time="18:00">18:00</button>
-              <button class="time-pill busy" data-time="18:30">18:30</button>
-              <button class="time-pill" data-time="19:00">19:00</button>
-              <button class="time-pill" data-time="19:30">19:30</button>
+            <!-- Combo 1 -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Retoque de Barba" data-srv-price="$27.190" data-srv-duration="1h 15m" style="border-color:rgba(184,151,90,.4);">
+              <div style="position:absolute;top:-8px;right:10px;background:var(--gold);color:var(--black);font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.1em;">Popular</div>
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-bolt"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Barba</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$27.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 15m</span></p>
+            </div>
+            <!-- Combo Premium -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Corte + Ritual de Barba Premium" data-srv-price="$31.190" data-srv-duration="1h 30m">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-crown"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Corte + Ritual Premium</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$31.190 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 30m</span></p>
+            </div>
+            <!-- Limpieza Facial -->
+            <div class="barber-pick-card modal-service-card" data-srv-name="Limpieza Facial" data-srv-price="$12.500" data-srv-duration="30 min">
+              <div style="font-size:1.8rem;color:var(--gold);margin-bottom:8px;"><i class="fa-solid fa-spa"></i></div>
+              <p class="bpc-name" style="font-size:.95rem;margin-bottom:2px;">Limpieza Facial</p>
+              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.9rem;">$12.500 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span></p>
             </div>
           </div>
 
@@ -462,8 +460,54 @@
           </div>
         </div>
 
-        <!-- Step 2: Professional -->
+        <!-- Step 2: Date & Time -->
         <div class="step-content" id="step-2">
+          <h2 class="step-title">Elige tu momento</h2>
+          <p class="step-legend">Selecciona el día y la hora que prefieras para tu sesión.</p>
+
+          <div class="day-picker" id="day-picker" role="list" aria-label="Días disponibles"></div>
+
+          <div class="time-section">
+            <p class="time-label">Mañana</p>
+            <div class="time-grid">
+              <button class="time-pill" data-time="09:00">09:00</button>
+              <button class="time-pill" data-time="09:45">09:45</button>
+              <button class="time-pill" data-time="10:30">10:30</button>
+              <button class="time-pill" data-time="11:15">11:15</button>
+              <button class="time-pill" data-time="12:00">12:00</button>
+              <button class="time-pill" data-time="12:45">12:45</button>
+            </div>
+          </div>
+
+          <div class="time-section">
+            <p class="time-label">Tarde</p>
+            <div class="time-grid">
+              <button class="time-pill" data-time="13:30">13:30</button>
+              <button class="time-pill" data-time="14:15">14:15</button>
+              <button class="time-pill" data-time="15:00">15:00</button>
+              <button class="time-pill" data-time="15:45">15:45</button>
+              <button class="time-pill" data-time="16:30">16:30</button>
+              <button class="time-pill" data-time="17:15">17:15</button>
+            </div>
+          </div>
+
+          <div class="time-section">
+            <p class="time-label">Noche</p>
+            <div class="time-grid">
+              <button class="time-pill" data-time="18:00">18:00</button>
+              <button class="time-pill" data-time="18:45">18:45</button>
+              <button class="time-pill" data-time="19:30">19:30</button>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <button class="btn-back" id="s2-back"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+            <button class="btn-next" id="s2-next">Continuar →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Professional -->
+        <div class="step-content" id="step-3">
           <h2 class="step-title">Tu barbero</h2>
           <p class="step-legend">Elige al profesional que realizará tu sesión.</p>
 
@@ -506,13 +550,13 @@
           </div>
 
           <div class="step-nav">
-            <button class="btn-back" id="s2-back"><i class="fa-solid fa-arrow-left"></i> Volver</button>
-            <button class="btn-next" id="s2-next">Continuar →</button>
+            <button class="btn-back" id="s3-back"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+            <button class="btn-next" id="s3-next">Continuar →</button>
           </div>
         </div>
 
-        <!-- Step 3: Data -->
-        <div class="step-content" id="step-3">
+        <!-- Step 4: Data -->
+        <div class="step-content" id="step-4">
           <h2 class="step-title">Tus datos</h2>
           <p class="step-legend">Solo lo necesario para confirmar tu reserva.</p>
 
@@ -555,8 +599,8 @@
           </div>
 
           <div class="step-nav">
-            <button class="btn-back" id="s3-back"><i class="fa-solid fa-arrow-left"></i> Volver</button>
-            <button class="btn-confirm" id="s3-confirm">Confirmar reserva</button>
+            <button class="btn-back" id="s4-back"><i class="fa-solid fa-arrow-left"></i> Volver</button>
+            <button class="btn-confirm" id="s4-confirm">Confirmar reserva</button>
           </div>
         </div>
 
