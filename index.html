@@ -5,9 +5,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SPARTAN BARBER CO. — La Forja del Estilo | Machalí</title>
-  <meta name="description"
-    content="Spartan Barber Co., la barbería premium en Machalí. Cortes de precisión, disciplina militar y grooming de clase mundial. Reserva tu espacio." />
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <meta name="description" content="Spartan Barber Co., la barbería premium en Machalí. Cortes de precisión, disciplina militar y grooming de clase mundial. Reserva tu espacio." />
+  
+  <!-- Favicon para la pestaña del navegador -->
+  <link rel="icon" href="assets/Logochico.jpeg" type="image/jpeg" />
+  
+  <!-- Meta Tags para visualización en Redes Sociales y Google (Open Graph) -->
+  <meta property="og:title" content="SPARTAN BARBER CO. — La Forja del Estilo" />
+  <meta property="og:description" content="Barbería premium en Machalí. Cortes de precisión y grooming de clase mundial. Reserva tu espacio." />
+  <meta property="og:image" content="https://proyectobarberia-rho.vercel.app/assets/logogrande.jpeg" />
+  <meta property="og:url" content="https://proyectobarberia-rho.vercel.app" />
+  <meta property="og:type" content="website" />
+
+  <link rel="stylesheet" href="styles.css?v=5" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <!-- EmailJS — envío de correos sin backend -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -19,7 +29,9 @@
        NAV
   ══════════════════════════════════════════════════════ -->
   <nav id="main-nav" role="navigation" aria-label="Navegación principal">
-    <a href="#" class="nav-logo">SPARTAN <span>BARBER CO.</span></a>
+    <a href="#hero" class="nav-logo" aria-label="Volver al inicio">
+      <img src="assets/logogrande.jpeg" alt="Spartan Barber Co." class="nav-brand-img" />
+    </a>
     <ul class="nav-links">
       <li><a href="#hero">Inicio</a></li>
       <li><a href="#services">Servicios</a></li>
