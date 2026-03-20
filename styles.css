@@ -134,9 +134,10 @@ button {
 }
 
 .nav-brand-img {
-  height: 36px;
+  height: clamp(44px, 5.5vw, 68px);
   width: auto;
   object-fit: contain;
+  transition: height var(--transition);
 }
 
 .nav-links {
