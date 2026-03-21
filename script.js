@@ -133,20 +133,19 @@ async function upsertClient(booking, bookingId) {
 }
 
 /**
- * Returns array of booked time strings for a given date label
- * e.g. ['10:00', '14:30'] for "Mar 10 mar"
- * Async because Supabase is async; refreshTimePills awaits it.
+ * Returns array of booked time strings for a given date label AND barber
  */
-async function getBookedTimesForDate(dateStr) {
+async function getBookedTimesForBarber(dateStr, barberName) {
   if (SUPABASE_ON) {
     const { data, error } = await sb
       .from('bookings')
       .select('time')
-      .eq('date', dateStr);
+      .eq('date', dateStr)
+      .eq('barber', barberName);
     if (error) { console.warn('Supabase select error:', error); }
     return (data || []).map(r => r.time);
   }
-  return lsGetAll().filter(b => b.date === dateStr).map(b => b.time);
+  return lsGetAll().filter(b => b.date === dateStr && b.barber === barberName).map(b => b.time);
 }
 
 /**
@@ -162,44 +161,6 @@ async function getBarberBlocksForDate(dateObj) {
     .eq('block_date', iso);
   if (error) { console.warn('Blocks fetch error:', error); return []; }
   return data || [];
-}
-
-/**
- * Given the blocks for today, hides/disables blocked barber cards
- * and blocks specific time pills for barbers blocked by hours.
- */
-function applyBarberBlocks(blocks) {
-  // --- 1. Barber cards (step 2 picker) ---
-  document.querySelectorAll('.barber-pick-card').forEach((card, i) => {
-    const barberName = BARBERS[i];
-    card.querySelector('.block-badge')?.remove();
-    card.style.opacity = '';
-    card.style.pointerEvents = '';
-    card.title = '';
-
-    const fullDayBlock = blocks.find(b => b.barber_name === barberName && b.block_type === 'full_day');
-    const hourBlock    = blocks.find(b => b.barber_name === barberName && b.block_type === 'hours');
-
-    if (fullDayBlock) {
-      card.style.opacity = '0.3';
-      card.style.pointerEvents = 'none';
-      card.title = 'No disponible este día';
-      const badge = document.createElement('span');
-      badge.className = 'block-badge';
-      badge.textContent = 'No disponible';
-      badge.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65);color:#f87171;font-size:.7rem;font-weight:700;letter-spacing:.05em;border-radius:inherit;cursor:not-allowed;';
-      card.style.position = 'relative';
-      card.appendChild(badge);
-    } else if (hourBlock) {
-      card.title = `Disponible fuera de ${hourBlock.start_time}–${hourBlock.end_time}`;
-      const badge = document.createElement('span');
-      badge.className = 'block-badge';
-      badge.textContent = `⏱ ${hourBlock.start_time}–${hourBlock.end_time} bloqueado`;
-      badge.style.cssText = 'position:absolute;bottom:6px;left:0;right:0;text-align:center;background:rgba(127,29,29,.75);color:#fca5a5;font-size:.6rem;font-weight:700;letter-spacing:.04em;padding:3px 6px;cursor:default;';
-      card.style.position = 'relative';
-      card.appendChild(badge);
-    }
-  });
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -266,15 +227,39 @@ async function refreshTimePills() {
     state.dateObj.getMonth() === now.getMonth() &&
     state.dateObj.getDate() === now.getDate();
 
-  // Fetch booked times (Supabase or LS)
-  const bookedTimes = state.date ? await getBookedTimesForDate(state.date) : [];
+  // Fetch booked times for specific barber
+  const bookedTimes = state.date && state.barber ? await getBookedTimesForBarber(state.date, state.barber) : [];
+  
+  // Fetch barber blocks to see if they are in lunch / day off
+  const blocks = state.dateObj ? await getBarberBlocksForDate(state.dateObj) : [];
+  const fullDayBlock = blocks.find(b => b.barber_name === state.barber && b.block_type === 'full_day');
+  const hourBlock = blocks.find(b => b.barber_name === state.barber && b.block_type === 'hours');
+
   const nowMin = now.getHours() * 60 + now.getMinutes() + 45; // 45-min buffer
 
   pills.forEach(pill => {
     const t = pill.dataset.time;
     if (!t) return;
 
-    pill.classList.remove('past', 'booked', 'selected');
+    pill.classList.remove('past', 'booked', 'selected', 'busy');
+
+    // 0. Full day blocks
+    if (fullDayBlock) {
+      pill.classList.add('busy'); pill.disabled = true;
+      pill.setAttribute('aria-label', `${t} — No disponible`);
+      return;
+    }
+
+    // 0.5. Hour blocks
+    if (hourBlock && hourBlock.start_time && hourBlock.end_time) {
+      function hm(ts) { const [h, m] = ts.split(':').map(Number); return h * 60 + m; }
+      const thisMin = hm(t);
+      if (thisMin >= hm(hourBlock.start_time) && thisMin < hm(hourBlock.end_time)) {
+        pill.classList.add('busy'); pill.disabled = true;
+        pill.setAttribute('aria-label', `${t} — Bloqueado`);
+        return;
+      }
+    }
 
     // 1. Already booked
     if (bookedTimes.includes(t)) {
@@ -331,9 +316,6 @@ function buildDayPicker() {
         state.date = lbl; state.dateObj = d;
         updateSummary();
         refreshTimePills();
-        // Aplicar bloqueos de barberos para este día
-        const blocks = await getBarberBlocksForDate(d);
-        applyBarberBlocks(blocks);
       });
     }
 
@@ -342,8 +324,6 @@ function buildDayPicker() {
   }
   refreshTimePills();
   updateSummary();
-  // Aplicar bloqueos para el día inicial
-  getBarberBlocksForDate(state.dateObj).then(blocks => applyBarberBlocks(blocks));
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -443,7 +423,7 @@ function goToStep(n) {
     else if (i + 1 < n) { dot.classList.add('done'); el.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>'; }
     else { el.textContent = i + 1; }
   });
-  if (n === 2) buildDayPicker();
+  if (n === 3) buildDayPicker(); // Ahora el día/hora es el paso 3
 }
 
 // Nav events for Step 1 -> 4
@@ -451,33 +431,17 @@ document.getElementById('s1-next').addEventListener('click', () => {
   if (!state.service) { showToast('Por favor selecciona un servicio.'); return; } goToStep(2);
 });
 
+// Paso 2 ahora es Profesionales
 document.getElementById('s2-back').addEventListener('click', () => goToStep(1));
 document.getElementById('s2-next').addEventListener('click', () => {
-  if (!state.time) { showToast('Por favor selecciona un horario disponible.'); return; } goToStep(3);
+  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; } 
+  goToStep(3);
 });
 
+// Paso 3 ahora es Fecha & Hora
 document.getElementById('s3-back').addEventListener('click', () => goToStep(2));
 document.getElementById('s3-next').addEventListener('click', async () => {
-  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; }
-
-  // Validar bloqueo por horas del barbero seleccionado
-  if (state.dateObj && state.time && SUPABASE_ON) {
-    const blocks = await getBarberBlocksForDate(state.dateObj);
-    const hourBlock = blocks.find(b =>
-      b.barber_name === state.barber &&
-      b.block_type === 'hours' &&
-      b.start_time && b.end_time
-    );
-    if (hourBlock) {
-      function hm(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
-      const chosenMin = hm(state.time);
-      if (chosenMin >= hm(hourBlock.start_time) && chosenMin < hm(hourBlock.end_time)) {
-        showToast(`${state.barber} no está disponible de ${hourBlock.start_time} a ${hourBlock.end_time}. Por favor elige otro horario o barbero.`);
-        return;
-      }
-    }
-  }
-
+  if (!state.time) { showToast('Por favor selecciona un horario disponible.'); return; }
   goToStep(4);
 });
 

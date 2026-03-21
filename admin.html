@@ -961,9 +961,9 @@
           <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Time-blocking por barbero</p>
         </div>
         <div class="flex gap-2">
-          <button class="btn btn-ghost"><i class="fa-solid fa-chevron-left"></i> Hoy</button>
-          <button class="btn btn-ghost"><i class="fa-solid fa-calendar-day"></i> 17 de Marzo</button>
-          <button class="btn btn-ghost"><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="btn btn-ghost" id="agenda-prev-btn"><i class="fa-solid fa-chevron-left"></i></button>
+          <button class="btn btn-ghost" id="agenda-today-btn"><i class="fa-solid fa-calendar-day"></i> Hoy</button>
+          <button class="btn btn-ghost" id="agenda-next-btn"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
       </div>
       
@@ -981,87 +981,9 @@
           </div>
 
           <!-- Time Rows Structure -->
-          <div class="relative bg-[#0f0f12]">
-            <!-- Current Time Line (Dummy) -->
-            <div class="absolute top-[35%] left-0 w-full border-t-2 border-[--gold] z-10 flex items-center">
-              <span class="absolute -left-2 bg-[--gold] text-[--black] text-[0.6rem] font-bold px-1 rounded">13:30</span>
-            </div>
-
-            <!-- CSS Grid Rows (9:00 to 20:00 every 1 hour for structure) -->
-            <div class="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] relative">
-              
-              <!-- 09:00 -->
-              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">09:00</div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
-                <div class="absolute top-1 left-1 right-1 h-[72px] bg-[--grey-80] border border-[--grey-60] rounded p-2 overflow-hidden flex flex-col justify-center cursor-pointer hover:border-[--gold] transition-colors">
-                  <p class="text-[--white] text-xs font-bold leading-tight">Juan Pérez</p>
-                  <p class="text-[--gold] text-[0.65rem]">Corte + Barba</p>
-                </div>
-              </div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-
-              <!-- 10:00 -->
-              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">10:00</div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
-                <div class="absolute top-1 left-1 right-1 h-[72px] bg-red-950 border border-red-800 rounded p-2 overflow-hidden flex flex-col justify-center opacity-70 cursor-pointer">
-                  <p class="text-white text-xs font-bold leading-tight">Miguel S.</p>
-                  <p class="text-red-300 text-[0.65rem]">Cancelado</p>
-                </div>
-              </div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
-                <div class="absolute top-1 left-1 right-1 h-[36px] bg-[rgba(182,122,67,0.15)] border border-[--gold] rounded p-2 overflow-hidden flex flex-col justify-center cursor-pointer">
-                  <p class="text-[--white] text-xs font-bold flex justify-between">Carlos V. <span class="text-[--green]"><i class="fa-solid fa-check"></i></span></p>
-                </div>
-              </div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-
-              <!-- 11:00 -->
-              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">11:00</div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative">
-                <div class="absolute top-1 left-1 right-1 h-[110px] bg-[--grey-80] border border-[--grey-60] rounded p-2 overflow-hidden flex flex-col cursor-pointer z-[5]">
-                  <p class="text-[--white] text-xs font-bold">Fernando A.</p>
-                  <p class="text-[--gold] text-[0.65rem]">VIP Falange</p>
-                  <p class="text-[--grey-40] text-[0.6rem] mt-auto">11:00 - 12:30</p>
-                </div>
-              </div>
-              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-
-              <!-- 12:00 -->
-              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">12:00</div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 relative">
-                <div class="absolute top-[40px] left-1 right-1 h-[36px] bg-[--grey-80] border border-[--grey-60] rounded p-1 overflow-hidden flex flex-col justify-center cursor-pointer">
-                  <p class="text-[--white] text-xs font-bold pl-1">Luis Rojas</p>
-                </div>
-              </div>
-
-              <!-- 13:00 to 20:00 (Empty Structure for visualization) -->
-              <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">13:00</div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
-              <div class="border-b border-r border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
-              <div class="border-b border-[#2b2b30] border-dashed p-1 h-20 bg-[--grey-90] opacity-50"><p class="text-center text-[--grey-40] text-[0.6rem] mt-8">ALMUERZO</p></div>
-
-              <div class="border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 h-20">14:00</div>
-              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative opacity-40">...</div>
-              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-r border-[#2b2b30] border-dashed p-1 h-20 relative"></div>
-              <div class="border-dashed p-1 h-20 relative"></div>
-
-            </div>
+          <div class="relative bg-[#0f0f12]" id="agenda-canvas" style="min-height: 900px;">
+            <!-- JS WILL RENDER THE GRID AND BOOKINGS HERE -->
+          </div>
           </div>
         </div>
       </div>
@@ -1824,7 +1746,141 @@
         [allBookings, allClients] = await Promise.all([fetchBookings(), fetchClients()]);
         renderBookings(document.getElementById('search-bookings').value);
         renderClients(document.getElementById('search-clients').value);
+        renderAgenda(); // Renderiza la agenda visual
         if (typeof updateFinanzas === 'function') updateFinanzas();
+      }
+
+      /* ── AGENDA VISUAL (NUEVA LÓGICA) ────────────────── */
+      let currentAgendaDateObj = new Date();
+      
+      document.getElementById('agenda-prev-btn').addEventListener('click', () => {
+        currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() - 1);
+        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() - 1); // Skip Sunday
+        renderAgenda();
+      });
+      document.getElementById('agenda-next-btn').addEventListener('click', () => {
+        currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() + 1);
+        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() + 1); // Skip Sunday
+        renderAgenda();
+      });
+      document.getElementById('agenda-today-btn').addEventListener('click', () => {
+        currentAgendaDateObj = new Date();
+        renderAgenda();
+      });
+
+      function renderAgenda() {
+        const titleDate = `${DAYS[currentAgendaDateObj.getDay()]} ${currentAgendaDateObj.getDate()} ${MONTHS[currentAgendaDateObj.getMonth()]}`;
+        const headerBtn = document.getElementById('agenda-today-btn');
+        headerBtn.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${titleDate}`;
+        
+        // El formato de guardado de Supabase de State.date es igual a titleDate
+        const targetDateLabel = titleDate; 
+        
+        // Filtramos las reservas para ese dia exacto
+        const dayBookings = allBookings.filter(b => b.date === targetDateLabel);
+        
+        const canvas = document.getElementById('agenda-canvas');
+        canvas.innerHTML = '';
+
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] relative';
+        
+        // Array de horas base: 09:00, 10:00... 20:00
+        const START_HOUR = 9;
+        const END_HOUR = 20;
+        const ROW_HEIGHT = 80; // 80px por hora
+        let htmlRows = '';
+
+        for (let h = START_HOUR; h <= END_HOUR; h++) {
+          const hourStr = h < 10 ? `0${h}:00` : `${h}:00`;
+          htmlRows += `
+            <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2" style="height:${ROW_HEIGHT}px;">${hourStr}</div>
+            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
+            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
+            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
+            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
+            <div class="border-b border-[#2b2b30] border-dashed relative"></div>
+          `;
+        }
+        grid.innerHTML = htmlRows;
+        
+        // Inyectar tarjetas de las reservas encima del grid
+        // Barbers: 0: Emanuel, 1: Matías Nuñez, 2: Ángel, 3: Benjamín, 4: Gonzalo
+        const BARBER_COLUMNS = ['Emanuel', 'Matías Nuñez', 'Ángel', 'Benjamín', 'Gonzalo'];
+
+        dayBookings.forEach(b => {
+           if (!b.time || !b.barber) return;
+           const colIndex = BARBER_COLUMNS.findIndex(name => name.includes(b.barber.split(' ')[0])); // Aproximación por 1er nombre
+           if (colIndex === -1) return;
+           
+           // parse time e.g. "10:30"
+           const [bh, bm] = b.time.split(':').map(Number);
+           // Posición vertical
+           const minsFromStart = (bh - START_HOUR) * 60 + bm;
+           const topPx = (minsFromStart / 60) * ROW_HEIGHT;
+           
+           // parse duration e.g. "45 min", "1 hr", "1 hr 15 min"
+           let durMins = 30; // fallback
+           if (b.duration) {
+              const dStr = b.duration.toLowerCase();
+              if (dStr.includes('1 hr 15')) durMins = 75;
+              else if (dStr.includes('1 hr 30')) durMins = 90;
+              else if (dStr.includes('1 hr')) durMins = 60;
+              else if (dStr.includes('45')) durMins = 45;
+              else if (dStr.includes('15')) durMins = 15;
+           }
+           const heightPx = (durMins / 60) * ROW_HEIGHT;
+           
+           // Columna horizontal: El grid es de 6 columnas. [Hora, B1, B2, B3, B4, B5]
+           // El left offset no se saca por absolute todo el ancho, sino que lo inyectamos calculando vw o %, mejor absoluto total:
+           // width: calculamos que la columna es (100% - 80px) / 5
+           const leftCalc = `calc(80px + ((100% - 80px) / 5) * ${colIndex} + 4px)`;
+           const widthCalc = `calc(((100% - 80px) / 5) - 8px)`;
+           
+           const card = document.createElement('div');
+           card.style.position = 'absolute';
+           card.style.top = `${topPx}px`;
+           card.style.left = leftCalc;
+           card.style.width = widthCalc;
+           card.style.height = `${heightPx - 4}px`; // restamos padding visual
+           card.style.zIndex = '5';
+           
+           const isAttended = b.attended;
+           const bgColor = isAttended ? 'rgba(182,122,67,0.15)' : 'var(--grey-80)';
+           const borderColor = isAttended ? 'var(--gold)' : 'var(--grey-60)';
+           
+           card.innerHTML = `
+             <div style="background:${bgColor}; border:1px solid ${borderColor}; border-radius:4px; padding:6px; overflow:hidden; display:flex; flex-direction:column; height:100%; cursor:pointer;">
+                <p style="color:var(--white); font-size:0.75rem; font-weight:700; display:flex; justify-content:space-between; line-height:1.1;">
+                  ${esc(b.name.split(' ')[0])} ${isAttended ? '<span style="color:var(--green)"><i class="fa-solid fa-check"></i></span>' : ''}
+                </p>
+                ${heightPx > 40 ? `<p style="color:var(--gold); font-size:0.65rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${esc(b.service)}</p>` : ''}
+             </div>
+           `;
+           grid.appendChild(card);
+        });
+
+        // Current time line
+        const now = new Date();
+        if (now.getDate() === currentAgendaDateObj.getDate() && now.getMonth() === currentAgendaDateObj.getMonth()) {
+           const nh = now.getHours();
+           const nm = now.getMinutes();
+           if (nh >= START_HOUR && nh <= END_HOUR) {
+             const nowMinsFromStart = (nh - START_HOUR) * 60 + nm;
+             const nowTopPx = (nowMinsFromStart / 60) * ROW_HEIGHT;
+             const timeLine = document.createElement('div');
+             timeLine.style.position = 'absolute';
+             timeLine.style.top = `${nowTopPx}px`;
+             timeLine.style.left = '80px';
+             timeLine.style.right = '0';
+             timeLine.style.borderTop = '2px solid var(--gold)';
+             timeLine.style.zIndex = '10';
+             timeLine.innerHTML = `<span style="position:absolute; left:-40px; top:-8px; background:var(--gold); color:var(--black); font-size:0.6rem; font-weight:700; padding:1px 4px; border-radius:4px;">${nh}:${nm<10?'0':''}${nm}</span>`;
+             grid.appendChild(timeLine);
+           }
+        }
+
+        canvas.appendChild(grid);
       }
 
       /* ── FINANZAS ─────────────────────────────────────── */
