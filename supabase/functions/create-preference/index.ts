@@ -13,6 +13,9 @@ serve(async (req) => {
   try {
     const { title, price, payer_email, payer_name, metadata } = await req.json()
     
+    // Detectamos automáticamente de dónde viene la petición (Tu dominio oficial o Vercel)
+    const originUrl = req.headers.get("origin") || "https://proyectobarberia-rho.vercel.app"
+    
     // El token secreto de mercado pago que configuraremos en Supabase
     const MP_ACCESS_TOKEN = Deno.env.get('MP_ACCESS_TOKEN')
     
@@ -36,9 +39,9 @@ serve(async (req) => {
       },
       metadata: metadata, // Empaquetamos invisiblemente los datos del cliente (RUT, telefono, notas, fecha, etc)
       back_urls: {
-        success: "https://proyectobarberia-rho.vercel.app/?collection_status=approved",
-        pending: "https://proyectobarberia-rho.vercel.app/?collection_status=pending",
-        failure: "https://proyectobarberia-rho.vercel.app/?collection_status=rejected"
+        success: `${originUrl}/?collection_status=approved`,
+        pending: `${originUrl}/?collection_status=pending`,
+        failure: `${originUrl}/?collection_status=rejected`
       },
       auto_return: "approved",
       // ESTE ES EL WEBHOOK QUE ESCUCHARÁ CUANDO ALGUIEN PAGUE:

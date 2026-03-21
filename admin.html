@@ -940,6 +940,10 @@
               <span class="text-[--grey-40]">📲 Transferencia</span>
               <span class="text-[--white] font-semibold" id="pay-stat-transferencia">—</span>
             </div>
+            <div class="flex justify-between items-center text-sm">
+              <span style="color:#009ee3" class="font-semibold">🤝 MercadoPago (Online)</span>
+              <span class="text-[--white] font-semibold" id="pay-stat-mercadopago">—</span>
+            </div>
             <div class="border-t border-[#2b2b30] pt-3 flex justify-between items-center text-sm">
               <span class="text-[--grey-50] font-semibold uppercase tracking-wider text-xs">Sin registrar</span>
               <span class="text-[--grey-50] font-semibold" id="pay-stat-sin">—</span>
@@ -2196,10 +2200,10 @@
         window._paymentChart = new Chart(ctxPay, {
           type: 'doughnut',
           data: {
-            labels: ['Efectivo', 'Débito', 'Crédito', 'Transferencia'],
+            labels: ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'MercadoPago'],
             datasets: [{
-              data: [0, 0, 0, 0],
-              backgroundColor: [green, gold, '#5f6fe0', '#e05f6f'],
+              data: [0, 0, 0, 0, 0],
+              backgroundColor: [green, gold, '#5f6fe0', '#e05f6f', '#009ee3'],
               borderWidth: 0,
               hoverOffset: 4
             }]
@@ -2217,9 +2221,13 @@
 
       // Función global para actualizar métodos de pago desde renderBookings
       window.updatePaymentStats = function(bookings) {
-        const counts = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, '': 0 };
+        const counts = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, 'MercadoPago': 0, '': 0 };
         bookings.forEach(b => {
-          const pm = b.payment_method || '';
+          let pm = b.payment_method || '';
+          // Si el método está en blanco pero las notas dicen MercadoPago, lo asignamos:
+          if (!pm && b.notes && b.notes.toLowerCase().includes('mercadopago')) {
+            pm = 'MercadoPago';
+          }
           if (pm in counts) counts[pm]++;
           else counts[''] = (counts[''] || 0) + 1;
         });
@@ -2227,7 +2235,7 @@
         // Actualizar chart
         if (window._paymentChart) {
           window._paymentChart.data.datasets[0].data = [
-            counts['Efectivo'], counts['Débito'], counts['Crédito'], counts['Transferencia']
+            counts['Efectivo'], counts['Débito'], counts['Crédito'], counts['Transferencia'], counts['MercadoPago']
           ];
           window._paymentChart.update();
         }
@@ -2238,6 +2246,7 @@
         setEl('pay-stat-debito', counts['Débito']);
         setEl('pay-stat-credito', counts['Crédito']);
         setEl('pay-stat-transferencia', counts['Transferencia']);
+        setEl('pay-stat-mercadopago', counts['MercadoPago']);
         setEl('pay-stat-sin', counts['']);
       };
     });
