@@ -535,7 +535,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   const cleanRut = formatRUT(rut);
 
   const payment = document.querySelector('input[name="f-payment"]:checked').value;
-  const paymentText = payment === 'transferencia' ? 'Transferencia (Pago anticipado)' : 'Pago en el local';
+  const paymentText = payment === 'mercadopago' ? 'MercadoPago (Online)' : 'Pago en el local';
   const finalNotes = notes ? `${notes} | Pago: ${paymentText}` : `Pago: ${paymentText}`;
 
   const booking = {
@@ -547,26 +547,68 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     time: state.time || '—',
     barber: state.barber || '—',
     createdAt: new Date().toISOString(),
+    payment_method: paymentText
   };
 
   const confirmBtn = document.getElementById('s4-confirm');
   confirmBtn.disabled = true;
-  confirmBtn.textContent = 'Guardando...';
+  confirmBtn.textContent = 'Procesando...';
 
-  // 1) Save to Supabase (or localStorage fallback) + upsert client profile
+  // Si eligió MercadoPago, abrimos el flujo online
+  if (payment === 'mercadopago') {
+    if (!SUPABASE_ON) { showToast('MercadoPago requiere conexión a Supabase real.'); confirmBtn.disabled = false; return; }
+    
+    try {
+      const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
+      
+      // Llamamos a la Edge Function
+      const { data, error } = await sb.functions.invoke('create-preference', {
+        body: {
+          title: state.service,
+          price: numericPrice,
+          payer_email: email || 'sin@correo.com',
+          payer_name: name,
+          metadata: booking // Pasamos la reserva entera invisiblemente
+        }
+      });
+      
+      if (error || !data?.id) throw new Error(error?.message || 'No preference ID');
+
+      // Inicializar MP
+      const mp = new window.MercadoPago('APP_USR-7539abe2-e99b-4f15-b127-cf49b3db5626', { locale: 'es-CL' });
+      
+      // Renderear un mini contenedor (Checkout Bricks ocultos o Checkout Pro modal)
+      mp.checkout({
+        preference: { id: data.id },
+        autoOpen: true // Abre el popup/redirección automático
+      });
+      
+      // Detenemos el código aquí, MercadoPago asume el control
+      confirmBtn.textContent = 'Redirigiendo a MercadoPago...';
+      return; 
+    } catch (err) {
+      console.error('Error MP:', err);
+      showToast('Hubo un error al conectar con MercadoPago. Intenta Pagar en el Local.');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirmar reserva';
+      return;
+    }
+  }
+
+  // Si eligió pago Local: Proceso tradicional
   const result = await persistBooking(booking);
   
   if (!result.ok && result.collision) {
     confirmBtn.disabled = false;
     confirmBtn.textContent = 'Confirmar reserva';
     alert("Lo sentimos, esa hora acaba de ser tomada por otro cliente hace unos instantes. Por favor, vuelve al paso 1 y elige una hora distinta.");
-    return; // Frenar ejecución
+    return;
   }
 
   const bookingId = result.bookingId;
   await upsertClient(booking, bookingId);
 
-  // 2) Mostrar pantalla de éxito (el WhatsApp llega automáticamente via Supabase + Twilio)
+  // 2) Mostrar pantalla de éxito
   stepContents.forEach(sc => sc.classList.remove('active'));
   document.querySelector('.steps-indicator').style.visibility = 'hidden';
   document.getElementById('success-screen').classList.add('visible');
@@ -576,6 +618,27 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
 
   confirmBtn.disabled = false;
   confirmBtn.textContent = 'Confirmar reserva';
+});
+
+// Listener de retorno de MercadoPago (Si autoOpen redirigió y volvió con params)
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('collection_status') === 'approved') {
+    // El usuario volvió de pagar su reserva con éxito
+    // Ya que el Webhook en el servidor guardará la reserva en DB, aquí solo celebramos
+    openModal(null);
+    goToStep(4);
+    stepContents.forEach(sc => sc.classList.remove('active'));
+    document.querySelector('.steps-indicator').style.visibility = 'hidden';
+    document.getElementById('success-screen').classList.add('visible');
+    document.getElementById('success-msg').innerHTML =
+      `¡Pago Exitoso por MercadoPago! Tu reserva online ya está registrada y en sistema. ¡Gracias por confiar en nosotros!`;
+    // Limpiar url
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (params.get('collection_status') === 'rejected' || params.get('collection_status') === 'null') {
+     alert('Tu pago no pudo ser completado. Por favor, realiza la reserva eligiendo pago en el local.');
+     window.history.replaceState({}, document.title, window.location.pathname);
+  }
 });
 
 /* ──────────────────────────────────────────────────────────────
