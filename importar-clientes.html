@@ -401,7 +401,7 @@
         <span class="arrow">→</span>
         <span class="to">phone</span>
 
-        <span class="from">Puntaje</span>
+        <span class="from">Puntos Fidelización (o Puntaje)</span>
         <span class="arrow">→</span>
         <span class="to">points</span>
 
@@ -480,7 +480,8 @@
       const phone       = cleanPhone(phoneMobile || phoneFixed);
 
       const email  = get('e-mail', 'email', 'correo', 'electronico', 'electrónico');
-      const points = parseInt(get('Puntaje', 'puntaje', 'puntos')) || 0;
+      const rawPoints = get('Puntos Fidelización', 'fidelizacion', 'fidelización', 'Puntaje', 'puntaje', 'puntos');
+      const points = parseInt(rawPoints) || 0;
       const rut    = get('rut', 'run', 'documento', 'identificaci');
 
       return {
