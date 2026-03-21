@@ -572,16 +572,11 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
         }
       });
       
-      if (error || !data?.id) throw new Error(error?.message || 'No preference ID');
+      if (error || !data?.id || !data?.init_point) throw new Error(error?.message || 'No preference ID');
 
-      // Inicializar MP
-      const mp = new window.MercadoPago('APP_USR-7539abe2-e99b-4f15-b127-cf49b3db5626', { locale: 'es-CL' });
-      
-      // Renderear un mini contenedor (Checkout Bricks ocultos o Checkout Pro modal)
-      mp.checkout({
-        preference: { id: data.id },
-        autoOpen: true // Abre el popup/redirección automático
-      });
+      // En lugar de abrir un "modal" sobre la página (que falla al iniciar sesión en Incógnito o Safari por cookies de terceros),
+      // Redirigimos al cliente en pantalla completa a la URL segura de cobro oficial de MercadoPago (init_point).
+      window.location.href = data.init_point;
       
       // Detenemos el código aquí, MercadoPago asume el control
       confirmBtn.textContent = 'Redirigiendo a MercadoPago...';
