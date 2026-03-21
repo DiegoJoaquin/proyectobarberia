@@ -427,18 +427,24 @@ button {
 }
 
 .barber-avatar {
-  width: 46px;
-  height: 46px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  border: 1.5px solid var(--grey-60);
-  object-fit: cover;
-  object-position: top;
-  flex-shrink: 0;
-  transition: border-color var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--grey-90);
+  color: var(--grey-40);
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  border: 2px solid var(--grey-70);
+  transition: border-color var(--transition), transform var(--transition), color var(--transition), background var(--transition);
 }
 
 .barber-item:hover .barber-avatar {
   border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-4px);
 }
 
 .barber-info {
@@ -994,17 +1000,24 @@ button {
   background: rgba(184, 151, 90, 0.07);
 }
 
-.barber-pick-card img {
+.modal-barber-avatar {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  object-fit: cover;
-  object-position: top;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--grey-80);
+  color: var(--grey-40);
+  font-size: 1.3rem;
   border: 1.5px solid var(--grey-60);
+  transition: border-color var(--transition), color var(--transition);
+  flex-shrink: 0;
 }
 
-.barber-pick-card.selected img {
+.barber-pick-card.selected .modal-barber-avatar {
   border-color: var(--gold);
+  color: var(--white);
 }
 
 .bpc-name {
