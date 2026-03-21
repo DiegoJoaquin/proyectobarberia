@@ -19,9 +19,9 @@
   --grey-10: #f3f4f6;
   --white: #e7e5e4; /* text-stone-200 */
   
-  /* Secundario: Bronce Envejecido */
-  --gold: #b45309; /* text-amber-700 */
-  --gold-dim: #78350f; /* border-amber-900 */
+  /* Secundario: Blanco Puro (Originalmente Bronce Envejecido) */
+  --gold: #ffffff; 
+  --gold-dim: #d1d5db;
   
   /* Fuerza: Rojo Lacedemonio (Sangre de Toro) */
   --red: #450a0a; /* bg-red-950 */
@@ -136,6 +136,7 @@ button {
 .nav-brand-img {
   height: clamp(44px, 5.5vw, 68px);
   width: auto;
+  border-radius: 50%;
   object-fit: contain;
   transition: height var(--transition);
 }
