@@ -427,15 +427,15 @@ button {
 }
 
 .barber-avatar {
-  width: 90px;
-  height: 90px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--grey-90);
   color: var(--grey-40);
-  font-size: 2.5rem;
+  font-size: 1.6rem;
   margin-bottom: 12px;
   border: 2px solid var(--grey-70);
   transition: border-color var(--transition), transform var(--transition), color var(--transition), background var(--transition);
@@ -1001,15 +1001,15 @@ button {
 }
 
 .modal-barber-avatar {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--grey-80);
   color: var(--grey-40);
-  font-size: 1.3rem;
+  font-size: 1.15rem;
   border: 1.5px solid var(--grey-60);
   transition: border-color var(--transition), color var(--transition);
   flex-shrink: 0;
