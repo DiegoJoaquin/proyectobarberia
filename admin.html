@@ -1487,6 +1487,23 @@
       function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
       function initials(name) { return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
 
+      // --- Helper: Fecha real de la cita para reporteo histórico global
+      const MONTHS_MAP = { 'ene':0, 'feb':1, 'mar':2, 'abr':3, 'may':4, 'jun':5, 'jul':6, 'ago':7, 'sep':8, 'oct':9, 'nov':10, 'dic':11 };
+      window.getAppointmentDate = function(b) {
+         if (!b.date) return new Date(b.created_at || b.createdAt); // Fallback
+         const parts = b.date.split(' ');
+         if (parts.length >= 3) {
+             const mStr = parts[2].substring(0,3).toLowerCase();
+             const m = MONTHS_MAP[mStr];
+             const d = parseInt(parts[1], 10);
+             if (m !== undefined && !isNaN(d)) {
+                 const currentY = new Date().getFullYear();
+                 return new Date(currentY, m, d);
+             }
+         }
+         return new Date(b.created_at || b.createdAt);
+      };
+
       /* ── HELPER PAGINACIÓN SUPABASE ────────────────── */
       async function fetchPaginated(table, orderField, asc = false) {
           let allData = [];
@@ -1924,10 +1941,8 @@
 
          let cash = 0, card = 0, mp = 0, total = 0, count = 0, uncollected = 0, uncollectedCount = 0;
          allBookings.forEach(b => {
-             // IMPORTANTE: 'created_at' viene de Supabase directamente (Atención en Sitio y Webhooks), 'createdAt' viene del cliente web antiguo. Soporta ambos.
-             const dateVal = b.created_at || b.createdAt; 
-             if (!dateVal) return;
-             const bd = new Date(dateVal);
+             const bd = window.getAppointmentDate(b);
+             if (isNaN(bd)) return;
              
              if (bd >= start) {
                 const px = parsePrice(b.price);
@@ -2242,6 +2257,24 @@
         });
       }
 
+      // Función para obtener fecha real de la cita
+      const MONTHS_MAP = { 'ene':0, 'feb':1, 'mar':2, 'abr':3, 'may':4, 'jun':5, 'jul':6, 'ago':7, 'sep':8, 'oct':9, 'nov':10, 'dic':11 };
+      function getAppointmentDate(b) {
+         if (!b.date) return new Date(b.created_at || b.createdAt); // Fallback si no tiene fecha "Día N Mes"
+         const parts = b.date.split(' ');
+         if (parts.length >= 3) {
+             const mStr = parts[2].substring(0,3).toLowerCase();
+             const m = MONTHS_MAP[mStr];
+             const d = parseInt(parts[1], 10);
+             if (m !== undefined && !isNaN(d)) {
+                 const currentY = new Date().getFullYear();
+                 // Asume que la cita fue este año. Si el sistema necesita años cruzados requerirá backend changes
+                 return new Date(currentY, m, d);
+             }
+         }
+         return new Date(b.created_at || b.createdAt);
+      }
+
       window.updateDashboardCharts = function() {
          if (!window.allBookings) return;
          const periodSelect = document.getElementById('dashboard-period');
@@ -2262,8 +2295,7 @@
          }
 
          const filteredBookings = window.allBookings.filter(b => {
-             const bd = new Date(b.created_at || b.createdAt);
-             return bd >= start;
+             return getAppointmentDate(b) >= start;
          });
 
          // --- 1. KPIs Globales
@@ -2276,7 +2308,7 @@
          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
          window.allBookings.forEach(b => {
-             const bd = new Date(b.created_at || b.createdAt);
+             const bd = getAppointmentDate(b);
              if (isNaN(bd)) return;
              const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
              const px = parseInt(pxStr, 10) || 0;
@@ -2301,17 +2333,15 @@
 
          // --- 2. Barbero Doughnut
          const barbersCount = {
-             'Emanuel': 0,
-             'Matías': 0,
-             'Ángel': 0,
-             'Benjamín': 0,
-             'Gonzalo': 0
+             'Emanuel': 0, 'Matías': 0, 'Ángel': 0, 'Benjamín': 0, 'Gonzalo': 0
          };
+         // Colores muy distintos: Dorado, Verde claro, Rojo suave, Púrpura, Azul rey
+         const barberColors = ['#B67A43', '#3ECF8E', '#e05f6f', '#965fe0', '#009ee3', '#a3a3ab']; 
+
          filteredBookings.forEach(b => {
              const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
              if (b.attended || isOnline) {
                  const fullName = b.barber || 'Otro';
-                 // Normalizamos el nombre buscando coincidencias
                  let matched = false;
                  for (const k of Object.keys(barbersCount)) {
                      if (fullName.includes(k) || fullName.includes(k.replace('í','i'))) {
@@ -2329,8 +2359,7 @@
              const data = Object.values(barbersCount);
              window._barbersChart.data.labels = labels;
              window._barbersChart.data.datasets[0].data = data;
-             // Restaurar colores fijos por si se desordenó el mapeo
-             window._barbersChart.data.datasets[0].backgroundColor = ['#B67A43', '#9A6331', '#7F4D21', '#633713', '#482408', '#2b2b30'];
+             window._barbersChart.data.datasets[0].backgroundColor = barberColors;
              window._barbersChart.update();
          }
 
@@ -2352,7 +2381,6 @@
            if (!pm && b.notes && b.notes.toLowerCase().includes('mercadopago')) pm = 'MercadoPago';
            if (pm === 'MercadoPago (Online)') pm = 'MercadoPago';
            
-           // Si existe en el count map, sumamos; si no lo guardamos como Efectivo para cobros de Walk-In si no dice explícito, pero la UI sí manda "Efectivo"
            if (pm in counts) counts[pm]++;
            else if (pm.includes('Transf')) counts['Transferencia']++;
            else if (pm.includes('Efectivo')) counts['Efectivo']++;
@@ -2376,15 +2404,13 @@
          setEl('pay-stat-mercadopago', counts['MercadoPago']);
          setEl('pay-stat-sin', counts['']);
 
-         // --- 5. Evolución Line Chart (Agrupando por semanas o días según periodo)
-         // Para simplificar, si es histórico calcularemos los meses. Si es de la semana, los días.
+         // --- 5. Evolución Line Chart
          if (window._evoChart) {
              const dataMap = {};
              filteredBookings.forEach(b => {
                  const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
                  if (b.attended || isOnline) {
-                     const bd = new Date(b.created_at || b.createdAt);
-                     // Agrupar por Día Ej: "15/Mar"
+                     const bd = getAppointmentDate(b);
                      const label = bd.getDate() + '/' + (bd.getMonth()+1);
                      const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
                      dataMap[label] = (dataMap[label] || 0) + (parseInt(pxStr, 10) || 0);
