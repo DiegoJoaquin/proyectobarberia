@@ -484,12 +484,38 @@
       const points = parseInt(rawPoints) || 0;
       const rut    = get('rut', 'run', 'documento', 'identificaci');
 
+      const rawDate = get('Fecha registro', 'fecha regist', 'registro', 'creacion');
+      let created_at = undefined;
+      if (rawDate) {
+        if (!isNaN(rawDate)) {
+           const excelSerial = parseFloat(rawDate);
+           if (excelSerial > 10000) { // Excel Serial Date
+               const jsDate = new Date((excelSerial - 25569) * 86400 * 1000);
+               created_at = jsDate.toISOString();
+           }
+        } else {
+           // Intenta parsear String DD/MM/YYYY o YYYY-MM-DD
+           const parts = String(rawDate).split(/[\/\-]/);
+           if (parts.length >= 3) {
+               let y, m, d;
+               if (parts[2].length === 4) { d=parts[0]; m=parts[1]; y=parts[2]; } // DD/MM/YYYY
+               else if (parts[0].length === 4) { y=parts[0]; m=parts[1]; d=parts[2]; } // YYYY-MM-DD
+               
+               if (y && m && d) {
+                   const jsDate = new Date(y, parseInt(m)-1, d);
+                   if (!isNaN(jsDate.getTime())) created_at = jsDate.toISOString();
+               }
+           }
+        }
+      }
+
       return {
         name:   fullName,
         phone:  phone,
         email:  email.toLowerCase(),
         points: points,
         rut:    rut,
+        created_at: created_at,
         _raw:   row
       };
     }
@@ -576,7 +602,9 @@
           const batch = sliceWithPhone.map(c => {
             let r = c.rut ? c.rut.replace(/[^0-9kK]/gi, '').toUpperCase() : null;
             if (r?.length > 1) r = r.slice(0, -1) + '-' + r.slice(-1); else if (!r) r = null;
-            return { name: c.name, phone: c.phone, email: c.email || null, rut: r, points: c.points || 0 };
+            let obj = { name: c.name, phone: c.phone, email: c.email || null, rut: r, points: c.points || 0 };
+            if (c.created_at) obj.created_at = c.created_at;
+            return obj;
           });
           
           // Deduplicar localmente por celular para evitar "ON CONFLICT DO UPDATE cannot affect row a second time"
@@ -591,7 +619,9 @@
           const batch = sliceWithoutPhone.map(c => {
             let r = c.rut ? c.rut.replace(/[^0-9kK]/gi, '').toUpperCase() : null;
             if (r?.length > 1) r = r.slice(0, -1) + '-' + r.slice(-1); else if (!r) r = null;
-            return { name: c.name, phone: null, email: c.email || null, rut: r, points: c.points || 0 };
+            let obj = { name: c.name, phone: null, email: c.email || null, rut: r, points: c.points || 0 };
+            if (c.created_at) obj.created_at = c.created_at;
+            return obj;
           });
           
           // Prevenir duplicados (db check por nombre ya que no tienen telefono)
