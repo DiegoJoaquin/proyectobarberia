@@ -857,10 +857,19 @@
 
     <!-- ══ TAB: DASHBOARD (NUEVO) ════════════════════════════════════════ -->
     <div class="tab-panel active" id="tab-dashboard">
-      <div class="section-header">
+      <div class="section-header flex justify-between items-end" style="flex-wrap: wrap; gap: 16px;">
         <div>
           <h1 class="section-title">Centro de <em>Mando</em></h1>
           <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Visión global de Spartan Barber Co.</p>
+        </div>
+        <div class="flex gap-2">
+          <select id="dashboard-period" class="filter-input" style="padding:10px 14px; background:var(--grey-80); border:1px solid var(--grey-70); border-radius:var(--radius); color:var(--white); font-size:0.88rem; outline:none; cursor:pointer;">
+            <option value="today">Hoy</option>
+            <option value="week">Esta semana</option>
+            <option value="month" selected>Este mes</option>
+            <option value="year">Este año</option>
+            <option value="all">Todo el historial</option>
+          </select>
         </div>
       </div>
       
@@ -1008,7 +1017,7 @@
       </div>
 
       <!-- Resumen de Flujo -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8" id="finance-cards-container">
         <div class="bg-[#161619] border-l-4 border-[--green] rounded p-4">
           <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Efectivo Recibido</p>
           <p class="text-[--white] font-serif text-2xl" id="fin-cash">$0</p>
@@ -1017,12 +1026,16 @@
           <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Tarjetas / Transf.</p>
           <p class="text-[--white] font-serif text-2xl" id="fin-card">$0</p>
         </div>
+        <div class="bg-[#161619] border-l-4 border-[#009ee3] rounded p-4">
+          <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">MercadoPago (Online)</p>
+          <p class="text-[#009ee3] font-serif text-2xl" id="fin-mp">$0</p>
+        </div>
         <div class="bg-[#161619] border-l-4 border-white rounded p-4">
           <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Total Generado</p>
           <p class="text-white font-serif text-2xl" id="fin-total">$0</p>
           <p class="text-[--grey-50] text-[0.65rem] mt-1" id="fin-count">0 citas cobradas</p>
         </div>
-        <div class="bg-[#161619] border-l-4 border-[#7f1d1d] rounded p-4 md:col-span-3">
+        <div class="bg-[#161619] border-l-4 border-[#7f1d1d] rounded p-4 md:col-span-4">
           <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Citas Pendientes de Cobro (No atendidas aún)</p>
           <p class="text-red-400 font-serif text-2xl" id="fin-uncollected">$0</p>
           <p class="text-[--grey-50] text-[0.65rem] mt-1" id="fin-uncollected-count">0 citas pttes</p>
@@ -1744,10 +1757,16 @@
         document.getElementById('table-section').style.display = 'none';
         document.getElementById('clients-grid').innerHTML = '';
         [allBookings, allClients] = await Promise.all([fetchBookings(), fetchClients()]);
+        
+        // Export to global scope for chart access
+        window.allBookings = allBookings;
+        window.allClients = allClients;
+        
         renderBookings(document.getElementById('search-bookings').value);
         renderClients(document.getElementById('search-clients').value);
         renderAgenda(); // Renderiza la agenda visual
         if (typeof updateFinanzas === 'function') updateFinanzas();
+        if (typeof window.updateDashboardCharts === 'function') window.updateDashboardCharts();
       }
 
       /* ── AGENDA VISUAL (NUEVA LÓGICA) ────────────────── */
@@ -1903,15 +1922,25 @@
             start = new Date(2000, 0, 1);
          }
 
-         let cash = 0, card = 0, total = 0, count = 0, uncollected = 0, uncollectedCount = 0;
+         let cash = 0, card = 0, mp = 0, total = 0, count = 0, uncollected = 0, uncollectedCount = 0;
          allBookings.forEach(b => {
-             const bd = new Date(b.createdAt);
+             // IMPORTANTE: 'created_at' viene de Supabase directamente (Atención en Sitio y Webhooks), 'createdAt' viene del cliente web antiguo. Soporta ambos.
+             const dateVal = b.created_at || b.createdAt; 
+             if (!dateVal) return;
+             const bd = new Date(dateVal);
+             
              if (bd >= start) {
                 const px = parsePrice(b.price);
-                if (b.attended) {
-                   if (b.payment_method === 'Efectivo') cash += px;
+                
+                // MercadoPago se cobra por adelantado, se asume cobrado siempre.
+                const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+                const isCollected = b.attended || isOnline;
+
+                if (isCollected) {
+                   if (isOnline) mp += px;
+                   else if (b.payment_method === 'Efectivo') cash += px;
                    else if (b.payment_method) card += px;
-                   else cash += px; // asume efectivo si está vacío y atendido
+                   else cash += px; // asume efectivo si está vacío pero sí fue atendido
                    total += px;
                    count++;
                 } else {
@@ -1925,6 +1954,7 @@
          const el = (id) => document.getElementById(id);
          if (el('fin-cash')) el('fin-cash').textContent = '$' + cash.toLocaleString('es-CL');
          if (el('fin-card')) el('fin-card').textContent = '$' + card.toLocaleString('es-CL');
+         if (el('fin-mp')) el('fin-mp').textContent = '$' + mp.toLocaleString('es-CL');
          if (el('fin-total')) el('fin-total').textContent = '$' + total.toLocaleString('es-CL');
          if (el('fin-count')) el('fin-count').textContent = count + (count === 1 ? ' cita cobrada' : ' citas cobradas');
          if (el('fin-uncollected')) el('fin-uncollected').textContent = '$' + uncollected.toLocaleString('es-CL');
@@ -2144,9 +2174,8 @@
     })();
   </script>
   <script>
-    /* ══ CHART.JS DASHBOARD DUMMY DATA ═════════════════════════════ */
+    /* ══ CHART.JS DASHBOARD DINÁMICO ═════════════════════════════ */
     document.addEventListener('DOMContentLoaded', () => {
-      // Configuración de colores globales
       Chart.defaults.color = '#a3a3ab';
       Chart.defaults.font.family = "'Inter', sans-serif";
       
@@ -2158,42 +2187,16 @@
       // 1. Gráfico de Evolución (Líneas)
       const ctxEvo = document.getElementById('chart-evolution')?.getContext('2d');
       if (ctxEvo) {
-        new Chart(ctxEvo, {
+        window._evoChart = new Chart(ctxEvo, {
           type: 'line',
-          data: {
-            labels: ['Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar'],
-            datasets: [
-              {
-                label: 'Ingresos',
-                data: [1.2, 1.5, 2.1, 1.8, 2.3, 2.85],
-                borderColor: gold,
-                backgroundColor: 'rgba(182, 122, 67, 0.1)',
-                tension: 0.4,
-                fill: true
-              },
-              {
-                label: 'Utilidad',
-                data: [0.7, 0.9, 1.3, 1.0, 1.4, 1.8],
-                borderColor: green,
-                borderDash: [5, 5],
-                tension: 0.4
-              },
-              {
-                label: 'Gastos',
-                data: [0.5, 0.6, 0.8, 0.8, 0.9, 1.05],
-                borderColor: red,
-                tension: 0.4
-              }
-            ]
-          },
+          data: { labels: [], datasets: [
+            { label: 'Ingresos Netos Totales', data: [], borderColor: gold, backgroundColor: 'rgba(182, 122, 67, 0.1)', tension: 0.4, fill: true }
+          ]},
           options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'bottom' }
-            },
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
             scales: {
-              y: { grid: { color: darkBorder }, ticks: { callback: (v) => '$' + v + 'M' } },
+              y: { grid: { color: darkBorder }, ticks: { callback: (v) => '$' + (v >= 1000 ? (v/1000)+'k' : v) }},
               x: { grid: { color: darkBorder } }
             }
           }
@@ -2203,108 +2206,185 @@
       // 2. Gráfico por Barbero (Doughnut)
       const ctxBarbers = document.getElementById('chart-barbers')?.getContext('2d');
       if (ctxBarbers) {
-        new Chart(ctxBarbers, {
+        window._barbersChart = new Chart(ctxBarbers, {
           type: 'doughnut',
           data: {
-            labels: ['Emanuel', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo'],
-            datasets: [{
-              data: [30, 25, 20, 15, 10],
-              backgroundColor: ['#B67A43', '#9A6331', '#7F4D21', '#633713', '#482408'],
-              borderWidth: 0,
-              hoverOffset: 4
-            }]
+            labels: [],
+            datasets: [{ data: [], backgroundColor: ['#B67A43', '#9A6331', '#7F4D21', '#633713', '#482408'], borderWidth: 0, hoverOffset: 4 }]
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'right', labels: { boxWidth: 12 } }
-            },
-            cutout: '70%'
-          }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } }, cutout: '70%' }
         });
       }
 
       // 3. Gráfico Estado de Citas (Doughnut)
       const ctxStatus = document.getElementById('chart-status')?.getContext('2d');
       if (ctxStatus) {
-        new Chart(ctxStatus, {
+        window._statusChart = new Chart(ctxStatus, {
           type: 'doughnut',
           data: {
-            labels: ['Atendidos', 'Pendientes', 'No Llegó', 'Anulados'],
-            datasets: [{
-              data: [65, 20, 10, 5],
-              backgroundColor: [green, gold, '#5f5f66', red],
-              borderWidth: 0,
-              hoverOffset: 4
-            }]
+            labels: ['Atendidos', 'Pendientes/Futuras'],
+            datasets: [{ data: [0, 0], backgroundColor: [green, gold], borderWidth: 0, hoverOffset: 4 }]
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'right', labels: { boxWidth: 12 } }
-            },
-            cutout: '70%'
-          }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } }, cutout: '70%' }
         });
       }
 
-      // 4. Gráfico de Métodos de Pago (con datos reales vivos)
+      // 4. Gráfico de Métodos de Pago
       const ctxPay = document.getElementById('chart-payment')?.getContext('2d');
       if (ctxPay) {
         window._paymentChart = new Chart(ctxPay, {
           type: 'doughnut',
           data: {
             labels: ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'MercadoPago'],
-            datasets: [{
-              data: [0, 0, 0, 0, 0],
-              backgroundColor: [green, gold, '#5f6fe0', '#e05f6f', '#009ee3'],
-              borderWidth: 0,
-              hoverOffset: 4
-            }]
+            datasets: [{ data: [0, 0, 0, 0, 0], backgroundColor: [green, gold, '#5f6fe0', '#e05f6f', '#009ee3'], borderWidth: 0, hoverOffset: 4 }]
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'right', labels: { boxWidth: 12 } }
-            },
-            cutout: '68%'
-          }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } }, cutout: '68%' }
         });
       }
 
-      // Función global para actualizar métodos de pago desde renderBookings
-      window.updatePaymentStats = function(bookings) {
-        const counts = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, 'MercadoPago': 0, '': 0 };
-        bookings.forEach(b => {
-          let pm = b.payment_method || '';
-          // Si el método está en blanco pero las notas dicen MercadoPago, lo asignamos:
-          if (!pm && b.notes && b.notes.toLowerCase().includes('mercadopago')) {
-            pm = 'MercadoPago';
-          }
-          if (pm in counts) counts[pm]++;
-          else counts[''] = (counts[''] || 0) + 1;
-        });
-        
-        // Actualizar chart
-        if (window._paymentChart) {
-          window._paymentChart.data.datasets[0].data = [
-            counts['Efectivo'], counts['Débito'], counts['Crédito'], counts['Transferencia'], counts['MercadoPago']
-          ];
-          window._paymentChart.update();
-        }
+      window.updateDashboardCharts = function() {
+         if (!window.allBookings) return;
+         const periodSelect = document.getElementById('dashboard-period');
+         const period = periodSelect ? periodSelect.value : 'month';
+         const now = new Date();
+         let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+         
+         if (period === 'week') {
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+            start = new Date(now.getFullYear(), now.getMonth(), diff);
+         } else if (period === 'month') {
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+         } else if (period === 'year') {
+            start = new Date(now.getFullYear(), 0, 1);
+         } else if (period === 'all') {
+            start = new Date(2000, 0, 1);
+         }
 
-        // Actualizar listas de texto
-        const setEl = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n + ' reservas'; };
-        setEl('pay-stat-efectivo', counts['Efectivo']);
-        setEl('pay-stat-debito', counts['Débito']);
-        setEl('pay-stat-credito', counts['Crédito']);
-        setEl('pay-stat-transferencia', counts['Transferencia']);
-        setEl('pay-stat-mercadopago', counts['MercadoPago']);
-        setEl('pay-stat-sin', counts['']);
+         const filteredBookings = window.allBookings.filter(b => {
+             const bd = new Date(b.created_at || b.createdAt);
+             return bd >= start;
+         });
+
+         // --- 1. KPIs Globales
+         let todayIncome = 0;
+         let monthIncome = 0;
+         let ticketTotal = 0;
+         let ticketCount = 0;
+         
+         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+         window.allBookings.forEach(b => {
+             const bd = new Date(b.created_at || b.createdAt);
+             if (isNaN(bd)) return;
+             const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
+             const px = parseInt(pxStr, 10) || 0;
+             const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+             const isCollected = b.attended || isOnline;
+             
+             if (isCollected) {
+                 if (bd >= todayStart) todayIncome += px;
+                 if (bd >= monthStart) monthIncome += px;
+                 if (bd >= start) { ticketTotal += px; ticketCount++; }
+             }
+         });
+         
+         const avgTicket = ticketCount > 0 ? (ticketTotal / ticketCount) : 0;
+         const newClientsThisMonth = window.allClients ? window.allClients.filter(c => new Date(c.created_at) >= monthStart).length : 0;
+
+         const el = id => document.getElementById(id);
+         if (el('kpi-today')) el('kpi-today').textContent = '$' + todayIncome.toLocaleString('es-CL');
+         if (el('kpi-month')) el('kpi-month').textContent = '$' + monthIncome.toLocaleString('es-CL');
+         if (el('kpi-new')) el('kpi-new').textContent = newClientsThisMonth;
+         if (el('kpi-ticket')) el('kpi-ticket').textContent = '$' + Math.round(avgTicket).toLocaleString('es-CL');
+
+         // --- 2. Barbero Doughnut
+         const barbersCount = {};
+         filteredBookings.forEach(b => {
+             if (b.attended || b.payment_method?.includes('MercadoPago')) {
+                 const name = b.barber?.split(' ')[0] || 'Desconocido';
+                 barbersCount[name] = (barbersCount[name] || 0) + 1;
+             }
+         });
+         
+         if (window._barbersChart) {
+             window._barbersChart.data.labels = Object.keys(barbersCount).length ? Object.keys(barbersCount) : ['Sin datos'];
+             window._barbersChart.data.datasets[0].data = Object.keys(barbersCount).length ? Object.values(barbersCount) : [1];
+             window._barbersChart.update();
+         }
+
+         // --- 3. Estado de Citas
+         let atendidas = 0, pendientes = 0;
+         filteredBookings.forEach(b => {
+             if (b.attended) atendidas++;
+             else pendientes++;
+         });
+         if (window._statusChart) {
+             window._statusChart.data.datasets[0].data = [atendidas, pendientes];
+             window._statusChart.update();
+         }
+
+         // --- 4. Payment Stats
+         const counts = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, 'MercadoPago': 0, '': 0 };
+         filteredBookings.forEach(b => {
+           let pm = b.payment_method || '';
+           if (!pm && b.notes && b.notes.toLowerCase().includes('mercadopago')) pm = 'MercadoPago';
+           if (pm === 'MercadoPago (Online)') pm = 'MercadoPago';
+           
+           // Si existe en el count map, sumamos; si no lo guardamos como Efectivo para cobros de Walk-In si no dice explícito, pero la UI sí manda "Efectivo"
+           if (pm in counts) counts[pm]++;
+           else if (pm.includes('Transf')) counts['Transferencia']++;
+           else if (pm.includes('Efectivo')) counts['Efectivo']++;
+           else if (pm.includes('ébito')) counts['Débito']++;
+           else if (pm.includes('rédito')) counts['Crédito']++;
+           else counts['']++;
+         });
+         
+         if (window._paymentChart) {
+           window._paymentChart.data.datasets[0].data = [
+             counts['Efectivo'], counts['Débito'], counts['Crédito'], counts['Transferencia'], counts['MercadoPago']
+           ];
+           window._paymentChart.update();
+         }
+
+         const setEl = (id, n) => { const x = document.getElementById(id); if (x) x.textContent = n + ' reservas'; };
+         setEl('pay-stat-efectivo', counts['Efectivo']);
+         setEl('pay-stat-debito', counts['Débito']);
+         setEl('pay-stat-credito', counts['Crédito']);
+         setEl('pay-stat-transferencia', counts['Transferencia']);
+         setEl('pay-stat-mercadopago', counts['MercadoPago']);
+         setEl('pay-stat-sin', counts['']);
+
+         // --- 5. Evolución Line Chart (Agrupando por semanas o días según periodo)
+         // Para simplificar, si es histórico calcularemos los meses. Si es de la semana, los días.
+         if (window._evoChart) {
+             const dataMap = {};
+             filteredBookings.forEach(b => {
+                 const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+                 if (b.attended || isOnline) {
+                     const bd = new Date(b.created_at || b.createdAt);
+                     // Agrupar por Día Ej: "15/Mar"
+                     const label = bd.getDate() + '/' + (bd.getMonth()+1);
+                     const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
+                     dataMap[label] = (dataMap[label] || 0) + (parseInt(pxStr, 10) || 0);
+                 }
+             });
+             
+             const labels = Object.keys(dataMap).sort((a,b) => {
+                 const [dA,mA]=a.split('/'); const [dB,mB]=b.split('/');
+                 if(mA!==mB) return mA-mB; return dA-dB;
+             });
+             const dataPoints = labels.map(l => dataMap[l]);
+             
+             window._evoChart.data.labels = labels.length ? labels : ['0'];
+             window._evoChart.data.datasets[0].data = dataPoints.length ? dataPoints : [0];
+             window._evoChart.update();
+         }
       };
+
+      // Event Listener filter
+      document.getElementById('dashboard-period')?.addEventListener('change', window.updateDashboardCharts);
     });
   </script>
 </body>
