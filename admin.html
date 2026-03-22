@@ -2300,17 +2300,37 @@
          if (el('kpi-ticket')) el('kpi-ticket').textContent = '$' + Math.round(avgTicket).toLocaleString('es-CL');
 
          // --- 2. Barbero Doughnut
-         const barbersCount = {};
+         const barbersCount = {
+             'Emanuel': 0,
+             'Matías': 0,
+             'Ángel': 0,
+             'Benjamín': 0,
+             'Gonzalo': 0
+         };
          filteredBookings.forEach(b => {
-             if (b.attended || b.payment_method?.includes('MercadoPago')) {
-                 const name = b.barber?.split(' ')[0] || 'Desconocido';
-                 barbersCount[name] = (barbersCount[name] || 0) + 1;
+             const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+             if (b.attended || isOnline) {
+                 const fullName = b.barber || 'Otro';
+                 // Normalizamos el nombre buscando coincidencias
+                 let matched = false;
+                 for (const k of Object.keys(barbersCount)) {
+                     if (fullName.includes(k) || fullName.includes(k.replace('í','i'))) {
+                         barbersCount[k]++;
+                         matched = true;
+                         break;
+                     }
+                 }
+                 if (!matched) barbersCount[fullName.split(' ')[0]] = (barbersCount[fullName.split(' ')[0]] || 0) + 1;
              }
          });
          
          if (window._barbersChart) {
-             window._barbersChart.data.labels = Object.keys(barbersCount).length ? Object.keys(barbersCount) : ['Sin datos'];
-             window._barbersChart.data.datasets[0].data = Object.keys(barbersCount).length ? Object.values(barbersCount) : [1];
+             const labels = Object.keys(barbersCount);
+             const data = Object.values(barbersCount);
+             window._barbersChart.data.labels = labels;
+             window._barbersChart.data.datasets[0].data = data;
+             // Restaurar colores fijos por si se desordenó el mapeo
+             window._barbersChart.data.datasets[0].backgroundColor = ['#B67A43', '#9A6331', '#7F4D21', '#633713', '#482408', '#2b2b30'];
              window._barbersChart.update();
          }
 
