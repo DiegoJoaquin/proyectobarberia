@@ -37,24 +37,19 @@ Deno.serve(async (req: Request) => {
       return new Response('Missing credentials', { status: 500 });
     }
 
-    // Armar el mensaje de confirmación
-    const message =
-      `✅ *¡Reserva Confirmada!* — Spartan Barber Co.
+    // --- TWILIO CONTENT API (Método oficial 2024 para Templates) ---
+    // Usamos el ID del Template en lugar de escribir el texto a mano
+    const CONTENT_SID = 'HX8c4c8a841ed6345ccc60814977cbb058';
 
-Hola, *${booking.name}*. Tu hora está agendada:
-
-📋 *Servicio:* ${booking.service || '—'}
-📅 *Fecha:* ${booking.date || '—'}
-⏰ *Hora:* ${booking.time || '—'}
-✂️ *Barbero:* ${booking.barber || 'A confirmar'}
-💰 *Precio:* ${booking.price || '—'}
-
-📍 Av. P. Alberto Hurtado 03, Local 22, Machalí
-
-Si necesitas cambiar o cancelar tu hora, contáctanos:
-📞 +56 9 8267 9620
-
-¡Te esperamos! ⚔️`;
+    // Rellenamos las variables {{1}}, {{2}}, etc. del template
+    const contentVariables = {
+      "1": String(booking.name || 'Cliente'),
+      "2": String(booking.service || '—'),
+      "3": String(booking.date || '—'),
+      "4": String(booking.time || '—'),
+      "5": String(booking.barber || '—'),
+      "6": String(booking.price || '—')
+    };
 
     // Llamar a la API de Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
@@ -63,7 +58,8 @@ Si necesitas cambiar o cancelar tu hora, contáctanos:
     const body = new URLSearchParams({
       To: toPhone,
       From: TWILIO_FROM,
-      Body: message,
+      ContentSid: CONTENT_SID,
+      ContentVariables: JSON.stringify(contentVariables),
     });
 
     const response = await fetch(twilioUrl, {
