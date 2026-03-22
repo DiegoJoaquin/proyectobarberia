@@ -494,8 +494,9 @@
                created_at = jsDate.toISOString();
            }
         } else {
-           // Intenta parsear String DD/MM/YYYY o YYYY-MM-DD
-           const parts = String(rawDate).split(/[\/\-]/);
+           // String Date (puede venir con hora "DD-MM-YYYY HH:mm")
+           const dateOnly = String(rawDate).trim().split(' ')[0];
+           const parts = dateOnly.split(/[\/\-]/);
            if (parts.length >= 3) {
                let y, m, d;
                if (parts[2].length === 4) { d=parts[0]; m=parts[1]; y=parts[2]; } // DD/MM/YYYY
@@ -509,6 +510,31 @@
         }
       }
 
+      // --- CAPTURA DE CAMPOS DE RESERVA (ATENCIONES PASADAS) ---
+      const barber  = get('barbero', 'profesional', 'colaborador', 'staff', 'responsable');
+      const service = get('servicio', 'prestacion', 'corte');
+      const rawPrice = get('precio', 'total', 'ingreso', 'monto', 'valor', 'pagado');
+      const price   = rawPrice ? parseInt(String(rawPrice).replace(/[^0-9]/g, '')) || 0 : 0;
+      
+      // Fecha de cita puede ser distinta a Fecha de Registro.
+      // En planillas de Atenciones suele llamarse "Fecha" o "Fecha Cita".
+      const bookingDateRaw = get('fecha cita', 'fecha atencion', 'fecha', 'dia');
+      let bookingDateStr = null;
+      let bookingTimeStr = '00:00';
+      if (bookingDateRaw) {
+         if (!isNaN(bookingDateRaw) && parseFloat(bookingDateRaw) > 10000) {
+             const d = new Date((parseFloat(bookingDateRaw) - 25569) * 86400 * 1000);
+             bookingDateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+         } else {
+             // asume string
+             const dtParts = String(bookingDateRaw).trim().split(' ');
+             const dOnly = dtParts[0];
+             const tOnly = dtParts[1] || '00:00';
+             bookingDateStr = dOnly; 
+             bookingTimeStr = tOnly;
+         }
+      }
+
       return {
         name:   fullName,
         phone:  phone,
@@ -516,6 +542,11 @@
         points: points,
         rut:    rut,
         created_at: created_at,
+        barber: barber,
+        service: service,
+        price: price,
+        bookingDateStr: bookingDateStr,
+        bookingTimeStr: bookingTimeStr,
         _raw:   row
       };
     }
@@ -646,6 +677,40 @@
             const res = await sb.from('clients').insert(toInsert);
             if (res.error && !error) error = res.error;
           }
+        }
+
+        // --- INSERCIÓN DE RESERVAS (ATENCIONES HISTÓRICAS) ---
+        const sliceBookings = clients.slice(i, i + BATCH_SIZE).filter(c => c.barber);
+        if (sliceBookings.length > 0) {
+            const bookingsBatch = sliceBookings.map(c => {
+                let dtISO = c.created_at; 
+                // Si la columna de fecha de cita existe, la priorizamos como el verdadero created_at de la reserva
+                if (c.bookingDateStr) {
+                    const dp = c.bookingDateStr.split('/');
+                    if (dp.length === 3) {
+                       const jd = new Date(dp[2], parseInt(dp[1])-1, dp[0]);
+                       if (!isNaN(jd.getTime())) dtISO = jd.toISOString();
+                    }
+                }
+                return {
+                    name: c.name || 'Cliente AgendaPro',
+                    phone: c.phone || '',
+                    email: c.email || '',
+                    barber: c.barber,
+                    service: c.service || 'Corte',
+                    price: c.price || 0,
+                    date: c.bookingDateStr || '', 
+                    time: c.bookingTimeStr || '00:00',
+                    attended: true,
+                    payment_method: 'Efectivo', // Default histórico
+                    notes: 'Atención importada [Legacy]',
+                    created_at: dtISO || new Date().toISOString()
+                };
+            });
+
+            // Insertamos las reservas a Supabase (No controlamos duplicados aquí, asume 1 corrida limpia)
+            const resB = await sb.from('bookings').insert(bookingsBatch);
+            if (resB.error) error = resB.error;
         }
 
         if (error) {
