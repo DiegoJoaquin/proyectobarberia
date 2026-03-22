@@ -667,10 +667,14 @@
           // Filtramos descartando los que ya existen en la base de datos para no duplicarlos
           const toInsert = batch.filter(b => !existingNames.has(b.name.toLowerCase()));
           
-          // Pero los que ya existen y ahora traen RUT, los actualizamos
-          const toUpdate = batch.filter(b => existingNames.has(b.name.toLowerCase()) && b.rut);
+          // Los que ya existen (sin teléfono), los actualizamos a la fuerza para inyectarles la fecha histórica real
+          const toUpdate = batch.filter(b => existingNames.has(b.name.toLowerCase()));
           for (const u of toUpdate) {
-             await sb.from('clients').update({ rut: u.rut }).eq('name', u.name).is('phone', null);
+             const payload = { points: u.points };
+             if (u.rut) payload.rut = u.rut;
+             if (u.created_at) payload.created_at = u.created_at;
+             
+             await sb.from('clients').update(payload).eq('name', u.name).is('phone', null);
           }
 
           if (toInsert.length > 0) {
@@ -708,9 +712,25 @@
                 };
             });
 
-            // Insertamos las reservas a Supabase (No controlamos duplicados aquí, asume 1 corrida limpia)
-            const resB = await sb.from('bookings').insert(bookingsBatch);
-            if (resB.error) error = resB.error;
+            // Deduplicación en Atenciones: Evitar subir si ya existe el combo (name, date, time)
+            if (bookingsBatch.length > 0) {
+               const bNames = bookingsBatch.map(b => b.name);
+               const bDates = bookingsBatch.map(b => b.date);
+               
+               // Buscar si en DB ya hay citas previas con esos nombres y fechas
+               const { data: existingBookings } = await sb.from('bookings')
+                 .select('name, date, time')
+                 .in('name', bNames)
+                 .in('date', bDates);
+                 
+               const existingKeys = (existingBookings || []).map(eb => `${eb.name}|${eb.date}|${eb.time}`);
+               const toInsertBookings = bookingsBatch.filter(b => !existingKeys.includes(`${b.name}|${b.date}|${b.time}`));
+               
+               if (toInsertBookings.length > 0) {
+                   const resB = await sb.from('bookings').insert(toInsertBookings);
+                   if (resB.error) error = resB.error;
+               }
+            }
         }
 
         if (error) {

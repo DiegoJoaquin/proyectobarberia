@@ -2093,8 +2093,17 @@
 
       /* ── INIT + REAL-TIME ────────────────────────────── */
       loadAll();
-      sb.channel('admin-bookings-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => loadAll()).subscribe();
-      sb.channel('admin-clients-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => loadAll()).subscribe();
+      
+      let reloadTimeout = null;
+      function debouncedLoadAll() {
+          if (reloadTimeout) clearTimeout(reloadTimeout);
+          reloadTimeout = setTimeout(() => {
+              loadAll();
+          }, 2000); // 2 segundos de pausa agrupan miles de eventos masivos
+      }
+
+      sb.channel('admin-bookings-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, debouncedLoadAll).subscribe();
+      sb.channel('admin-clients-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, debouncedLoadAll).subscribe();
     })();
   </script>
 
