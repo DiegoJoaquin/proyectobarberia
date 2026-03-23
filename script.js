@@ -527,6 +527,9 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
       const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
       
       // Llamamos a la transaccion Deno (Edge Function de Transbank)
+      // Guardamos el estado para no perder el resumen al volver
+      localStorage.setItem('booking_state', JSON.stringify(state));
+      
       const { data, error } = await sb.functions.invoke('create-webpay-tx', {
         body: {
           title: state.service,
@@ -597,6 +600,14 @@ window.addEventListener('DOMContentLoaded', () => {
     openModal(null);
     goToStep(4);
     stepContents.forEach(sc => sc.classList.remove('active'));
+    // RECUPERAR ESTADO PARA EL RESUMEN
+    const savedState = localStorage.getItem('booking_state');
+    if (savedState) {
+      Object.assign(state, JSON.parse(savedState));
+      updateSummary();
+      localStorage.removeItem('booking_state');
+    }
+
     document.querySelector('.steps-indicator').style.visibility = 'hidden';
     document.getElementById('success-screen').classList.add('visible');
     document.getElementById('success-msg').innerHTML =
