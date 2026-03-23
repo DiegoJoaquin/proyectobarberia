@@ -499,7 +499,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   const cleanRut = formatRUT(rut);
 
   const payment = document.querySelector('input[name="f-payment"]:checked').value;
-  const paymentText = payment === 'mercadopago' ? 'MercadoPago (Online)' : 'Pago en el local';
+  const paymentText = payment === 'webpay' ? 'Webpay Plus (Online)' : 'Pago en el local';
   const finalNotes = notes ? `${notes} | Pago: ${paymentText}` : `Pago: ${paymentText}`;
 
   const booking = {
@@ -518,36 +518,43 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   confirmBtn.disabled = true;
   confirmBtn.textContent = 'Procesando...';
 
-  // Si eligió MercadoPago, abrimos el flujo online
-  if (payment === 'mercadopago') {
-    if (!SUPABASE_ON) { showToast('MercadoPago requiere conexión a Supabase real.'); confirmBtn.disabled = false; return; }
+  // Si eligió Webpay Plus, abrimos el flujo online
+  if (payment === 'webpay') {
+    if (!SUPABASE_ON) { showToast('Webpay Plus requiere conexión a Supabase real.'); confirmBtn.disabled = false; return; }
     
     try {
       const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
       
-      // Llamamos a la Edge Function
-      const { data, error } = await sb.functions.invoke('create-preference', {
+      // Llamamos a la transaccion Deno (Edge Function de Transbank)
+      const { data, error } = await sb.functions.invoke('create-webpay-tx', {
         body: {
           title: state.service,
           price: numericPrice,
-          payer_email: email || 'sin@correo.com',
           payer_name: name,
-          metadata: booking // Pasamos la reserva entera invisiblemente
+          booking: booking // Depositamos la info de la cita para crearla post-pago
         }
       });
       
-      if (error || !data?.id || !data?.init_point) throw new Error(error?.message || 'No preference ID');
+      if (error || !data?.token || !data?.url) throw new Error(error?.message || 'Error al conectar con Transbank');
 
-      // En lugar de abrir un "modal" sobre la página (que falla al iniciar sesión en Incógnito o Safari por cookies de terceros),
-      // Redirigimos al cliente en pantalla completa a la URL segura de cobro oficial de MercadoPago (init_point).
-      window.location.href = data.init_point;
+      // Creamos un Formulario transparente e inyectamos el Token de TBK para catapultar al usuario de forma segura
+      const form = document.createElement('form');
+      form.action = data.url;
+      form.method = 'POST';
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'token_ws';
+      input.value = data.token;
       
-      // Detenemos el código aquí, MercadoPago asume el control
-      confirmBtn.textContent = 'Redirigiendo a MercadoPago...';
+      form.appendChild(input);
+      document.body.appendChild(form);
+      
+      confirmBtn.textContent = 'Redirigiendo a Banco...';
+      form.submit();
       return; 
     } catch (err) {
-      console.error('Error MP:', err);
-      showToast('Hubo un error al conectar con MercadoPago. Intenta Pagar en el Local.');
+      console.error('Error TBK:', err);
+      showToast('Hubo un error al iniciar Webpay Plus. Intenta Pagar en el Local.');
       confirmBtn.disabled = false;
       confirmBtn.textContent = 'Confirmar reserva';
       return;
@@ -579,23 +586,23 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   confirmBtn.textContent = 'Confirmar reserva';
 });
 
-// Listener de retorno de MercadoPago (Si autoOpen redirigió y volvió con params)
+// Listener de retorno de Pasarelas (Webpay Plus Redirecciona de Vuelta)
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('collection_status') === 'approved') {
-    // El usuario volvió de pagar su reserva con éxito
-    // Ya que el Webhook en el servidor guardará la reserva en DB, aquí solo celebramos
+  
+  if (params.get('payment') === 'success') {
+    // Al volver pago Pagado existosamente a través de las funciones Deno
     openModal(null);
     goToStep(4);
     stepContents.forEach(sc => sc.classList.remove('active'));
     document.querySelector('.steps-indicator').style.visibility = 'hidden';
     document.getElementById('success-screen').classList.add('visible');
     document.getElementById('success-msg').innerHTML =
-      `¡Pago Exitoso por MercadoPago! Tu reserva online ya está registrada y en sistema. ¡Gracias por confiar en nosotros!`;
-    // Limpiar url
+      `¡Pago Exitoso por Webpay Plus! Tu reserva online ya está registrada y en sistema. ¡Gracias por confiar en nosotros!`;
     window.history.replaceState({}, document.title, window.location.pathname);
-  } else if (params.get('collection_status') === 'rejected' || params.get('collection_status') === 'null') {
-     alert('Tu pago no pudo ser completado. Por favor, realiza la reserva eligiendo pago en el local.');
+    
+  } else if (params.get('payment') === 'failed' || params.get('payment') === 'rejected') {
+     alert('Tu pago en Webpay rebotó o fue cancelado. La reserva no se procesó. Puedes reintentar o pagar en el local.');
      window.history.replaceState({}, document.title, window.location.pathname);
   }
 });
