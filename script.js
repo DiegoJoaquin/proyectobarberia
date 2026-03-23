@@ -531,7 +531,8 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
           title: state.service,
           price: numericPrice,
           payer_name: name,
-          booking: booking // Depositamos la info de la cita para crearla post-pago
+          booking: booking, // Depositamos la info de la cita para crearla post-pago
+          frontendUrl: window.location.origin + window.location.pathname // <--- AGREGAR ESTO
         }
       });
       
