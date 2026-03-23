@@ -50,9 +50,10 @@ serve(async (req) => {
     // 4. Confirmar con Transbank (Certificación Reversa)
     const TBK_COMMERCE_CODE = Deno.env.get('TBK_COMMERCE_CODE') || "597055555532"
     const TBK_API_KEY = Deno.env.get('TBK_API_KEY') || "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C"
+    const TBK_ENVIRONMENT = Deno.env.get('TBK_ENVIRONMENT') || "INTEGRATION" // 'INTEGRATION' o 'PRODUCTION'
     
-    const isProd = TBK_COMMERCE_CODE !== "597055555532"
-    const tbkBaseUrl = isProd 
+    // Entorno Inteligente: Prueba VS Producción
+    const tbkBaseUrl = TBK_ENVIRONMENT === "PRODUCTION"
       ? 'https://webpay3g.transbank.cl'
       : 'https://webpay3gint.transbank.cl'
 

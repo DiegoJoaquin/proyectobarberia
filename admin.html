@@ -950,8 +950,8 @@
               <span class="text-[--white] font-semibold" id="pay-stat-transferencia">—</span>
             </div>
             <div class="flex justify-between items-center text-sm">
-              <span style="color:#009ee3" class="font-semibold">🤝 MercadoPago (Online)</span>
-              <span class="text-[--white] font-semibold" id="pay-stat-mercadopago">—</span>
+              <span style="color:#eb0029" class="font-semibold">💳 Webpay Plus (Online)</span>
+              <span class="text-[--white] font-semibold" id="pay-stat-webpay">—</span>
             </div>
             <div class="border-t border-[#2b2b30] pt-3 flex justify-between items-center text-sm">
               <span class="text-[--grey-50] font-semibold uppercase tracking-wider text-xs">Sin registrar</span>
@@ -1026,9 +1026,9 @@
           <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Tarjetas / Transf.</p>
           <p class="text-[--white] font-serif text-2xl" id="fin-card">$0</p>
         </div>
-        <div class="bg-[#161619] border-l-4 border-[#009ee3] rounded p-4">
-          <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">MercadoPago (Online)</p>
-          <p class="text-[#009ee3] font-serif text-2xl" id="fin-mp">$0</p>
+        <div class="bg-[#161619] border-l-4 border-[#eb0029] rounded p-4">
+          <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Webpay Plus (Online)</p>
+          <p class="text-[#eb0029] font-serif text-2xl" id="fin-webpay">$0</p>
         </div>
         <div class="bg-[#161619] border-l-4 border-white rounded p-4">
           <p class="text-[--grey-40] text-xs font-semibold uppercase tracking-widest mb-1">Total Generado</p>
@@ -1947,8 +1947,8 @@
              if (bd >= start) {
                 const px = parsePrice(b.price);
                 
-                // MercadoPago se cobra por adelantado, se asume cobrado siempre.
-                const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+                // webpay se cobra por adelantado, se asume cobrado siempre.
+                const isOnline = b.payment_method === 'Webpay Plus' || b.payment_method === 'webpay (Online)';
                 const isCollected = b.attended || isOnline;
 
                 if (isCollected) {
@@ -1969,7 +1969,7 @@
          const el = (id) => document.getElementById(id);
          if (el('fin-cash')) el('fin-cash').textContent = '$' + cash.toLocaleString('es-CL');
          if (el('fin-card')) el('fin-card').textContent = '$' + card.toLocaleString('es-CL');
-         if (el('fin-mp')) el('fin-mp').textContent = '$' + mp.toLocaleString('es-CL');
+         if (el('fin-webpay')) el('fin-webpay').textContent = '$' + mp.toLocaleString('es-CL');
          if (el('fin-total')) el('fin-total').textContent = '$' + total.toLocaleString('es-CL');
          if (el('fin-count')) el('fin-count').textContent = count + (count === 1 ? ' cita cobrada' : ' citas cobradas');
          if (el('fin-uncollected')) el('fin-uncollected').textContent = '$' + uncollected.toLocaleString('es-CL');
@@ -2259,8 +2259,8 @@
         window._paymentChart = new Chart(ctxPay, {
           type: 'doughnut',
           data: {
-            labels: ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'MercadoPago'],
-            datasets: [{ data: [0, 0, 0, 0, 0], backgroundColor: [green, gold, '#5f6fe0', '#e05f6f', '#009ee3'], borderWidth: 0, hoverOffset: 4 }]
+            labels: ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Webpay Plus'],
+            datasets: [{ data: [0, 0, 0, 0, 0], backgroundColor: [green, gold, '#5f6fe0', '#e05f6f', '#eb0029'], borderWidth: 0, hoverOffset: 4 }]
           },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } }, cutout: '68%' }
         });
@@ -2321,7 +2321,7 @@
              if (isNaN(bd)) return;
              const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
              const px = parseInt(pxStr, 10) || 0;
-             const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+             const isOnline = b.payment_method === 'Webpay Plus' || b.payment_method === 'Webpay Plus (Online)';
              const isCollected = b.attended || isOnline;
              
              if (isCollected) {
@@ -2348,7 +2348,7 @@
          const barberColors = ['#B67A43', '#3ECF8E', '#e05f6f', '#965fe0', '#009ee3', '#a3a3ab']; 
 
          filteredBookings.forEach(b => {
-             const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+             const isOnline = b.payment_method === 'Webpay Plus' || b.payment_method === 'Webpay Plus (Online)';
              if (b.attended || isOnline) {
                  const fullName = b.barber || 'Otro';
                  let matched = false;
@@ -2384,11 +2384,11 @@
          }
 
          // --- 4. Payment Stats
-         const counts = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, 'MercadoPago': 0, '': 0 };
+         const counts = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, 'Webpay Plus': 0, '': 0 };
          filteredBookings.forEach(b => {
            let pm = b.payment_method || '';
-           if (!pm && b.notes && b.notes.toLowerCase().includes('mercadopago')) pm = 'MercadoPago';
-           if (pm === 'MercadoPago (Online)') pm = 'MercadoPago';
+           if (!pm && b.notes && b.notes.toLowerCase().includes('Webpay Plus')) pm = 'Webpay Plus';
+           if (pm === 'webpay (Online)') pm = 'Webpay Plus';
            
            if (pm in counts) counts[pm]++;
            else if (pm.includes('Transf')) counts['Transferencia']++;
@@ -2400,7 +2400,7 @@
          
          if (window._paymentChart) {
            window._paymentChart.data.datasets[0].data = [
-             counts['Efectivo'], counts['Débito'], counts['Crédito'], counts['Transferencia'], counts['MercadoPago']
+             counts['Efectivo'], counts['Débito'], counts['Crédito'], counts['Transferencia'], counts['Webpay Plus']
            ];
            window._paymentChart.update();
          }
@@ -2410,14 +2410,14 @@
          setEl('pay-stat-debito', counts['Débito']);
          setEl('pay-stat-credito', counts['Crédito']);
          setEl('pay-stat-transferencia', counts['Transferencia']);
-         setEl('pay-stat-mercadopago', counts['MercadoPago']);
+         setEl('pay-stat-webpay', counts['Webpay Plus']);
          setEl('pay-stat-sin', counts['']);
 
          // --- 5. Evolución Line Chart
          if (window._evoChart) {
              const dataMap = {};
              filteredBookings.forEach(b => {
-                 const isOnline = b.payment_method === 'MercadoPago' || b.payment_method === 'MercadoPago (Online)';
+                 const isOnline = b.payment_method === 'Webpay Plus' || b.payment_method === 'webpay (Online)';
                  if (b.attended || isOnline) {
                      const bd = getAppointmentDate(b);
                      const label = bd.getDate() + '/' + (bd.getMonth()+1);

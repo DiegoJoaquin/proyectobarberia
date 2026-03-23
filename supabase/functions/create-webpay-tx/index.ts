@@ -14,13 +14,13 @@ serve(async (req) => {
   try {
     const { title, price, payer_name, booking, frontendUrl } = await req.json()
 
-    // 1. Obtener llaves (Integración por Defecto)
+    // 1. Obtener llaves (Configuración Dinámica)
     const TBK_COMMERCE_CODE = Deno.env.get('TBK_COMMERCE_CODE') || "597055555532"
     const TBK_API_KEY = Deno.env.get('TBK_API_KEY') || "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C"
+    const TBK_ENVIRONMENT = Deno.env.get('TBK_ENVIRONMENT') || "INTEGRATION" // 'INTEGRATION' o 'PRODUCTION'
     
     // Entorno Inteligente: Prueba VS Producción
-    const isProd = TBK_COMMERCE_CODE !== "597055555532"
-    const tbkBaseUrl = isProd 
+    const tbkBaseUrl = TBK_ENVIRONMENT === "PRODUCTION"
       ? 'https://webpay3g.transbank.cl'
       : 'https://webpay3gint.transbank.cl'
       
