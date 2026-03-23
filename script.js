@@ -511,7 +511,8 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     time: state.time || '—',
     barber: state.barber || '—',
     createdAt: new Date().toISOString(),
-    payment_method: paymentText
+    payment_method: paymentText,
+    status: 'confirmed'
   };
 
   const confirmBtn = document.getElementById('s4-confirm');

@@ -21,6 +21,13 @@ Deno.serve(async (req: Request) => {
       return new Response('No booking data', { status: 400 });
     }
 
+    // --- FILTRO DE SEGURIDAD PARA WEBAPP ---
+    // Si la reserva dice 'waiting_payment', significa que el cliente aún está en Webpay.
+    // El robot debe ignorarla. Se enviará luego cuando el status cambie a 'confirmed'.
+    if (booking.status === 'waiting_payment') {
+      console.log(`Reserva ${booking.id} en espera de pago. No enviar WhatsApp aún.`);
+      return new Response('Waiting for payment confirmation', { status: 200 });
+    }
     // Formatear el número: +56933278938 → whatsapp:+56933278938
     const rawPhone = (booking.phone || '').replace(/\s/g, '').replace(/^0/, '');
     const toPhone = rawPhone.startsWith('+')
