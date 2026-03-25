@@ -844,6 +844,9 @@
     <button class="tab-nav-btn" data-tab="disponibilidad">
       <i class="fa-solid fa-user-clock"></i> Disponibilidad
     </button>
+    <button class="tab-nav-btn" data-tab="manual" style="border-color: rgba(62,207,142,0.4); color: var(--green);">
+      <i class="fa-solid fa-calendar-plus"></i> Reserva Manual
+    </button>
     <button class="tab-nav-btn" data-tab="crm">
       <i class="fa-solid fa-users"></i> CRM
     </button>
@@ -1138,6 +1141,103 @@
       <div class="empty-state" id="empty-bookings" style="display:none;">
         <i class="fa-regular fa-calendar-xmark"></i>
         <p>No hay reservas registradas aún.<br />Aparecerán aquí cuando alguien agende.</p>
+      </div>
+    </div>
+
+    <!-- ══ TAB: RESERVA MANUAL (ADMIN) ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-manual">
+      <div class="section-header" style="margin-bottom:28px;">
+        <div>
+          <h1 class="section-title">Reserva <em>Manual</em></h1>
+          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Agenda una hora sin pasar por Webpay. El cliente recibe WhatsApp de confirmación.</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;">
+
+        <!-- Columna Izquierda: Datos del Cliente -->
+        <div style="background:var(--grey-90);border:1px solid var(--grey-70);border-radius:8px;padding:28px;">
+          <p style="font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--grey-50);margin-bottom:20px;border-bottom:1px solid var(--grey-70);padding-bottom:12px;"><i class="fa-solid fa-user" style="margin-right:6px;"></i>Datos del Cliente</p>
+          <div style="display:grid;gap:14px;">
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Nombre completo *</label>
+              <input type="text" id="m-name" placeholder="Diego González" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">RUT</label>
+              <input type="text" id="m-rut" placeholder="12.345.678-9" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Teléfono (WhatsApp) *</label>
+              <input type="tel" id="m-phone" placeholder="+56 9 XXXX XXXX" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Correo (opcional)</label>
+              <input type="email" id="m-email" placeholder="cliente@correo.com" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Notas (opcional)</label>
+              <input type="text" id="m-notes" placeholder="Prefiere fade alto..." style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Datos de la Cita -->
+        <div style="background:var(--grey-90);border:1px solid var(--grey-70);border-radius:8px;padding:28px;">
+          <p style="font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--grey-50);margin-bottom:20px;border-bottom:1px solid var(--grey-70);padding-bottom:12px;"><i class="fa-solid fa-scissors" style="margin-right:6px;"></i>Datos de la Cita</p>
+          <div style="display:grid;gap:14px;">
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Servicio *</label>
+              <select id="m-service" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
+                <option value="">— Selecciona un servicio —</option>
+                <option value="Corte de pelo|$8.000|30 min">Corte de pelo — $8.000 (30 min)</option>
+                <option value="Arreglo de barba|$6.000|30 min">Arreglo de barba — $6.000 (30 min)</option>
+                <option value="Corte + Barba|$12.000|45 min">Corte + Barba — $12.000 (45 min)</option>
+                <option value="Afeitado Clásico|$8.000|30 min">Afeitado Clásico — $8.000 (30 min)</option>
+                <option value="Corte Infantil|$6.000|30 min">Corte Infantil — $6.000 (30 min)</option>
+                <option value="Corte + Barba + Tratamiento|$18.000|60 min">Corte + Barba + Tratamiento — $18.000 (60 min)</option>
+                <option value="Limpieza Facial|$10.000|30 min">Limpieza Facial — $10.000 (30 min)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Barbero *</label>
+              <select id="m-barber" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
+                <option value="">— Selecciona un barbero —</option>
+                <option value="Emanuel">Emanuel</option>
+                <option value="Matías N.">Matías N.</option>
+                <option value="Ángel">Ángel</option>
+                <option value="Benjamín">Benjamín</option>
+                <option value="Gonzalo">Gonzalo</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Fecha *</label>
+              <input type="date" id="m-date" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;" />
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Hora disponible *</label>
+              <select id="m-time" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
+                <option value="">— Elige barbero y fecha primero —</option>
+              </select>
+              <p id="m-slots-status" style="font-size:.7rem;color:var(--grey-50);margin-top:5px;"></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Botón Confirmar -->
+      <div style="max-width:900px;margin-top:20px;">
+        <button id="m-confirm-btn" class="btn btn-green" style="width:100%;padding:14px;font-size:.85rem;justify-content:center;border-radius:6px;">
+          <i class="fa-solid fa-calendar-check"></i> Confirmar Reserva Manual
+        </button>
+        <div id="m-result" style="display:none;margin-top:16px;background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.3);border-radius:6px;padding:16px 20px;">
+          <p style="color:var(--green);font-weight:600;font-size:.85rem;margin-bottom:6px;"><i class="fa-solid fa-check-circle"></i> ¡Reserva creada con éxito!</p>
+          <p id="m-result-text" style="color:var(--grey-30);font-size:.8rem;line-height:1.6;"></p>
+        </div>
+        <div id="m-error" style="display:none;margin-top:16px;background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.3);border-radius:6px;padding:16px 20px;">
+          <p id="m-error-text" style="color:#e74c3c;font-size:.82rem;"></p>
+        </div>
       </div>
     </div>
 
@@ -2441,6 +2541,175 @@
       // Event Listener filter
       document.getElementById('dashboard-period')?.addEventListener('change', window.updateDashboardCharts);
     });
+  </script>
+
+  <!-- ═══ LÓGICA: RESERVA MANUAL (ADMIN) ═══ -->
+  <script>
+  (function() {
+    const SUPABASE_URL = 'https://hgxayxrszmcmmrrwxlxz.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
+
+    const TWILIO_SID = '';  // No se usa desde el admin. La Edge Function lo toma de sus propios Secrets.
+    const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
+
+    async function loadAvailableSlots() {
+      const barber = document.getElementById('m-barber')?.value;
+      const date = document.getElementById('m-date')?.value;
+      const timeSelect = document.getElementById('m-time');
+      const statusEl = document.getElementById('m-slots-status');
+
+      if (!barber || !date || !timeSelect) return;
+
+      timeSelect.innerHTML = '<option value="">Cargando slots...</option>';
+      if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment)`, {
+          headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
+        });
+        const booked = await res.json();
+        const bookedTimes = (booked || []).map(b => b.time?.substring(0,5));
+
+        const available = ALL_SLOTS.filter(s => !bookedTimes.includes(s));
+
+        timeSelect.innerHTML = available.length
+          ? '<option value="">— Elige una hora —</option>' + available.map(s => `<option value="${s}">${s}</option>`).join('')
+          : '<option value="">Sin disponibilidad este día</option>';
+
+        if (statusEl) statusEl.textContent = available.length
+          ? `${available.length} horarios disponibles con ${barber} el ${date.split('-').reverse().join('/')}`
+          : `${barber} no tiene horas libres ese día.`;
+      } catch(e) {
+        timeSelect.innerHTML = '<option value="">Error al cargar slots</option>';
+        if (statusEl) statusEl.textContent = 'No se pudo consultar disponibilidad.';
+      }
+    }
+
+    // Cargar slots cuando cambia barbero o fecha
+    document.getElementById('m-barber')?.addEventListener('change', loadAvailableSlots);
+    document.getElementById('m-date')?.addEventListener('change', loadAvailableSlots);
+
+    // Poner fecha mínima en el datepicker (hoy)
+    const dateInput = document.getElementById('m-date');
+    if (dateInput) {
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.min = today;
+      dateInput.value = today;
+    }
+
+    // Confirmar Reserva
+    document.getElementById('m-confirm-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('m-confirm-btn');
+      const resultDiv = document.getElementById('m-result');
+      const errorDiv = document.getElementById('m-error');
+      const resultText = document.getElementById('m-result-text');
+      const errorText = document.getElementById('m-error-text');
+
+      resultDiv.style.display = 'none';
+      errorDiv.style.display = 'none';
+
+      const name = document.getElementById('m-name')?.value.trim();
+      const rut = document.getElementById('m-rut')?.value.trim();
+      const phone = document.getElementById('m-phone')?.value.trim();
+      const email = document.getElementById('m-email')?.value.trim();
+      const notes = document.getElementById('m-notes')?.value.trim();
+      const serviceRaw = document.getElementById('m-service')?.value;
+      const barber = document.getElementById('m-barber')?.value;
+      const date = document.getElementById('m-date')?.value;
+      const time = document.getElementById('m-time')?.value;
+
+      if (!name || !phone || !serviceRaw || !barber || !date || !time) {
+        errorText.textContent = 'Por favor completa todos los campos obligatorios (marcados con *).';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      const [service, price, duration] = serviceRaw.split('|');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+
+      try {
+        // 1. Anti-colisión: verificar que el slot sigue libre
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&time=eq.${time}&status=in.(confirmed,waiting_payment)`, {
+          headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
+        });
+        const existing = await checkRes.json();
+        if (existing?.length > 0) {
+          throw new Error(`¡Ese horario (${time}) acaba de ser tomado! Elige otro.`);
+        }
+
+        // 2. Insertar en Supabase
+        const payload = {
+          name, phone, email: email || null, rut: rut || null,
+          service, price, duration, date, time, barber,
+          notes: notes ? `${notes} [Admin Manual]` : '[Reserva Manual Admin]',
+          status: 'confirmed',
+          payment_method: 'Reserva Manual (Admin)',
+          attended: false,
+          createdAt: new Date().toISOString()
+        };
+
+        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify([payload])
+        });
+
+        if (!insertRes.ok) {
+          const err = await insertRes.json();
+          throw new Error(err?.message || 'Error al guardar la reserva.');
+        }
+
+        const [savedBooking] = await insertRes.json();
+
+        // El Webhook de Supabase (INSERT en bookings) dispara automáticamente
+        // la Edge Function send-booking-whatsapp con el registro confirmado.
+        // No llamamos manualmente para evitar duplicados.
+
+        // 4. Upsert en tabla clients (puntos)
+        fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_client`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON,
+            'Authorization': `Bearer ${SUPABASE_ANON}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ p_name: name, p_phone: phone, p_email: email || null })
+        }).catch(() => {});
+
+        // 5. Mostrar éxito y limpiar formulario
+        resultText.innerHTML = `
+          <strong>${name}</strong> · ${service} · ${price}<br>
+          Barbero: <strong>${barber}</strong> · ${date.split('-').reverse().join('/')} a las <strong>${time}</strong><br>
+          ${phone ? `📲 WhatsApp de confirmación enviado a <strong>${phone}</strong>` : ''}
+        `;
+        resultDiv.style.display = 'block';
+
+        // Limpiar campos
+        ['m-name','m-rut','m-phone','m-email','m-notes'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        document.getElementById('m-service').value = '';
+        document.getElementById('m-barber').value = '';
+        document.getElementById('m-time').innerHTML = '<option value="">— Elige barbero y fecha primero —</option>';
+        document.getElementById('m-slots-status').textContent = '';
+
+      } catch(e) {
+        errorText.textContent = e.message || 'Error inesperado.';
+        errorDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Confirmar Reserva Manual';
+      }
+    });
+  })();
   </script>
 </body>
 

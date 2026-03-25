@@ -714,19 +714,22 @@
             <input class="form-input" id="f-notes" type="text"
               placeholder="Ej. Prefiero fade alto, barba delineada..." />
           </div>
-          <div class="form-group" style="margin-bottom:24px;">
-            <label class="form-label">Método de pago preferido</label>
-            <div style="display:flex;gap:12px;margin-top:8px;">
-              <label class="form-check" style="margin-top:0;align-items:center;">
-                <input type="radio" name="f-payment" value="local" checked />
-                <span>Pagar en el local (Efectivo/Tarjeta)</span>
-              </label>
-              <label class="form-check" style="margin-top:0;align-items:center;">
-                <input type="radio" name="f-payment" value="webpay" />
-                <span><i class="fa-solid fa-credit-card" style="margin-right:4px;"></i> Pagar Ahora (Webpay Plus)</span>
-              </label>
+          <div class="form-group" style="margin-bottom:16px;">
+            <div style="background:rgba(235,0,41,.08);border:1px solid rgba(235,0,41,.25);border-radius:6px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;">
+              <i class="fa-brands fa-cc-visa" style="color:#eb0029;font-size:1.4rem;flex-shrink:0;margin-top:2px;"></i>
+              <div>
+                <p style="font-size:.8rem;font-weight:600;color:#f4f2ee;margin-bottom:3px;">Pago 100% Online con Webpay Plus</p>
+                <p style="font-size:.73rem;color:#81818a;line-height:1.5;">Tu reserva se confirma al instante tras el pago con tarjeta de débito o crédito. 100% seguro y encriptado.</p>
+              </div>
             </div>
           </div>
+          <div style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.2);border-radius:6px;padding:11px 14px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+            <i class="fa-brands fa-whatsapp" style="color:#25D366;font-size:1.1rem;"></i>
+            <p style="font-size:.72rem;color:#81818a;line-height:1.5;">¿Necesitas agendar sin pagar online? Escríbenos al <a href="https://wa.me/56982679620" target="_blank" style="color:#25D366;font-weight:600;">WhatsApp de la barbería</a> y te ayudamos.
+            </p>
+          </div>
+          <!-- Hidden radio para mantener compatibilidad con el JS -->
+          <input type="radio" name="f-payment" value="webpay" checked style="display:none;" />
           <div class="form-check">
             <input type="checkbox" id="f-terms" />
             <label for="f-terms">Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de

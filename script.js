@@ -498,8 +498,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   
   const cleanRut = formatRUT(rut);
 
-  const payment = document.querySelector('input[name="f-payment"]:checked').value;
-  const paymentText = payment === 'webpay' ? 'Webpay Plus (Online)' : 'Pago en el local';
+  const paymentText = 'Webpay Plus (Online)';
   const finalNotes = notes ? `${notes} | Pago: ${paymentText}` : `Pago: ${paymentText}`;
 
   const booking = {
@@ -512,83 +511,54 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     barber: state.barber || '—',
     createdAt: new Date().toISOString(),
     payment_method: paymentText,
-    status: 'confirmed'
+    status: 'waiting_payment'
   };
 
   const confirmBtn = document.getElementById('s4-confirm');
   confirmBtn.disabled = true;
   confirmBtn.textContent = 'Procesando...';
 
-  // Si eligió Webpay Plus, abrimos el flujo online
-  if (payment === 'webpay') {
-    if (!SUPABASE_ON) { showToast('Webpay Plus requiere conexión a Supabase real.'); confirmBtn.disabled = false; return; }
-    
-    try {
-      const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
-      
-      // Llamamos a la transaccion Deno (Edge Function de Transbank)
-      // Guardamos el estado para no perder el resumen al volver
-      localStorage.setItem('booking_state', JSON.stringify(state));
-      
-      const { data, error } = await sb.functions.invoke('create-webpay-tx', {
-        body: {
-          title: state.service,
-          price: numericPrice,
-          payer_name: name,
-          booking: booking, // Depositamos la info de la cita para crearla post-pago
-          frontendUrl: window.location.origin + window.location.pathname // <--- AGREGAR ESTO
-        }
-      });
-      
-      if (error || !data?.token || !data?.url) throw new Error(error?.message || 'Error al conectar con Transbank');
-
-      // Creamos un Formulario transparente e inyectamos el Token de TBK para catapultar al usuario de forma segura
-      const form = document.createElement('form');
-      form.action = data.url;
-      form.method = 'POST';
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'token_ws';
-      input.value = data.token;
-      
-      form.appendChild(input);
-      document.body.appendChild(form);
-      
-      confirmBtn.textContent = 'Redirigiendo a Banco...';
-      form.submit();
-      return; 
-    } catch (err) {
-      console.error('Error TBK:', err);
-      showToast('Hubo un error al iniciar Webpay Plus. Intenta Pagar en el Local.');
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Confirmar reserva';
-      return;
-    }
-  }
-
-  // Si eligió pago Local: Proceso tradicional
-  const result = await persistBooking(booking);
+  if (!SUPABASE_ON) { showToast('El pago online requiere conexión a Supabase.'); confirmBtn.disabled = false; return; }
   
-  if (!result.ok && result.collision) {
+  try {
+    const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
+    
+    // Guardamos el estado para no perder el resumen al volver
+    localStorage.setItem('booking_state', JSON.stringify(state));
+    
+    const { data, error } = await sb.functions.invoke('create-webpay-tx', {
+      body: {
+        title: state.service,
+        price: numericPrice,
+        payer_name: name,
+        booking: booking,
+        frontendUrl: window.location.origin + window.location.pathname
+      }
+    });
+    
+    if (error || !data?.token || !data?.url) throw new Error(error?.message || 'Error al conectar con Transbank');
+
+    // Formulario oculto para redirigir al banco de forma segura (POST)
+    const form = document.createElement('form');
+    form.action = data.url;
+    form.method = 'POST';
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'token_ws';
+    input.value = data.token;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    
+    confirmBtn.textContent = 'Redirigiendo al Banco...';
+    form.submit();
+    return;
+  } catch (err) {
+    console.error('Error TBK:', err);
+    showToast('Error al iniciar Webpay. Escríbenos al WhatsApp para agendar.');
     confirmBtn.disabled = false;
     confirmBtn.textContent = 'Confirmar reserva';
-    alert("Lo sentimos, esa hora acaba de ser tomada por otro cliente hace unos instantes. Por favor, vuelve al paso 1 y elige una hora distinta.");
     return;
   }
-
-  const bookingId = result.bookingId;
-  await upsertClient(booking, bookingId);
-
-  // 2) Mostrar pantalla de éxito
-  stepContents.forEach(sc => sc.classList.remove('active'));
-  document.querySelector('.steps-indicator').style.visibility = 'hidden';
-  document.getElementById('success-screen').classList.add('visible');
-
-  document.getElementById('success-msg').innerHTML =
-    `Tu hora está reservada. En breve recibirás todos los detalles por <strong>WhatsApp</strong> al número que ingresaste.`;
-
-  confirmBtn.disabled = false;
-  confirmBtn.textContent = 'Confirmar reserva';
 });
 
 // Listener de retorno de Pasarelas (Webpay Plus Redirecciona de Vuelta)
