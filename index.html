@@ -23,23 +23,25 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <!-- EmailJS — envío de correos sin backend -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<style>
-/* Fix for modal service wrapping */
-.bpc-avail {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  white-space: nowrap !important;
-  width: 100%;
-  margin-top: 4px;
-}
-.bpc-avail span {
-  font-size: 0.75rem !important;
-}
-.bpc-name {
-  white-space: normal !important;
-}
-</style>
+  <style>
+    /* Fix for modal service wrapping */
+    .bpc-avail {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      white-space: nowrap !important;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .bpc-avail span {
+      font-size: 0.75rem !important;
+    }
+
+    .bpc-name {
+      white-space: normal !important;
+    }
+  </style>
 </head>
 
 <body>
@@ -212,6 +214,107 @@
               pre shaver, toalla caliente esterilizada.</p>
             <button class="service-book-btn">Agendar servicio</button>
           </article>
+          <article class="service-card" data-name="Limpieza Facial" data-price="$12.500" data-duration="15 min"
+            data-desc="Aplicación de vapor con toalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.">
+            <div class="service-card-header">
+              <h3 class="service-name">Limpieza Facial</h3>
+              <span class="service-price">$12.500</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 15 min</p>
+            <p class="service-desc">Aplicación de vapor con tohalla caliente para la apertura de poros del rostro,
+              primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card" data-name="Rituales de Barba Premium + Limpieza Facial" data-price="$27.000"
+            data-duration="45 min"
+            data-desc="Cuidado facial absoluto. Barba majestuosa y piel revitalizada en un solo ritual.">
+            <div class="service-card-header">
+              <h3 class="service-name">Ritual + Facial</h3>
+              <span class="service-price">$27.000</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 45 min</p>
+            <p class="service-desc">Cuidado facial absoluto. Barba majestuosa y piel revitalizada en un solo ritual.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card" data-name="Corte de Cabello+ Retoque de Barba + Perfilado de Cejas"
+            data-price="$30.190" data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la mejor calidad disponible.Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos. Definir con navaja las cejas, de acuerdo a el rostro.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte de Cabello+ Retoque de Barba + Perfilado de Cejas</h3>
+              <span class="service-price">$30.190</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la
+              mejor calidad disponible.Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca
+              estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos. Definir con navaja las cejas,
+              de acuerdo a el rostro.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card" data-name="Corte de Cabello + Perfilado de Cejas + Limpieza Facial"
+            data-price="$30.690" data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro. Aplicación de vapor con tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte de Cabello + Perfilado de Cejas + Limpieza Facial</h3>
+              <span class="service-price">$30.690</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la
+              mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro. Aplicación de vapor con
+              tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo
+              aplicación de crema de limpieza.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card" data-name="Corte de Cabello + Ritual de Barba Premium + Perfilado de Cejas"
+            data-price="$34.190" data-duration="1 hr"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la mejor calidad disponible. Servicio de perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos. Aplicación de vapor con tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo aplicación de crema de limpieza.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte de Cabello + Ritual de Barba Premium + Perfilado de Cejas</h3>
+              <span class="service-price">$34.190</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de la
+              mejor calidad disponible. Definir con navaja las cejas, de acuerdo a el rostro. Aplicación de vapor con
+              tohalla caliente para la apertura de poros del rostro, primero aplicación de crema exfoliante y segundo
+              aplicación de crema de limpieza.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card" data-name="Corte + Retoque de Barba + Limpieza Facial" data-price="$37.690"
+            data-duration="1 hr 15 min"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible, pre shaver, toalla caliente.">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte + Retoque de Barba + Limpieza Facial</h3>
+              <span class="service-price">$37.690</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 15 min</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de
+              barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el
+              cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta
+              calidad disponible, pre shaver, toalla caliente.</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
+          <article class="service-card" data-name="Corte de Cabello + Ritual de Barba Premium + Limpieza Facial"
+            data-price="$41.690" data-duration="1 hr 15 min"
+            data-desc="Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta calidad disponible, pre shaver, toalla caliente">
+            <div class="service-card-header">
+              <h3 class="service-name">Corte de Cabello + Ritual de Barba Premium + Limpieza Facial</h3>
+              <span class="service-price">$41.690</span>
+            </div>
+            <p class="service-meta"><i class="fa-regular fa-clock"></i> 1 hr 15 min</p>
+            <p class="service-desc">Corte de Cabello incluye lavado de cabello, peinado y aplicación de producto de
+              peinado de la mejor calidad disponible. Servicio de Barba Premium, primer paso: perfilado de bellos de
+              barba solo con máquina, idealmente se busca estilizar el rostro adicionalmente despejando de bellos el
+              cuello y pómulos, segundo paso: utilizando crema de afeitar productos hipoalergénicos de la más alta
+              calidad disponible, pre shaver, toalla caliente</p>
+            <button class="service-book-btn">Agendar servicio</button>
+          </article>
+
 
         </div>
       </div>
@@ -354,7 +457,7 @@
             <!-- 1. Corte -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello" data-srv-price="$16.690"
               data-srv-duration="45 min">
-              
+
               <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello</p>
               <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$16.690
                 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span>
@@ -363,7 +466,7 @@
             <!-- 2. Barba -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Retoque de Barba" data-srv-price="$12.500"
               data-srv-duration="30 min">
-              
+
               <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Retoque de Barba</p>
               <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$12.500
                 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span>
@@ -372,7 +475,7 @@
             <!-- 3. Ritual Barba -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Ritual de Barba Premium"
               data-srv-price="$16.500" data-srv-duration="30 min">
-              
+
               <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Ritual Barba Premium</p>
               <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$16.500
                 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span>
@@ -633,7 +736,11 @@
             style="background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.25);border-radius:6px;padding:12px 14px;margin-bottom:12px;">
             <p style="font-size:.73rem;color:#c5c5cb;line-height:1.6;"><i class="fa-solid fa-triangle-exclamation"
                 style="color:#ffc107;margin-right:6px;"></i><strong style="color:#f4f2ee;">Política de
-                cancelación:</strong> En caso de que necesites cancelar la hora, se te devolverá el 50% a la tarjeta con la que pagaste. <strong style="color:#f4f2ee;">La única forma de cancelar la hora es llamando al número de la barbería.</strong> Puedes reagendar con al menos <strong style="color:#f4f2ee;">1 hora de anticipación</strong> sin costo. El retraso máximo aceptado es de <strong style="color:#f4f2ee;">10 minutos</strong>. Si no llegas o no avisas, perderás la reserva y el 50% del monto pagado.</p>
+                cancelación:</strong> En caso de que necesites cancelar la hora, se te devolverá el 50% a la tarjeta con
+              la que pagaste. <strong style="color:#f4f2ee;">La única forma de cancelar la hora es llamando al número de
+                la barbería.</strong> Puedes reagendar con al menos <strong style="color:#f4f2ee;">1 hora de
+                anticipación</strong> sin costo. El retraso máximo aceptado es de <strong style="color:#f4f2ee;">10
+                minutos</strong>. Si no llegas o no avisas, perderás la reserva y el 50% del monto pagado.</p>
           </div>
           <div
             style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.2);border-radius:6px;padding:11px 14px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
@@ -805,21 +912,37 @@
   <script src="https://sdk.mercadopago.com/js/v2"></script>
   <script src="script.js"></script>
   <!-- Modal Términos y Condiciones -->
-  <div id="terms-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:#161619;border:1px solid #2b2b30;border-radius:8px;padding:32px;max-width:550px;width:100%;color:#c5c5cb;font-size:.85rem;line-height:1.6;position:relative;max-height:85vh;overflow-y:auto;">
-      <button id="close-terms-btn" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#a3a3ab;font-size:1.4rem;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-      
-      <h3 style="color:#fff;font-family:var(--font-serif);font-size:1.4rem;margin-bottom:20px;">Términos y Condiciones</h3>
-      
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Garantía del servicio:</strong> Tiene un máximo de 24 horas y es por errores visibles del servicio. No incorpora el cambio de corte, ya que eso es otro servicio que debe ser pagado.</p>
-      
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Responsabilidad y Puntualidad:</strong> Hay una responsabilidad en disponer del servicio y del barbero. El cliente debe llegar a la hora con un máximo de retraso de 10 minutos. Puede reagendar la reserva con 1 hora de anticipación para que otro cliente pueda ocupar esa hora.</p>
-      
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Cancelación y No Show:</strong> Al no llegar o no avisar el reagendamiento previo, el cliente perderá la reserva y con ello el 50% del dinero pagado. La cancelación de la hora solo puede realizarse llamando al número de la barbería, en cuyo caso se devolverá el 50% a la tarjeta con la que pagó.</p>
-      
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Otros medios de pago y reserva:</strong> Se puede reservar horas por otros canales como WhatsApp, mensaje de Instagram, vía telefónica, etc. También estará la alternativa de pagar en el local con tarjeta o efectivo.</p>
-      
-      <p><strong style="color:var(--gold);">Integridad del servicio:</strong> Es importante que quien reciba el servicio sea autovalente y que no esté bajo los efectos del alcohol o drogas. Nos reservamos el derecho de atención.</p>
+  <div id="terms-modal"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+    <div
+      style="background:#161619;border:1px solid #2b2b30;border-radius:8px;padding:32px;max-width:550px;width:100%;color:#c5c5cb;font-size:.85rem;line-height:1.6;position:relative;max-height:85vh;overflow-y:auto;">
+      <button id="close-terms-btn"
+        style="position:absolute;top:16px;right:20px;background:none;border:none;color:#a3a3ab;font-size:1.4rem;cursor:pointer;"><i
+          class="fa-solid fa-xmark"></i></button>
+
+      <h3 style="color:#fff;font-family:var(--font-serif);font-size:1.4rem;margin-bottom:20px;">Términos y Condiciones
+      </h3>
+
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Garantía del servicio:</strong> Tiene un máximo
+        de 24 horas y es por errores visibles del servicio. No incorpora el cambio de corte, ya que eso es otro servicio
+        que debe ser pagado.</p>
+
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Responsabilidad y Puntualidad:</strong> Hay una
+        responsabilidad en disponer del servicio y del barbero. El cliente debe llegar a la hora con un máximo de
+        retraso de 10 minutos. Puede reagendar la reserva con 1 hora de anticipación para que otro cliente pueda ocupar
+        esa hora.</p>
+
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Cancelación y No Show:</strong> Al no llegar o
+        no avisar el reagendamiento previo, el cliente perderá la reserva y con ello el 50% del dinero pagado. La
+        cancelación de la hora solo puede realizarse llamando al número de la barbería, en cuyo caso se devolverá el 50%
+        a la tarjeta con la que pagó.</p>
+
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Otros medios de pago y reserva:</strong> Se
+        puede reservar horas por otros canales como WhatsApp, mensaje de Instagram, vía telefónica, etc. También estará
+        la alternativa de pagar en el local con tarjeta o efectivo.</p>
+
+      <p><strong style="color:var(--gold);">Integridad del servicio:</strong> Es importante que quien reciba el servicio
+        sea autovalente y que no esté bajo los efectos del alcohol o drogas. Nos reservamos el derecho de atención.</p>
     </div>
   </div>
 
@@ -828,7 +951,7 @@
       const termsLink = document.getElementById('open-terms-link');
       const termsModal = document.getElementById('terms-modal');
       const closeTermsBtn = document.getElementById('close-terms-btn');
-      
+
       if (termsLink && termsModal && closeTermsBtn) {
         termsLink.addEventListener('click', (e) => {
           e.preventDefault();
