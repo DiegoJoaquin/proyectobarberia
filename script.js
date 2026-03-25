@@ -646,10 +646,15 @@ updateSummary();
     }
 
   } else if (paymentStatus === 'rejected') {
-    window.history.replaceState({}, document.title, window.location.pathname);
+    // NO borramos la URL para permitir ver el token_ws en certificaciones
     setTimeout(() => {
       showToast('❌ El pago fue rechazado o cancelado. Por favor intenta nuevamente.');
     }, 500);
+
+    if (tokenWs) {
+      console.log('%c❌ Pago Webpay rechazado', 'color:red;font-weight:bold');
+      console.log('%ctoken_ws para certificación:', 'color:orange', tokenWs);
+    }
   } else if (paymentStatus === 'error') {
     window.history.replaceState({}, document.title, window.location.pathname);
     setTimeout(() => {
