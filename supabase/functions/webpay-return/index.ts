@@ -58,6 +58,26 @@ serve(async (req) => {
            status: 'confirmed', 
            notes: newNotes.trim() 
          }).eq('id', booking.id)
+
+         // Llama manualmente a send-booking-whatsapp simulando el evento de webhook
+         try {
+           const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+           const projectUrl = Deno.env.get('SUPABASE_URL') ?? '';
+           await fetch(`${projectUrl}/functions/v1/send-booking-whatsapp`, {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${anonKey}`
+             },
+             body: JSON.stringify({
+               type: 'WEBHOOK_MOCK',
+               record: { ...booking, status: 'confirmed' }
+             })
+           });
+           console.log("WhatsApp push enviado post-pago.");
+         } catch(e) {
+           console.error("Error al enviar WhatsApp post-pago:", e.message);
+         }
       }
       return Response.redirect(`${fUrl}?payment=success`, 302)
     } else {
