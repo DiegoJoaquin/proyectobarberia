@@ -509,7 +509,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     date: state.date || '—',
     time: state.time || '—',
     barber: state.barber || '—',
-    createdAt: new Date().toISOString(),
+    created_at: new Date().toISOString(),
     payment_method: paymentText,
     status: 'waiting_payment'
   };

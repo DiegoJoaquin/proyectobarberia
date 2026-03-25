@@ -59,24 +59,59 @@ serve(async (req) => {
            notes: newNotes.trim() 
          }).eq('id', booking.id)
 
-         // Llama manualmente a send-booking-whatsapp simulando el evento de webhook
+         // ============================================
+         // NUEVO: Enviar WhatsApp DIRECTO por Twilio
+         // ============================================
          try {
-           const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-           const projectUrl = Deno.env.get('SUPABASE_URL') ?? '';
-           await fetch(`${projectUrl}/functions/v1/send-booking-whatsapp`, {
-             method: 'POST',
-             headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${anonKey}`
-             },
-             body: JSON.stringify({
-               type: 'WEBHOOK_MOCK',
-               record: { ...booking, status: 'confirmed' }
-             })
-           });
-           console.log("WhatsApp push enviado post-pago.");
+            console.log("Iniciando envío de WhatsApp para reserva:", booking.id);
+            const rawPhone = (booking.phone || '').replace(/\s/g, '').replace(/^0/, '');
+            const toPhone = rawPhone.startsWith('+') ? `whatsapp:${rawPhone}` : `whatsapp:+56${rawPhone}`;
+
+            const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
+            const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') ?? '';
+            const TWILIO_FROM = Deno.env.get('TWILIO_FROM_NUMBER') ?? 'whatsapp:+14155238886';
+            
+            if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
+              const CONTENT_SID = 'HX8c4c8a841ed6345ccc60814977cbb058';
+              const contentVariables = {
+                "1": String(booking.name || 'Cliente'),
+                "2": String(booking.service || '—'),
+                "3": String(booking.date || '—'),
+                "4": String(booking.time || '—'),
+                "5": String(booking.barber || '—'),
+                "6": String(booking.price || '—')
+              };
+
+              const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
+              const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+              
+              const body = new URLSearchParams({
+                To: toPhone,
+                From: TWILIO_FROM,
+                ContentSid: CONTENT_SID,
+                ContentVariables: JSON.stringify(contentVariables),
+              });
+
+              const twilioRes = await fetch(twilioUrl, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Basic ${auth}`,
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: body.toString(),
+              });
+              
+              const twilioData = await twilioRes.json();
+              if (!twilioRes.ok) {
+                console.error("Error Twilio:", twilioData);
+              } else {
+                console.log(`WhatsApp enviado | SID: ${twilioData.sid}`);
+              }
+            } else {
+              console.error("Credenciales Twilio faltantes en webpay-return");
+            }
          } catch(e) {
-           console.error("Error al enviar WhatsApp post-pago:", e.message);
+           console.error("Error al enviar WhatsApp directo:", e.message);
          }
       }
       return Response.redirect(`${fUrl}?payment=success`, 302)
