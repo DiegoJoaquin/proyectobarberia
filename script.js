@@ -616,3 +616,46 @@ function showToast(msg) {
    INIT
    ────────────────────────────────────────────────────────────── */
 updateSummary();
+
+/* ──────────────────────────────────────────────────────────────
+   WEBPAY RETURN — Detectar resultado del pago al cargar la página
+   ────────────────────────────────────────────────────────────── */
+(function checkPaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const paymentStatus = params.get('payment');
+  const tokenWs = params.get('token_ws');
+
+  if (paymentStatus === 'success') {
+    // Limpiar URL sin recargar
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    // Recuperar datos guardados del estado de reserva
+    const savedState = localStorage.getItem('booking_state');
+    let bookingInfo = '';
+    if (savedState) {
+      try {
+        const s = JSON.parse(savedState);
+        bookingInfo = `\n\nServicio: ${s.service || '—'}\nFecha: ${s.date || '—'} a las ${s.time || '—'}\nBarbero: ${s.barber || '—'}`;
+        localStorage.removeItem('booking_state');
+      } catch(e) {}
+    }
+
+    // Mostrar mensaje de éxito
+    setTimeout(() => {
+      showToast('✅ ¡Pago confirmado! Tu hora ha sido agendada. Recibirás confirmación por WhatsApp.');
+    }, 500);
+
+    console.log('Pago Webpay confirmado. Token:', tokenWs);
+
+  } else if (paymentStatus === 'rejected') {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(() => {
+      showToast('❌ El pago fue rechazado o cancelado. Por favor intenta nuevamente.');
+    }, 500);
+  } else if (paymentStatus === 'error') {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(() => {
+      showToast('⚠️ Ocurrió un error al procesar el pago. Contáctanos si el problema persiste.');
+    }, 500);
+  }
+})();
