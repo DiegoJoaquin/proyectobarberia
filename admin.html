@@ -1784,7 +1784,14 @@
                  });
                  const data = await res.json();
                  if (!res.ok) throw new Error(data.error || 'Fallo en reembolso automático');
-                 alert(data.message || 'Reembolso parcial procesado exitosamente.');
+                 
+                 // Buscamos el token en las notas de la reserva para mostrarlo
+                 const bId = btn.dataset.id;
+                 const bookingData = allBookings.find(b => String(b.id) === String(bId));
+                 const tokenMatch = (bookingData?.notes || '').match(/\[TBK_TOKEN:(.*?)\]/);
+                 const tokenText = tokenMatch ? `\n\nTOKEN PARA TRANSBANK CERTIFICACIÓN:\n${tokenMatch[1]}` : '';
+
+                 alert((data.message || 'Reembolso parcial procesado exitosamente.') + tokenText);
                } else {
                  // Pago en local/otros: Solo borramos el registro
                  await sb.from('bookings').delete().eq('id', btn.dataset.id);
