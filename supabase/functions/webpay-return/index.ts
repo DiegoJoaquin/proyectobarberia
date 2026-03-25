@@ -49,8 +49,10 @@ serve(async (req) => {
     if (txResponse.ok && txData.status === 'AUTHORIZED') {
       if (booking) {
          // ACTUALIZAMOS ESTADO A 'confirmed'. 
-         // El Webhook de Supabase se encargará de mandar el WhatsApp automáticamente una sola vez.
-         const newNotes = booking.notes.replace(`[TBK_TOKEN:${token}]`, `[TBK_AUTH:${txData.authorization_code}]`).replace(/\[FRONT_URL:(.*?)\]/, '')
+         // PRESERVAMOS el TBK_TOKEN para futuras anulaciones (refunds)
+         const newNotes = booking.notes
+           .replace(/\[FRONT_URL:(.*?)\]/, '') // Quitamos el FRONT_URL
+           + ` [TBK_AUTH:${txData.authorization_code}]`; // Añadimos la auth y dejamos el TBK_TOKEN intacto
          
          await supabaseClient.from('bookings').update({ 
            status: 'confirmed', 

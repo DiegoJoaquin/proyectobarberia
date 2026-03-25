@@ -23,6 +23,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <!-- EmailJS — envío de correos sin backend -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+/* Fix for modal service wrapping */
+.bpc-avail {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  width: 100%;
+  margin-top: 4px;
+}
+.bpc-avail span {
+  font-size: 0.75rem !important;
+}
+.bpc-name {
+  white-space: normal !important;
+}
+</style>
 </head>
 
 <body>
@@ -83,8 +100,7 @@
       <div class="service-tabs" role="tablist" aria-label="Categorías de servicios">
         <button class="tab-btn active" role="tab" aria-selected="true" data-tab="corte">Corte</button>
         <button class="tab-btn" role="tab" aria-selected="false" data-tab="barba">Barba</button>
-        <button class="tab-btn" role="tab" aria-selected="false" data-tab="combo">Combos</button>
-        <button class="tab-btn" role="tab" aria-selected="false" data-tab="premium">Facial & Premium</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="combo">Combos y Pack</button>
       </div>
 
       <!-- ── Corte ── -->

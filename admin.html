@@ -1764,15 +1764,36 @@
              const isWebpay = (btn.dataset.pay || '').toLowerCase().includes('webpay');
              let msg = '¿Estás seguro de que deseas CANCELAR esta reserva?\nEl turno quedará libre en la agenda.';
              if (isWebpay) {
-               msg += '\n\nATENCIÓN: Como pagó online, recuerda gestionar la devolución del 50% a su tarjeta.';
+               msg += '\n\nATENCIÓN: Se intentará devolver el 50% del monto pagado a la tarjeta del cliente automáticamente vía Transbank Webpay Plus.';
              }
              if (!confirm(msg)) return;
              
              btn.disabled = true;
              btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
              
-             // Aquí borramos el registro para liberar el espacio (o se podría cambiar a status='cancelled')
-             await sb.from('bookings').delete().eq('id', btn.dataset.id);
+             try {
+               if (isWebpay) {
+                 // Llamamos a la Edge Function de reembolso automático
+                 const res = await fetch(`${SUPABASE_URL}/functions/v1/refund-webpay-tx`, {
+                   method: 'POST',
+                   headers: {
+                     'Content-Type': 'application/json',
+                     'Authorization': `Bearer ${SUPABASE_ANON}`
+                   },
+                   body: JSON.stringify({ booking_id: btn.dataset.id })
+                 });
+                 const data = await res.json();
+                 if (!res.ok) throw new Error(data.error || 'Fallo en reembolso automático');
+                 alert(data.message || 'Reembolso parcial procesado exitosamente.');
+               } else {
+                 // Pago en local/otros: Solo borramos el registro
+                 await sb.from('bookings').delete().eq('id', btn.dataset.id);
+                 alert('Reserva cancelada correctamente.');
+               }
+             } catch (err) {
+               alert('Error al cancelar: ' + err.message);
+             }
+             
              await loadAll();
           });
         });
