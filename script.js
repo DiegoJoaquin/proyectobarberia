@@ -626,26 +626,24 @@ updateSummary();
   const tokenWs = params.get('token_ws');
 
   if (paymentStatus === 'success') {
-    // Limpiar URL sin recargar
-    window.history.replaceState({}, document.title, window.location.pathname);
+    // NO borramos la URL: el token_ws debe quedar visible para certificación Transbank
 
-    // Recuperar datos guardados del estado de reserva
+    // Recuperar datos guardados
     const savedState = localStorage.getItem('booking_state');
-    let bookingInfo = '';
     if (savedState) {
-      try {
-        const s = JSON.parse(savedState);
-        bookingInfo = `\n\nServicio: ${s.service || '—'}\nFecha: ${s.date || '—'} a las ${s.time || '—'}\nBarbero: ${s.barber || '—'}`;
-        localStorage.removeItem('booking_state');
-      } catch(e) {}
+      try { localStorage.removeItem('booking_state'); } catch(e) {}
     }
 
-    // Mostrar mensaje de éxito
+    // Toast de confirmación
     setTimeout(() => {
       showToast('✅ ¡Pago confirmado! Tu hora ha sido agendada. Recibirás confirmación por WhatsApp.');
     }, 500);
 
-    console.log('Pago Webpay confirmado. Token:', tokenWs);
+    // Token visible en consola también
+    if (tokenWs) {
+      console.log('%c✅ Pago Webpay confirmado', 'color:green;font-weight:bold');
+      console.log('%ctoken_ws para certificación:', 'color:orange', tokenWs);
+    }
 
   } else if (paymentStatus === 'rejected') {
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -659,3 +657,4 @@ updateSummary();
     }, 500);
   }
 })();
+
