@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -1719,7 +1719,9 @@
         <td style="color:var(--grey-30)">${esc(b.barber)}</td>
         <td>${payBadge}</td>
         <td>${attendedHtml}</td>
-        <td><button class="del-btn" data-id="${esc(b.id)}" title="Eliminar"><i class="fa-solid fa-xmark"></i></button></td>`;
+        <td>
+          <button class="cancel-btn" data-id="${esc(b.id)}" data-pay="${esc(b.payment_method)}" title="Cancelar Reserva" style="background:rgba(235,0,41,.1);border:1px solid rgba(235,0,41,.3);color:#eb0029;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:.8rem;transition:all .2s;"><i class="fa-solid fa-ban"></i> Cancelar</button>
+        </td>`;
           tbody.appendChild(tr);
         });
 
@@ -1756,12 +1758,22 @@
           });
         });
 
-        // Delete buttons
-        tbody.querySelectorAll('.del-btn').forEach(btn => {
+        // Cancel buttons
+        tbody.querySelectorAll('.cancel-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
-            if (!confirm('¿Eliminar esta reserva?')) return;
-            await sb.from('bookings').delete().eq('id', btn.dataset.id);
-            await loadAll();
+             const isWebpay = (btn.dataset.pay || '').toLowerCase().includes('webpay');
+             let msg = '¿Estás seguro de que deseas CANCELAR esta reserva?\nEl turno quedará libre en la agenda.';
+             if (isWebpay) {
+               msg += '\n\nATENCIÓN: Como pagó online, recuerda gestionar la devolución del 50% a su tarjeta.';
+             }
+             if (!confirm(msg)) return;
+             
+             btn.disabled = true;
+             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+             
+             // Aquí borramos el registro para liberar el espacio (o se podría cambiar a status='cancelled')
+             await sb.from('bookings').delete().eq('id', btn.dataset.id);
+             await loadAll();
           });
         });
       }
