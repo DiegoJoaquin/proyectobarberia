@@ -2321,7 +2321,7 @@
       }
 
       /* ── PERFIL CLIENTE ──────────────────────────────── */
-      window.openClientProfile = function(clientId) {
+      window.openClientProfile = async function(clientId) {
         const client = allClients.find(c => String(c.id) === String(clientId));
         if (!client) return;
 
@@ -2336,16 +2336,36 @@
         const pct = Math.min(100, Math.round((client.points || 0) / POINTS_GOAL * 100));
         document.getElementById('p-loyalty-pct').textContent = pct + '%';
 
-        // Buscar historial bookings
-        const history = allBookings.filter(b => String(b.client_id) === String(clientId) || (b.phone && b.phone === client.phone));
         const tbody = document.getElementById('p-history-tbody');
         const empty = document.getElementById('p-history-empty');
         
-        tbody.innerHTML = '';
-        if (history.length === 0) {
-           empty.style.display = 'block';
-        } else {
-           empty.style.display = 'none';
+        // Mostrar estado de carga interino
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--grey-40);"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:8px;"></i> Buscando historial...</td></tr>';
+        empty.style.display = 'none';
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        try {
+           // Consulta directa a Supabase para historial completo
+           let query = sb.from('bookings').select('date, service, barber, price, id');
+           if (client.phone) {
+             query = query.or(`client_id.eq.${clientId},phone.eq.${encodeURIComponent(client.phone)}`);
+           } else {
+             query = query.eq('client_id', clientId);
+           }
+           
+           const { data: historyData, error } = await query;
+           if (error) throw error;
+           
+           let history = historyData || [];
+           
+           // Filtrar duplicados en caso de tener mismo ID
+           const seenIds = new Set();
+           history = history.filter(h => {
+               if (seenIds.has(h.id)) return false;
+               seenIds.add(h.id); return true;
+           });
+
            // Ordenar por fecha desc, previniendo Invalid Date con registros antiguos
            history.sort((a,b) => {
               let dA = new Date(a.date);
@@ -2355,21 +2375,26 @@
               return dB - dA;
            });
 
-           history.forEach(h => {
-              const tr = document.createElement('tr');
-              tr.style.borderBottom = '1px solid #222';
-              tr.innerHTML = `
-                <td style="padding:10px 14px;color:var(--grey-30);">${h.date}</td>
-                <td style="padding:10px 14px;color:var(--white);font-weight:500;">${h.service}</td>
-                <td style="padding:10px 14px;color:var(--grey-40);">${h.barber}</td>
-                <td style="padding:10px 14px;color:var(--gold);font-weight:600;">${h.price}</td>
-              `;
-              tbody.appendChild(tr);
-           });
+           tbody.innerHTML = '';
+           if (history.length === 0) {
+              empty.style.display = 'block';
+           } else {
+              history.forEach(h => {
+                 const tr = document.createElement('tr');
+                 tr.style.borderBottom = '1px solid #222';
+                 tr.innerHTML = `
+                   <td style="padding:10px 14px;color:var(--grey-30);">${h.date}</td>
+                   <td style="padding:10px 14px;color:var(--white);font-weight:500;">${h.service}</td>
+                   <td style="padding:10px 14px;color:var(--grey-40);">${h.barber}</td>
+                   <td style="padding:10px 14px;color:var(--gold);font-weight:600;">${h.price}</td>
+                 `;
+                 tbody.appendChild(tr);
+              });
+           }
+        } catch (err) {
+           console.error('Error fetching client history:', err);
+           tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#e74c3c;"><i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i> Error de red al cargar el historial.</td></tr>';
         }
-
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
       }
 
       document.getElementById('p-close-btn').addEventListener('click', () => {
