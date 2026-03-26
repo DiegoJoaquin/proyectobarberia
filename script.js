@@ -43,19 +43,10 @@ function lsSave(b) {
   localStorage.setItem(LS_KEY, JSON.stringify(all));
 }
 
-/* Points per service (partial match, case-insensitive) */
-const POINTS_MAP = [
-  { keyword: 'premium', pts: 20 },
-  { keyword: 'combo', pts: 15 },
-  { keyword: 'corte', pts: 10 },
-  { keyword: 'barba', pts: 8 },
-];
-function getPointsForService(serviceName) {
-  const s = (serviceName || '').toLowerCase();
-  for (const { keyword, pts } of POINTS_MAP) {
-    if (s.includes(keyword)) return pts;
-  }
-  return 10; // default
+/* 10% Cashback Points Logic */
+function getPointsForService(priceString) {
+  const numericPrice = parseInt((priceString || '0').replace(/[^0-9]/g, ''), 10);
+  return Math.floor(numericPrice * 0.1); // 10% del valor
 }
 
 /** Insert booking and link to client. Returns { ok, bookingId, collision } */
@@ -69,9 +60,10 @@ async function persistBooking(booking) {
       service: booking.service,
       price: booking.price,
       duration: booking.duration,
-      date: booking.date,
+      date: booking.date_iso || booking.date, // Usar ISO si existe
       time: booking.time,
       barber: booking.barber,
+      points_earned: booking.points_earned || 0,
     }]).select('id').single();
     
     if (error) { 
@@ -137,15 +129,26 @@ async function upsertClient(booking, bookingId) {
  */
 async function getBookedTimesForBarber(dateStr, barberName) {
   if (SUPABASE_ON) {
+    // Buscamos tanto en el formato texto (dateStr) como el ISO (state.dateIso)
     const { data, error } = await sb
       .from('bookings')
       .select('time')
-      .eq('date', dateStr)
-      .eq('barber', barberName);
+      .or(`date.eq.${dateStr}${state.dateIso ? `,date.eq.${state.dateIso}` : ''}`)
+      .eq('barber', barberName)
+      .in('status', ['confirmed', 'waiting_payment']);
     if (error) { console.warn('Supabase select error:', error); }
     return (data || []).map(r => r.time);
   }
   return lsGetAll().filter(b => b.date === dateStr && b.barber === barberName).map(b => b.time);
+}
+
+// Suscripción Real-Time para que los slots se liberen/ocupen al instante
+if (SUPABASE_ON) {
+  sb.channel('bookings-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+      if (state.date && state.barber) refreshTimePills();
+    })
+    .subscribe();
 }
 
 /**
@@ -300,6 +303,8 @@ function buildDayPicker() {
     const sun = d.getDay() === 0;
     const lbl = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
 
+    const isoDate = d.toISOString().split('T')[0]; // YYYY-MM-DD
+
     const pill = document.createElement('button');
     pill.className = 'day-pill' + (i === 0 ? ' selected' : '') + (sun ? ' disabled' : '');
     pill.disabled = sun;
@@ -314,12 +319,13 @@ function buildDayPicker() {
         picker.querySelectorAll('.day-pill').forEach(p => p.classList.remove('selected'));
         pill.classList.add('selected');
         state.date = lbl; state.dateObj = d;
+        state.dateIso = isoDate;
         updateSummary();
         refreshTimePills();
       });
     }
 
-    if (i === 0) { state.date = lbl; state.dateObj = d; }
+    if (i === 0) { state.date = lbl; state.dateObj = d; state.dateIso = isoDate; }
     picker.appendChild(pill);
   }
   refreshTimePills();
@@ -506,12 +512,14 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     service: state.service || '(Sin especificar)',
     price: state.price || '—',
     duration: state.duration || '—',
-    date: state.date || '—',
+    date_iso: state.dateIso || '—',
+    date: state.date || '—', // Mantenemos date para labels si es necesario, pero el insert usará date_iso preferente
     time: state.time || '—',
     barber: state.barber || '—',
     created_at: new Date().toISOString(),
     payment_method: paymentText,
-    status: 'waiting_payment'
+    status: 'waiting_payment',
+    points_earned: getPointsForService(state.price)
   };
 
   const confirmBtn = document.getElementById('s4-confirm');

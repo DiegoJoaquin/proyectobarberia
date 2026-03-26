@@ -1471,6 +1471,65 @@
       </div>
     </div>
 
+    <!-- ══ MODAL: PERFIL DEL CLIENTE (NUEVO) ══════════════════════════════ -->
+    <div id="profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+      <div style="background:#1a1a1d;border:1px solid #2b2b30;border-radius:12px;padding:32px;width:90%;max-width:850px;position:relative;max-height:90vh;overflow-y:auto;">
+        <button id="p-close-btn" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#a3a3ab;font-size:1.4rem;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:32px;margin-top:10px;">
+          <!-- Columna Lateral: Info Cliente -->
+          <div>
+            <div id="p-avatar" style="width:72px;height:72px;border-radius:50%;background:var(--gold);color:var(--black);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;margin-bottom:16px;box-shadow:0 10px 20px rgba(0,0,0,0.3);">JD</div>
+            <h2 id="p-name" style="font-family:var(--font-serif);color:var(--white);font-size:1.4rem;margin-bottom:8px;">Nombre Cliente</h2>
+            <div style="font-size:.85rem;color:var(--grey-30);display:grid;gap:6px;">
+              <p><i class="fa-solid fa-phone" style="width:18px;color:var(--gold);"></i> <span id="p-phone">—</span></p>
+              <p><i class="fa-solid fa-envelope" style="width:18px;color:var(--gold);"></i> <span id="p-email">—</span></p>
+            </div>
+            
+            <div style="margin-top:28px;padding-top:20px;border-top:1px solid #2b2b30;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div style="background:#111;padding:12px;border-radius:8px;text-align:center;border:1px solid #222;">
+                <p id="p-stat-visits" style="font-size:1.4rem;font-weight:700;color:var(--white);line-height:1;">0</p>
+                <p style="font-size:.6rem;text-transform:uppercase;color:var(--grey-50);letter-spacing:.1em;margin-top:4px;">Visitas</p>
+              </div>
+              <div style="background:#111;padding:12px;border-radius:8px;text-align:center;border:1px solid #222;">
+                <p id="p-stat-points" style="font-size:1.4rem;font-weight:700;color:var(--gold);line-height:1;">0</p>
+                <p style="font-size:.6rem;text-transform:uppercase;color:var(--grey-50);letter-spacing:.1em;margin-top:4px;">Pts Ahorro</p>
+              </div>
+            </div>
+            
+            <div id="p-loyalty-status" style="margin-top:20px;font-size:.7rem;padding:10px;border-radius:6px;background:rgba(184,151,90,.08);color:var(--gold);border:1px dashed rgba(184,151,90,.3);">
+              Progreso: <strong id="p-loyalty-pct">0%</strong> para el próximo corte gratis.
+            </div>
+          </div>
+          
+          <!-- Columna Principal: Historial -->
+          <div>
+            <p style="font-size:.7rem;font-weight:700;color:var(--grey-50);text-transform:uppercase;letter-spacing:.15em;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+              <i class="fa-solid fa-history"></i> Historial de Atenciones
+            </p>
+            <div style="border:1px solid #2b2b30;border-radius:8px;overflow:hidden;">
+              <table style="width:100%;text-align:left;font-size:.85rem;border-collapse:collapse;">
+                <thead style="background:#222;color:var(--grey-40);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;">
+                  <tr>
+                    <th style="padding:12px 14px;">Fecha</th>
+                    <th style="padding:12px 14px;">Servicio</th>
+                    <th style="padding:12px 14px;">Barbero</th>
+                    <th style="padding:12px 14px;">Precio</th>
+                  </tr>
+                </thead>
+                <tbody id="p-history-tbody">
+                  <!-- Se llena dinámicamente -->
+                </tbody>
+              </table>
+              <div id="p-history-empty" style="display:none;padding:40px;text-align:center;color:var(--grey-50);">
+                <i class="fa-solid fa-calendar-day" style="font-size:1.5rem;margin-bottom:12px;display:block;"></i>
+                No registra visitas en el historial.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1583,18 +1642,16 @@
       const LS = 'nb_bookings';
       const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
       const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-      const POINTS_GOAL = 60;
+      const POINTS_GOAL = 16690;
 
-      const POINTS_MAP = [
-        { keyword: 'premium', pts: 20 },
-        { keyword: 'combo', pts: 15 },
-        { keyword: 'corte', pts: 10 },
-        { keyword: 'barba', pts: 8 },
-      ];
-      function ptsForService(s) {
-        const sl = (s || '').toLowerCase();
-        for (const { keyword, pts } of POINTS_MAP) { if (sl.includes(keyword)) return pts; }
-        return 10;
+      window.ptsForService = function(s, price) {
+        if (!price) {
+          const p = parseInt(String(s).replace(/[^0-9]/g, ''), 10);
+          if (!isNaN(p)) return Math.floor(p * 0.1);
+          return 1600;
+        }
+        const numericPrice = typeof price === 'number' ? price : parseInt(String(price).replace(/[^0-9]/g, ''), 10);
+        return Math.floor(numericPrice * 0.1);
       }
 
       let allBookings = [], allClients = [];
@@ -1880,21 +1937,29 @@
           <div class="points-bar"><div class="points-fill${isReady ? ' maxed' : ''}" style="width:${pct}%"></div></div>
         </div>
         <div class="client-actions">
+          <button class="btn btn-ghost btn-sm view-profile-btn" data-id="${c.id}">
+            <i class="fa-solid fa-eye"></i> Perfil
+          </button>
           ${isReady
               ? `<a href="https://wa.me/${waPhone}?text=${waMsg}" target="_blank" class="btn btn-wa btn-sm">
-                 <i class="fa-brands fa-whatsapp"></i> Notificar WhatsApp
+                 <i class="fa-brands fa-whatsapp"></i> Notificar
                </a>
                <button class="btn btn-gold btn-sm redeem-btn" data-id="${c.id}" data-name="${esc(c.name)}" data-pts="${c.points}">
-                 <i class="fa-solid fa-star"></i> Canjear corte
+                 <i class="fa-solid fa-star"></i> Canjear
                </button>`
               : `<button class="btn btn-ghost btn-sm add-pts-btn" data-id="${c.id}" data-name="${esc(c.name)}">
-                 <i class="fa-solid fa-plus"></i> + Puntos manual
+                 <i class="fa-solid fa-plus"></i> Puntos
                </button>`}
           <button class="btn btn-danger btn-sm del-client-btn" data-id="${c.id}" data-name="${esc(c.name)}">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>`;
           grid.appendChild(card);
+        });
+
+        // Eventos de Perfil
+        grid.querySelectorAll('.view-profile-btn').forEach(btn => {
+           btn.addEventListener('click', () => openClientProfile(btn.dataset.id));
         });
 
         // Redeem
@@ -2254,6 +2319,63 @@
         const blob = new Blob(['\uFEFF' + parts.join('')], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
       }
+
+      /* ── PERFIL CLIENTE ──────────────────────────────── */
+      window.openClientProfile = function(clientId) {
+        const client = allClients.find(c => String(c.id) === String(clientId));
+        if (!client) return;
+
+        const modal = document.getElementById('profile-modal');
+        document.getElementById('p-name').textContent = client.name;
+        document.getElementById('p-phone').textContent = client.phone || 'Sin teléfono';
+        document.getElementById('p-email').textContent = client.email || 'Sin correo registrado';
+        document.getElementById('p-avatar').textContent = initials(client.name);
+        document.getElementById('p-stat-visits').textContent = client.total_visits || 0;
+        document.getElementById('p-stat-points').textContent = (client.points || 0).toLocaleString('es-CL');
+        
+        const pct = Math.min(100, Math.round((client.points || 0) / POINTS_GOAL * 100));
+        document.getElementById('p-loyalty-pct').textContent = pct + '%';
+
+        // Buscar historial bookings
+        const history = allBookings.filter(b => String(b.client_id) === String(clientId) || (b.phone && b.phone === client.phone));
+        const tbody = document.getElementById('p-history-tbody');
+        const empty = document.getElementById('p-history-empty');
+        
+        tbody.innerHTML = '';
+        if (history.length === 0) {
+           empty.style.display = 'block';
+        } else {
+           empty.style.display = 'none';
+           // Ordenar por fecha desc, previniendo Invalid Date con registros antiguos
+           history.sort((a,b) => {
+              let dA = new Date(a.date);
+              let dB = new Date(b.date);
+              if (isNaN(dA)) dA = new Date(0);
+              if (isNaN(dB)) dB = new Date(0);
+              return dB - dA;
+           });
+
+           history.forEach(h => {
+              const tr = document.createElement('tr');
+              tr.style.borderBottom = '1px solid #222';
+              tr.innerHTML = `
+                <td style="padding:10px 14px;color:var(--grey-30);">${h.date}</td>
+                <td style="padding:10px 14px;color:var(--white);font-weight:500;">${h.service}</td>
+                <td style="padding:10px 14px;color:var(--grey-40);">${h.barber}</td>
+                <td style="padding:10px 14px;color:var(--gold);font-weight:600;">${h.price}</td>
+              `;
+              tbody.appendChild(tr);
+           });
+        }
+
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      document.getElementById('p-close-btn').addEventListener('click', () => {
+        document.getElementById('profile-modal').style.display = 'none';
+        document.body.style.overflow = '';
+      });
 
       /* ── INIT + REAL-TIME ────────────────────────────── */
       loadAll();
@@ -2628,10 +2750,15 @@
       if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
 
       try {
+        // Consultar por fecha exacta (YYYY-MM-DD)
         const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment)`, {
           headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
         });
         const booked = await res.json();
+        
+        // También consultamos por el formato antiguo "Día N Mes" solo por si acaso hay datos viejos
+        // Pero el nuevo estándar es date=eq.${date}
+        
         const bookedTimes = (booked || []).map(b => b.time?.substring(0,5));
 
         const available = ALL_SLOTS.filter(s => !bookedTimes.includes(s));
@@ -2707,51 +2834,45 @@
           throw new Error(`¡Ese horario (${time}) acaba de ser tomado! Elige otro.`);
         }
 
-        // 2. Insertar en Supabase
+        // 2. Insertar en Supabase usando el cliente oficial
         const payload = {
-          name, phone, email: email || null, rut: rut || null,
+          name, phone, email: email || null,
           service, price: finalPrice, duration, date, time, barber,
-          notes: isCanje
-            ? `[CANJE DE PUNTOS] ${notes || ''}`.trim()
-            : (notes ? `${notes} [Admin Manual]` : '[Reserva Manual Admin]'),
           status: 'confirmed',
           payment_method: isCanje ? 'Canje de Puntos' : 'Reserva Manual (Admin)',
           attended: false,
-          createdAt: new Date().toISOString()
+          points_earned: window.ptsForService ? window.ptsForService(service, price) : 0
         };
 
-        const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_ANON,
-            'Authorization': `Bearer ${SUPABASE_ANON}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify([payload])
-        });
-
-        if (!insertRes.ok) {
-          const err = await insertRes.json();
-          throw new Error(err?.message || 'Error al guardar la reserva.');
-        }
-
-        const [savedBooking] = await insertRes.json();
+        const { data: savedBookingArr, error: insErr } = await sb.from('bookings').insert([payload]).select();
+        
+        if (insErr) throw new Error(insErr.message || 'Error al guardar reserva.');
+        
+        const savedBooking = savedBookingArr && savedBookingArr.length > 0 ? savedBookingArr[0] : null;
 
         // El Webhook de Supabase (INSERT en bookings) dispara automáticamente
         // la Edge Function send-booking-whatsapp con el registro confirmado.
         // No llamamos manualmente para evitar duplicados.
 
-        // 4. Upsert en tabla clients (puntos)
-        fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_client`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_ANON,
-            'Authorization': `Bearer ${SUPABASE_ANON}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ p_name: name, p_phone: phone, p_email: email || null })
-        }).catch(() => {});
+        // 4. Upsert en tabla clients (puntos + registro)
+        try {
+          const { data: ext } = await sb.from('clients').select('id, points, total_visits').eq('phone', phone).maybeSingle();
+          if (ext) {
+            await sb.from('clients').update({
+              points: (ext.points || 0) + (isCanje ? 0 : window.ptsForService(service, price)),
+              total_visits: (ext.total_visits || 0) + 1,
+              updated_at: new Date().toISOString()
+            }).eq('id', ext.id);
+          } else {
+            await sb.from('clients').insert({
+              name, phone, email: email || null,
+              points: isCanje ? 0 : window.ptsForService(service, price),
+              total_visits: 1,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+          }
+        } catch (cErr) { console.warn('Client upsert error:', cErr); }
 
         // 5. Mostrar éxito y limpiar formulario
         resultText.innerHTML = `
