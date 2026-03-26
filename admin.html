@@ -1855,7 +1855,11 @@
                  alert('Reserva cancelada correctamente.');
                }
              } catch (err) {
-               alert('Error al cancelar: ' + err.message);
+               console.error('Cancellation error:', err);
+               if (confirm('Transbank rechazó el reembolso automático (Error 57 u otro).\n\nEsto es común en tarjetas de Débito. ¿Deseas ELIMINAR la reserva del sistema de todas formas para liberar el cupo?\n(Deberás devolver el dinero manualmente)')) {
+                  await sb.from('bookings').delete().eq('id', btn.dataset.id);
+                  alert('Reserva eliminada. Cupo liberado en la agenda.');
+               }
              }
              
              await loadAll();
@@ -2038,11 +2042,13 @@
         const headerBtn = document.getElementById('agenda-today-btn');
         headerBtn.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${titleDate}`;
         
-        // El formato de guardado de Supabase de State.date es igual a titleDate
+        // El formato de guardado de Supabase de State.date es igual a titleDate (viejo)
+        // Pero ahora usamos ISO (YYYY-MM-DD). Soportamos ambos:
         const targetDateLabel = titleDate; 
+        const targetIso = currentAgendaDateObj.toISOString().split('T')[0];
         
         // Filtramos las reservas para ese dia exacto
-        const dayBookings = allBookings.filter(b => b.date === targetDateLabel);
+        const dayBookings = allBookings.filter(b => b.date === targetDateLabel || b.date === targetIso);
         
         const canvas = document.getElementById('agenda-canvas');
         canvas.innerHTML = '';
@@ -2070,8 +2076,8 @@
         grid.innerHTML = htmlRows;
         
         // Inyectar tarjetas de las reservas encima del grid
-        // Barbers: 0: Emanuel, 1: Matías Nuñez, 2: Ángel, 3: Benjamín, 4: Gonzalo
-        const BARBER_COLUMNS = ['Emanuel', 'Matías Nuñez', 'Ángel', 'Benjamín', 'Gonzalo'];
+        // Barbers: 0: Prox, 1: Matías N., 2: Ángel, 3: Benjamín, 4: Gonzalo
+        const BARBER_COLUMNS = ['Próximamente', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo'];
 
         dayBookings.forEach(b => {
            if (!b.time || !b.barber) return;
@@ -2250,7 +2256,7 @@
         saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
 
         const now = new Date();
-        const dayStr = `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]}`;
+        const dayStr = now.toISOString().split('T')[0];
         const timeStr = now.toTimeString().slice(0, 5);
         const pts = ptsForService(serviceName);
 
@@ -2794,9 +2800,11 @@
            const hm = h*60 + m;
            if (timeObj.getDay() === 0) return false; // Dom
            if (isWeekend) {
-              if (hm < 600 || hm > 1095 || (hm >= 825 && hm < 870)) return false; // 10:00, 18:15, 13:45 colación
+              // Sábado: 10:00 a 18:30 (18:15 último slot), Colación: 13:45 a 14:30
+              if (hm < 600 || hm > 1095 || (hm >= 825 && hm < 870)) return false; 
            } else {
-              if (hm < 660 || hm > 1200 || (hm >= 840 && hm < 885)) return false; // 11:00, 20:00, 14:00 colación
+              // Lun-Vie: 11:00 a 20:00, Colación: 14:00 a 14:45
+              if (hm < 660 || hm > 1200 || (hm >= 840 && hm < 885)) return false;
            }
            return true;
         });
