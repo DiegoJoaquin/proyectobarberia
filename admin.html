@@ -2008,28 +2008,27 @@
         document.getElementById('clients-grid').innerHTML = '';
         [allBookings, allClients] = await Promise.all([fetchBookings(), fetchClients()]);
         
-        // Export to global scope for chart access
         window.allBookings = allBookings;
         window.allClients = allClients;
         
         renderBookings(document.getElementById('search-bookings').value);
         renderClients(document.getElementById('search-clients').value);
-        renderAgenda(); // Renderiza la agenda visual
+        renderAgenda(); 
         if (typeof updateFinanzas === 'function') updateFinanzas();
         if (typeof window.updateDashboardCharts === 'function') window.updateDashboardCharts();
       }
 
-      /* ── AGENDA VISUAL (NUEVA LÓGICA) ────────────────── */
+      /* ── AGENDA VISUAL ───────────────────────────────── */
       let currentAgendaDateObj = new Date();
       
       document.getElementById('agenda-prev-btn').addEventListener('click', () => {
         currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() - 1);
-        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() - 1); // Skip Sunday
+        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() - 1); 
         renderAgenda();
       });
       document.getElementById('agenda-next-btn').addEventListener('click', () => {
         currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() + 1);
-        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() + 1); // Skip Sunday
+        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() + 1); 
         renderAgenda();
       });
       document.getElementById('agenda-today-btn').addEventListener('click', () => {
@@ -2042,12 +2041,9 @@
         const headerBtn = document.getElementById('agenda-today-btn');
         headerBtn.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${titleDate}`;
         
-        // El formato de guardado de Supabase de State.date es igual a titleDate (viejo)
-        // Pero ahora usamos ISO (YYYY-MM-DD). Soportamos ambos:
         const targetDateLabel = titleDate; 
         const targetIso = currentAgendaDateObj.toISOString().split('T')[0];
         
-        // Filtramos las reservas para ese dia exacto
         const dayBookings = allBookings.filter(b => b.date === targetDateLabel || b.date === targetIso);
         
         const canvas = document.getElementById('agenda-canvas');
@@ -2056,10 +2052,9 @@
         const grid = document.createElement('div');
         grid.className = 'grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] relative';
         
-        // Array de horas base: 09:00, 10:00... 20:00
         const START_HOUR = 9;
         const END_HOUR = 20;
-        const ROW_HEIGHT = 80; // 80px por hora
+        const ROW_HEIGHT = 80; 
         let htmlRows = '';
 
         for (let h = START_HOUR; h <= END_HOUR; h++) {
@@ -2075,36 +2070,31 @@
         }
         grid.innerHTML = htmlRows;
         
-        // Inyectar tarjetas de las reservas encima del grid
-        // Barbers: 0: Prox, 1: Matías N., 2: Ángel, 3: Benjamín, 4: Gonzalo
         const BARBER_COLUMNS = ['Próximamente', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo'];
 
         dayBookings.forEach(b => {
            if (!b.time || !b.barber) return;
-           const colIndex = BARBER_COLUMNS.findIndex(name => name.includes(b.barber.split(' ')[0])); // Aproximación por 1er nombre
+           const barberName = b.barber.split(' ')[0];
+           const colIndex = BARBER_COLUMNS.findIndex(name => name.toLowerCase().includes(barberName.toLowerCase())); 
            if (colIndex === -1) return;
            
-           // parse time e.g. "10:30"
            const [bh, bm] = b.time.split(':').map(Number);
-           // Posición vertical
            const minsFromStart = (bh - START_HOUR) * 60 + bm;
            const topPx = (minsFromStart / 60) * ROW_HEIGHT;
            
-           // parse duration e.g. "45 min", "1 hr", "1 hr 15 min"
-           let durMins = 30; // fallback
+           let durMins = 30; 
            if (b.duration) {
               const dStr = b.duration.toLowerCase();
               if (dStr.includes('1 hr 15')) durMins = 75;
               else if (dStr.includes('1 hr 30')) durMins = 90;
               else if (dStr.includes('1 hr')) durMins = 60;
-              else if (dStr.includes('45')) durMins = 45;
-              else if (dStr.includes('15')) durMins = 15;
+              else {
+                  const match = dStr.match(/(\d+)/);
+                  if (match) durMins = parseInt(match[1], 10);
+              }
            }
-           const heightPx = (durMins / 60) * ROW_HEIGHT;
+           const heightPx = Math.max(34, (durMins / 60) * ROW_HEIGHT);
            
-           // Columna horizontal: El grid es de 6 columnas. [Hora, B1, B2, B3, B4, B5]
-           // El left offset no se saca por absolute todo el ancho, sino que lo inyectamos calculando vw o %, mejor absoluto total:
-           // width: calculamos que la columna es (100% - 80px) / 5
            const leftCalc = `calc(80px + ((100% - 80px) / 5) * ${colIndex} + 4px)`;
            const widthCalc = `calc(((100% - 80px) / 5) - 8px)`;
            
@@ -2113,25 +2103,23 @@
            card.style.top = `${topPx}px`;
            card.style.left = leftCalc;
            card.style.width = widthCalc;
-           card.style.height = `${heightPx - 4}px`; // restamos padding visual
+           card.style.height = `${heightPx - 3}px`; 
            card.style.zIndex = '5';
            
            const isAttended = b.attended;
-           const bgColor = isAttended ? 'rgba(182,122,67,0.15)' : 'var(--grey-80)';
-           const borderColor = isAttended ? 'var(--gold)' : 'var(--grey-60)';
+           const accentColor = isAttended ? 'var(--gold)' : 'var(--white)';
            
            card.innerHTML = `
-             <div style="background:${bgColor}; border:1px solid ${borderColor}; border-radius:4px; padding:6px; overflow:hidden; display:flex; flex-direction:column; height:100%; cursor:pointer;">
-                <p style="color:var(--white); font-size:0.75rem; font-weight:700; display:flex; justify-content:space-between; line-height:1.1;">
-                  ${esc(b.name.split(' ')[0])} ${isAttended ? '<span style="color:var(--green)"><i class="fa-solid fa-check"></i></span>' : ''}
+             <div style="background:${isAttended ? 'rgba(184,151,90,0.18)' : 'rgba(30,30,35,0.95)'}; border:1px solid ${isAttended ? 'var(--gold)' : '#333'}; border-left:3px solid ${accentColor}; border-radius:4px; padding:4px 8px; overflow:hidden; display:flex; flex-direction:column; justify-content:center; height:100%; cursor:pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                <p style="color:var(--white); font-size:0.75rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; line-height:1.2;">
+                  ${esc(b.name.split(' ')[0])} ${isAttended ? '<span style="color:var(--green); font-size:0.65rem;"><i class="fa-solid fa-check"></i></span>' : ''}
                 </p>
-                ${heightPx > 40 ? `<p style="color:var(--gold); font-size:0.65rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${esc(b.service)}</p>` : ''}
+                ${heightPx > 45 ? `<p style="color:var(--gold); font-size:0.6rem; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px;">${esc(b.service)}</p>` : ''}
              </div>
            `;
            grid.appendChild(card);
         });
 
-        // Current time line
         const now = new Date();
         if (now.getDate() === currentAgendaDateObj.getDate() && now.getMonth() === currentAgendaDateObj.getMonth()) {
            const nh = now.getHours();
