@@ -535,8 +535,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     service: state.service || '(Sin especificar)',
     price: state.price || '—',
     duration: state.duration || '—',
-    date_iso: state.dateIso || '—',
-    date: state.date || '—', // Mantenemos date para labels si es necesario, pero el insert usará date_iso preferente
+    date: state.dateIso || state.date || '—',
     time: state.time || '—',
     barber: state.barber || '—',
     created_at: new Date().toISOString(),
