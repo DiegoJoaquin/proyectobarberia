@@ -585,7 +585,6 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     return;
   } catch (err) {
     console.error('Error TBK:', err);
-    alert('⚠️ ERROR TÉCNICO INTERNO:\n' + (err.message || JSON.stringify(err)) + '\n\nPor favor envíale una foto de este cuadrito al desarrollador.');
     showToast('Error al iniciar Webpay. Escríbenos al WhatsApp para agendar.');
     confirmBtn.disabled = false;
     confirmBtn.textContent = 'Confirmar reserva';
