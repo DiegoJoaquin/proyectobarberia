@@ -129,11 +129,11 @@ async function upsertClient(booking, bookingId) {
  */
 async function getBookedTimesForBarber(dateStr, barberName) {
   if (SUPABASE_ON) {
-    // Buscamos tanto en el formato texto (dateStr) como el ISO (state.dateIso)
+    const datesToSearch = state.dateIso ? [dateStr, state.dateIso] : [dateStr];
     const { data, error } = await sb
       .from('bookings')
       .select('time')
-      .or(`date.eq.${dateStr}${state.dateIso ? `,date.eq.${state.dateIso}` : ''}`)
+      .in('date', datesToSearch)
       .eq('barber', barberName)
       .in('status', ['confirmed', 'waiting_payment']);
     if (error) { console.warn('Supabase select error:', error); }
