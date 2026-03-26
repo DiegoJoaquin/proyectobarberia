@@ -2786,7 +2786,22 @@
         
         const bookedTimes = (booked || []).map(b => b.time?.substring(0,5));
 
-        const available = ALL_SLOTS.filter(s => !bookedTimes.includes(s));
+        const timeObj = new Date(date + 'T12:00:00');
+        const isWeekend = timeObj.getDay() === 6;
+
+        let validSlots = ALL_SLOTS.filter(s => {
+           const [h,m] = s.split(':').map(Number);
+           const hm = h*60 + m;
+           if (timeObj.getDay() === 0) return false; // Dom
+           if (isWeekend) {
+              if (hm < 600 || hm > 1095 || (hm >= 825 && hm < 870)) return false; // 10:00, 18:15, 13:45 colación
+           } else {
+              if (hm < 660 || hm > 1200 || (hm >= 840 && hm < 885)) return false; // 11:00, 20:00, 14:00 colación
+           }
+           return true;
+        });
+
+        const available = validSlots.filter(s => !bookedTimes.includes(s));
 
         timeSelect.innerHTML = available.length
           ? '<option value="">— Elige una hora —</option>' + available.map(s => `<option value="${s}">${s}</option>`).join('')

@@ -240,9 +240,32 @@ async function refreshTimePills() {
 
   const nowMin = now.getHours() * 60 + now.getMinutes() + 45; // 45-min buffer
 
+  const isWeekend = state.dateObj && state.dateObj.getDay() === 6; // Sábado
+  
   pills.forEach(pill => {
     const t = pill.dataset.time;
     if (!t) return;
+
+    // Reglas de colación y apertura estricta
+    const hm = parseHM(t);
+    let outOfBounds = false;
+    
+    if (state.dateObj && state.dateObj.getDay() === 0) {
+       outOfBounds = true; // Domingo cerrado
+    } else if (isWeekend) {
+       // Sábado: 10:00 a 13:45, 14:30 a 18:15
+       if (hm < parseHM('10:00') || hm > parseHM('18:15') || (hm >= parseHM('13:45') && hm < parseHM('14:30'))) outOfBounds = true;
+    } else {
+       // Lun-Vie: 11:00 a 20:00, Colación: 14:00 a 14:45
+       if (hm < parseHM('11:00') || hm > parseHM('20:00') || (hm >= parseHM('14:00') && hm < parseHM('14:45'))) outOfBounds = true;
+    }
+    
+    if (outOfBounds) {
+       pill.style.display = 'none';
+       return;
+    } else {
+       pill.style.display = 'inline-flex';
+    }
 
     pill.classList.remove('past', 'booked', 'selected', 'busy');
 
