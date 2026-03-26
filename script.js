@@ -655,6 +655,11 @@ updateSummary();
       console.log('%c❌ Pago Webpay rechazado', 'color:red;font-weight:bold');
       console.log('%ctoken_ws para certificación:', 'color:orange', tokenWs);
     }
+  } else if (paymentStatus === 'timeout') {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setTimeout(() => {
+      showToast('⏳ La sesión de pago ha expirado por inactividad. Por favor, intenta agendar nuevamente.');
+    }, 500);
   } else if (paymentStatus === 'error') {
     window.history.replaceState({}, document.title, window.location.pathname);
     setTimeout(() => {

@@ -5,19 +5,36 @@ serve(async (req) => {
   try {
     const url = new URL(req.url)
     const bodyText = await req.text()
-    const searchParams = new URLSearchParams(bodyText)
+    const params = new URLSearchParams(bodyText)
     
-    // 1. Obtener Token
-    const token = url.searchParams.get('token_ws') || searchParams.get('token_ws') || searchParams.get('TBK_TOKEN')
+    // 1. CAPTURA DE PARÁMETROS (Transbank entrega distintos según el flujo)
+    const tokenSuccess = params.get('token_ws') || url.searchParams.get('token_ws')
+    const tokenAbort = params.get('TBK_TOKEN') || url.searchParams.get('TBK_TOKEN')
+    const token = tokenSuccess || tokenAbort
     
-    if (!token) return new Response("Token Missing", { status: 400 })
+    // CASO TIMEOUT (Recomendación Transbank Producción)
+    // Cuando el usuario demora >5 min, no llega token pero sí TBK_ID_SESION
+    const tbkSession = params.get('TBK_ID_SESION') || url.searchParams.get('TBK_ID_SESION')
+    const tbkBuyOrder = params.get('TBK_ORDEN_COMPRA') || url.searchParams.get('TBK_ORDEN_COMPRA')
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 2. Buscar la Reserva
+    // A. ESCENARIO TIMEOUT / SESIÓN EXPIRADA
+    if (!token && tbkSession) {
+      console.log(`Timeout detectado para sesión: ${tbkSession}`);
+      // Liberar el cupo borrando la reserva temporal (usamos el ID que enviamos como session_id)
+      await supabaseClient.from('bookings').delete().eq('id', tbkSession)
+      return Response.redirect(`https://www.spartanbarber.cl/?payment=timeout`, 303)
+    }
+
+    if (!token) {
+      return Response.redirect(`https://www.spartanbarber.cl/?payment=error&reason=no_token`, 303)
+    }
+
+    // 2. BUSCAR LA RESERVA (Por token guardado en notas)
     const { data: bookings } = await supabaseClient
       .from('bookings')
       .select('*')
@@ -26,13 +43,13 @@ serve(async (req) => {
 
     const booking = bookings?.[0]
     
-    let fUrl = 'https://spartan-barber.com' 
-    if (booking?.notes) {
-      const match = booking.notes.match(/\[FRONT_URL:(.*?)\]/)
-      if (match && match[1] && match[1] !== 'undefined') fUrl = match[1]
+    // B. ESCENARIO ANULACIÓN MANUAL (TBK_TOKEN presente pero no token_ws)
+    if (tokenAbort && !tokenSuccess) {
+      if (booking) await supabaseClient.from('bookings').delete().eq('id', booking.id)
+      return Response.redirect(`https://www.spartanbarber.cl/?payment=rejected&token_ws=${token}`, 303)
     }
 
-    // 3. Confirmar con Transbank (Commit)
+    // 3. CONFIRMAR CON TRANSBANK (COMMIT)
     const TBK_COMMERCE_CODE = Deno.env.get('TBK_COMMERCE_CODE') || "597055555532"
     const TBK_API_KEY = Deno.env.get('TBK_API_KEY') || "579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C"
     const TBK_ENVIRONMENT = Deno.env.get('TBK_ENVIRONMENT') || "INTEGRATION"
@@ -40,88 +57,52 @@ serve(async (req) => {
 
     const txResponse = await fetch(`${tbkBaseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`, {
       method: 'PUT',
-      headers: { 'Tbk-Api-Key-Id': TBK_COMMERCE_CODE, 'Tbk-Api-Key-Secret': TBK_API_KEY, 'Content-Type': 'application/json' }
+      headers: { 
+        'Tbk-Api-Key-Id': TBK_COMMERCE_CODE, 
+        'Tbk-Api-Key-Secret': TBK_API_KEY, 
+        'Content-Type': 'application/json' 
+      }
     })
 
-    const txData = await txResponse.json()
+    if (txResponse.ok) {
+      const txData = await txResponse.json()
+      
+      if (txData.status === 'AUTHORIZED') {
+        if (booking) {
+          // Confirmar reserva en DB
+          const newNotes = (booking.notes || '').replace(/\[FRONT_URL:(.*?)\]/, '') + ` [TBK_AUTH:${txData.authorization_code}]`
+          await supabaseClient.from('bookings').update({ status: 'confirmed', notes: newNotes.trim() }).eq('id', booking.id)
 
-    // 4. Resultado de la Transacción
-    if (txResponse.ok && txData.status === 'AUTHORIZED') {
-      if (booking) {
-         // ACTUALIZAMOS ESTADO A 'confirmed'. 
-         // PRESERVAMOS el TBK_TOKEN para futuras anulaciones (refunds)
-         const newNotes = booking.notes
-           .replace(/\[FRONT_URL:(.*?)\]/, '') // Quitamos el FRONT_URL
-           + ` [TBK_AUTH:${txData.authorization_code}]`; // Añadimos la auth y dejamos el TBK_TOKEN intacto
-         
-         await supabaseClient.from('bookings').update({ 
-           status: 'confirmed', 
-           notes: newNotes.trim() 
-         }).eq('id', booking.id)
+          // --- ENVÍO DE WHATSAPP (TWILIO) ---
+          try {
+            const rawPhone = (booking.phone || '').replace(/\s/g, '').replace(/^0/, '')
+            const toPhone = rawPhone.startsWith('+') ? `whatsapp:${rawPhone}` : `whatsapp:+56${rawPhone}`
+            const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID')
+            const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')
+            const TWILIO_FROM = Deno.env.get('TWILIO_FROM_NUMBER') || 'whatsapp:+14155238886'
 
-         // ============================================
-         // NUEVO: Enviar WhatsApp DIRECTO por Twilio
-         // ============================================
-         try {
-            console.log("Iniciando envío de WhatsApp para reserva:", booking.id);
-            const rawPhone = (booking.phone || '').replace(/\s/g, '').replace(/^0/, '');
-            const toPhone = rawPhone.startsWith('+') ? `whatsapp:${rawPhone}` : `whatsapp:+56${rawPhone}`;
-
-            const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
-            const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') ?? '';
-            const TWILIO_FROM = Deno.env.get('TWILIO_FROM_NUMBER') ?? 'whatsapp:+14155238886';
-            
-            if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
-              const CONTENT_SID = 'HX8c4c8a841ed6345ccc60814977cbb058';
-              const contentVariables = {
-                "1": String(booking.name || 'Cliente'),
-                "2": String(booking.service || '—'),
-                "3": String(booking.date || '—'),
-                "4": String(booking.time || '—'),
-                "5": String(booking.barber || '—'),
-                "6": String(booking.price || '—')
-              };
-
-              const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-              const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-              
-              const body = new URLSearchParams({
-                To: toPhone,
-                From: TWILIO_FROM,
-                ContentSid: CONTENT_SID,
-                ContentVariables: JSON.stringify(contentVariables),
-              });
-
-              const twilioRes = await fetch(twilioUrl, {
+            if (TWILIO_SID && TWILIO_TOKEN) {
+              const vars = { "1": String(booking.name || 'Cliente'), "2": String(booking.service || '—'), "3": String(booking.date || '—'), "4": String(booking.time || '—'), "5": String(booking.barber || '—'), "6": String(booking.price || '—') }
+              const auth = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`)
+              await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
                 method: 'POST',
-                headers: {
-                  'Authorization': `Basic ${auth}`,
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: body.toString(),
-              });
-              
-              const twilioData = await twilioRes.json();
-              if (!twilioRes.ok) {
-                console.error("Error Twilio:", twilioData);
-              } else {
-                console.log(`WhatsApp enviado | SID: ${twilioData.sid}`);
-              }
-            } else {
-              console.error("Credenciales Twilio faltantes en webpay-return");
+                headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ To: toPhone, From: TWILIO_FROM, ContentSid: 'HX8c4c8a841ed6345ccc60814977cbb058', ContentVariables: JSON.stringify(vars) })
+              })
             }
-         } catch(e) {
-           console.error("Error al enviar WhatsApp directo:", e.message);
-         }
+          } catch(e) { console.error("Error WhatsApp:", e.message) }
+        }
+        return Response.redirect(`https://www.spartanbarber.cl/?payment=success&token_ws=${token}`, 303)
       }
-      return Response.redirect(`${fUrl}?payment=success`, 302)
-    } else {
-      // Si falló el pago, borramos la reserva temporal
-      if (booking) await supabaseClient.from('bookings').delete().eq('id', booking.id)
-      return Response.redirect(`${fUrl}?payment=rejected`, 302)
     }
+
+    // C. ESCENARIO RECHAZO BANCARIO
+    if (booking) await supabaseClient.from('bookings').delete().eq('id', booking.id)
+    return Response.redirect(`https://www.spartanbarber.cl/?payment=rejected&token_ws=${token}`, 303)
+
   } catch (error) {
-    console.error("Error en Webpay Return:", error.message)
-    return new Response(`Error: ${error.message}`, { status: 500 })
+    console.error("Error Catch:", error.message)
+    return Response.redirect(`https://www.spartanbarber.cl/?payment=error`, 303)
   }
 })
+
