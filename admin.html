@@ -1169,8 +1169,8 @@
               <input type="text" id="m-name" list="client-names" placeholder="Diego González" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
             </div>
             <div>
-              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">RUT</label>
-              <input type="text" id="m-rut" placeholder="12.345.678-9" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">RUT (Búsqueda automática)</label>
+              <input type="text" id="m-rut" list="client-ruts" placeholder="12.345.678-9" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
               <p id="m-rut-status" style="font-size:0.65rem;color:var(--gold);margin-top:6px;min-height:12px;"></p>
             </div>
             <div>
@@ -1478,9 +1478,10 @@
           <div>
             <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">RUT del cliente (Búsqueda automática)</label>
             <div style="display:flex;gap:8px;">
-              <input id="wi-rut" type="text" placeholder="12345678-9" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" autocomplete="off">
+              <input id="wi-rut" type="text" list="client-ruts" placeholder="12345678-9" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" autocomplete="off">
               <button id="wi-history-btn" class="btn btn-ghost btn-sm" disabled><i class="fa-solid fa-clock-rotate-left"></i> Histórico</button>
             </div>
+            <datalist id="client-ruts"></datalist>
             <p id="wi-rut-status" style="font-size:0.65rem;color:var(--gold);margin-top:4px;min-height:12px;"></p>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -1888,7 +1889,8 @@
           service: r.service, price: r.price, duration: r.duration,
           date: r.date, time: r.time, barber: r.barber, notes: r.notes,
           attended: r.attended, client_id: r.client_id, createdAt: r.created_at,
-          payment_method: r.payment_method || ''
+          payment_method: r.payment_method || '',
+          status: r.status, rut: r.rut
         }));
       }
 
@@ -2230,19 +2232,25 @@
         // Cargar Autocompletado CRM
         const dlNames = document.getElementById('client-names');
         const dlPhones = document.getElementById('client-phones');
+        const dlRuts = document.getElementById('client-ruts');
+        
         if (dlNames && dlPhones) {
-            let namesHtml = '', phonesHtml = '';
-            // Only process unique phones to avoid explosive dropdown sizes
-            const seenPhones = new Set();
+            let namesHtml = '', phonesHtml = '', rutsHtml = '';
+            // Only process unique identities to avoid explosive dropdown sizes
+            const seenIds = new Set();
+            
             allClients.forEach(c => {
-                if (c.phone && !seenPhones.has(c.phone)) {
-                    seenPhones.add(c.phone);
-                    if(c.name) namesHtml += `<option value="${esc(c.name)}">${c.phone}</option>`;
-                    phonesHtml += `<option value="${esc(c.phone)}">${c.name || ''}</option>`;
+                const identifier = c.rut || c.phone || c.name; 
+                if (identifier && !seenIds.has(identifier)) {
+                    seenIds.add(identifier);
+                    if (c.name) namesHtml += `<option value="${esc(c.name)}">${c.phone || c.rut || 'Sin detalles'}</option>`;
+                    if (c.phone) phonesHtml += `<option value="${esc(c.phone)}">${esc(c.name || 'Sin nombre')}</option>`;
+                    if (c.rut) rutsHtml += `<option value="${esc(c.rut)}">${esc(c.name || 'Sin nombre')}</option>`;
                 }
             });
             dlNames.innerHTML = namesHtml;
             dlPhones.innerHTML = phonesHtml;
+            if (dlRuts) dlRuts.innerHTML = rutsHtml;
             
             // Smart input completion (rut/phone)
             const wiRut = document.getElementById('wi-rut');
@@ -2417,13 +2425,13 @@
              let bdColor = '#333';
              
              if (status === 'Confirmado') {
-                 bgColor = 'rgba(0, 255, 0, 0.1)'; bdColor = 'var(--green)';
+                 bgColor = 'rgba(0, 255, 0, 0.25)'; bdColor = '#32cd32';
              } else if (status === 'Atendido') {
-                 bgColor = 'rgba(184, 151, 90, 0.18)'; bdColor = 'var(--gold)';
+                 bgColor = 'rgba(184, 151, 90, 0.35)'; bdColor = 'var(--gold)';
              } else if (status === 'No llegó') {
-                 bgColor = 'rgba(231, 76, 60, 0.15)'; bdColor = '#e74c3c';
+                 bgColor = 'rgba(231, 76, 60, 0.35)'; bdColor = '#f44336';
              } else if (status === 'Llegó') {
-                 bgColor = 'rgba(0, 200, 245, 0.15)'; bdColor = '#00c8f5';
+                 bgColor = 'rgba(0, 200, 245, 0.35)'; bdColor = '#00c8f5';
              }
 
              return {
@@ -3606,7 +3614,7 @@
 
         // 2. Insertar en Supabase usando el cliente oficial
         const payload = {
-          name, phone, email: email || null,
+          name, phone, email: email || null, rut: rut || null,
           service, price: finalPrice, duration, date, time, barber,
           status: 'confirmed',
           payment_method: isCanje ? 'Canje de Puntos' : 'Reserva Manual (Admin)',
@@ -3676,3 +3684,4 @@
 </body>
 
 </html>
+
