@@ -17,6 +17,26 @@
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
 
     :root {
+      --fc-border-color: rgba(255,255,255,0.06) !important;
+      --fc-non-business-color: rgba(0,0,0,0.2) !important;
+      --fc-page-bg-color: transparent !important;
+      --fc-neutral-bg-color: rgba(255,255,255,0.02) !important;
+    }
+
+    /* Redefinir bordes para que no sean punteados sino sólidos premium */
+    .fc-theme-standard td, .fc-theme-standard th {
+      border: 1px solid var(--fc-border-color) !important;
+    }
+    .fc-timegrid-slot-minor {
+        border-top-style: solid !important;
+        border-top-color: rgba(255,255,255,0.03) !important;
+    }
+    .fc-v-event {
+        border-radius: 4px !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+    }
+
+    :root {
       --black: #0f0f12;
       --grey-90: #161619;
       --grey-80: #1d1d21;
@@ -1695,6 +1715,10 @@
         document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab)?.classList.add('active');
+        
+        if (btn.dataset.tab === 'agenda' && typeof calendar !== 'undefined' && calendar) {
+             setTimeout(() => { calendar.updateSize(); calendar.render(); }, 50);
+        }
       });
     });
   </script>
@@ -2274,8 +2298,9 @@
             initialView: 'resourceTimeGridDay',
             initialDate: currentAgendaDateObj,
             locale: 'es',
-            slotMinTime: '09:00:00',
-            slotMaxTime: '21:00:00',
+            slotMinTime: '11:00:00',
+            slotMaxTime: '20:00:00',
+            slotDuration: '00:15:00',
             allDaySlot: false,
             editable: true,     // Let Drag&Drop
             selectable: true,
@@ -2283,8 +2308,24 @@
             resources: BARBER_COLUMNS.map(b => ({ id: b.split(' ')[0], title: b })),
             events: events,
             dateClick: function(info) {
-                const hourStr = info.date.toTimeString().slice(0,5);
-                openManualTab(hourStr, info.resource.title, targetIso);
+                let m = info.date.getMinutes();
+                let h = info.date.getHours();
+                
+                // Autocompletado inteligente: Redondear a intervalos de 45 mins (ALL_SLOTS)
+                const hm = h * 60 + m;
+                let closestSlot = '11:00';
+                if (typeof ALL_SLOTS !== 'undefined') {
+                    let minDiff = Infinity;
+                    ALL_SLOTS.forEach(slot => {
+                        const [sh, sm] = slot.split(':').map(Number);
+                        const shm = sh * 60 + sm;
+                        if (Math.abs(shm - hm) < minDiff) { minDiff = Math.abs(shm - hm); closestSlot = slot; }
+                    });
+                } else {
+                    closestSlot = info.date.toTimeString().slice(0,5);
+                }
+                
+                openManualTab(closestSlot, info.resource.title, targetIso);
             },
             eventClick: function(info) {
                 if (info.event.display === 'background') return;
@@ -2330,11 +2371,20 @@
          const isAttended = booking.attended;
          let html = `<p style="color:var(--white); font-size:0.8rem; font-weight:600; margin-bottom:4px; border-bottom:1px solid var(--grey-70); padding-bottom:6px;">${esc(booking.name)}</p>`;
          
+         html += `<button id="pop-status-btn" class="btn btn-ghost btn-sm" style="color:var(--green);border:1px solid rgba(0,255,0,0.2);"><i class="fa-solid fa-check"></i> Confirmado</button>`;
+         html += `<button id="pop-status-btn-lleg" class="btn btn-ghost btn-sm" style="color:#00c8f5;border:1px solid rgba(0,200,245,0.2);"><i class="fa-solid fa-location-dot"></i> Llegó</button>`;
          if (!isAttended) {
             html += `<button id="pop-pay-btn" class="btn btn-gold btn-sm"><i class="fa-solid fa-cash-register"></i> Pagar / Atendido</button>`;
          }
-         html += `<button id="pop-cancel-btn" class="btn btn-danger btn-sm"><i class="fa-solid fa-ban"></i> Suspender</button>`;
-         html += `<button id="pop-close-btn" class="btn btn-ghost btn-sm" style="margin-top:4px;"><i class="fa-solid fa-xmark"></i> Cerrar</button>`;
+         
+         const btnNoLleg = `<button id="pop-nolleg-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--gold);"><i class="fa-solid fa-user-slash"></i> No llegó</button>`;
+         const btnEsp = `<button id="pop-esp-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--grey-50);"><i class="fa-solid fa-hourglass-half"></i> Lista de espera</button>`;
+         const btnSusp = `<button id="pop-cancel-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--gold);border:1px solid rgba(184,151,90,0.3);"><i class="fa-solid fa-ban"></i> Suspender</button>`;
+         const btnElim = `<button id="pop-delete-btn" class="btn btn-danger btn-sm" style="font-size:0.65rem;"><i class="fa-solid fa-trash"></i> Eliminar</button>`;
+         
+         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">${btnNoLleg}${btnEsp}</div>`;
+         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px;">${btnSusp}${btnElim}</div>`;
+         html += `<button id="pop-close-btn" class="btn btn-ghost btn-sm" style="margin-top:6px;"><i class="fa-solid fa-xmark"></i> Cerrar</button>`;
          
          pop.innerHTML = html;
          document.body.appendChild(pop);
@@ -2352,21 +2402,38 @@
          const cancelBtn = document.getElementById('pop-cancel-btn');
          if (cancelBtn) cancelBtn.addEventListener('click', async () => {
              pop.remove();
-             
              const isWebpay = (booking.payment_method || '').toLowerCase().includes('webpay');
              if (isWebpay) {
                  const diffMs = new Date(booking.date + 'T' + booking.time).getTime() - new Date().getTime();
-                 const diffHrs = diffMs / (1000 * 60 * 60);
-                 if (diffHrs < 1 && diffHrs > 0) {
-                     alert("ADVERTENCIA DE POLÍTICA: Esta reserva fue pagada en línea y falta menos de 1 hora para la misma. Las devoluciones o reagendamientos no aplican de forma regular.");
-                     if (!confirm('¿Estás seguro de forzar la cancelación de todas formas? (Bajo estricta responsabilidad del administrador)')) return;
+                 if (diffMs / 3600000 < 1 && diffMs > 0) {
+                     alert("ADVERTENCIA DE POLÍTICA: Faltan menos de 1 hora. Responsabilidad del administrador suspender.");
+                     if (!confirm('¿Forzar suspensión?')) return;
                  }
              }
-             
-             if (!confirm(`¿Deseas suspender y eliminar la reserva libremente?`)) return;
+             if (!confirm(`¿Suspender turno? El horario quedará libre pero el registro se conservará como Suspendido.`)) return;
+             await sb.from('bookings').update({ status: 'Suspendido' }).eq('id', booking.id);
+             await loadAll();
+         });
+
+         const delBtn = document.getElementById('pop-delete-btn');
+         if (delBtn) delBtn.addEventListener('click', async () => {
+             pop.remove();
+             if (!confirm(`ATENCIÓN: Esto BORRARÁ el registro permanentemente. ¿Deseas eliminar la reserva?`)) return;
              await sb.from('bookings').delete().eq('id', booking.id);
              await loadAll();
          });
+
+         const updateStatus = async (st) => {
+             pop.remove();
+             const statusVal = st; // 'Confirmado', 'Llegó', 'No llegó', 'En Espera'
+             await sb.from('bookings').update({ status: statusVal }).eq('id', booking.id);
+             await loadAll();
+         };
+         
+         document.getElementById('pop-status-btn')?.addEventListener('click', () => updateStatus('Confirmado'));
+         document.getElementById('pop-status-btn-lleg')?.addEventListener('click', () => updateStatus('Llegó'));
+         document.getElementById('pop-nolleg-btn')?.addEventListener('click', () => updateStatus('No llegó'));
+         document.getElementById('pop-esp-btn')?.addEventListener('click', () => updateStatus('Lista de espera'));
          
          // Click outside to close
          setTimeout(() => {
@@ -3226,7 +3293,7 @@
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
 
     const TWILIO_SID = '';  // No se usa desde el admin. La Edge Function lo toma de sus propios Secrets.
-    const ALL_SLOTS = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30'];
+    const ALL_SLOTS = ['11:00', '11:45', '12:30', '13:15', '14:45', '15:30', '16:15', '17:00', '17:45', '18:30', '19:15'];
 
     async function loadAvailableSlots() {
       const barber = document.getElementById('m-barber')?.value;
@@ -3240,34 +3307,20 @@
       if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
 
       try {
-        // Consultar por fecha exacta (YYYY-MM-DD)
         const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment)`, {
           headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
         });
         const booked = await res.json();
         
-        // También consultamos por el formato antiguo "Día N Mes" solo por si acaso hay datos viejos
-        // Pero el nuevo estándar es date=eq.${date}
-        
         const bookedTimes = (booked || []).map(b => b.time?.substring(0,5));
-
         const timeObj = new Date(date + 'T12:00:00');
-        const isWeekend = timeObj.getDay() === 6;
 
         let validSlots = ALL_SLOTS.filter(s => {
-           const [h,m] = s.split(':').map(Number);
-           const hm = h*60 + m;
-           if (timeObj.getDay() === 0) return false; // Dom
-           if (isWeekend) {
-              // Sábado: 10:00 a 18:30 (18:15 último slot), Colación: 13:45 a 14:30
-              if (hm < 600 || hm > 1095 || (hm >= 825 && hm < 870)) return false; 
-           } else {
-              // Lun-Vie: 11:00 a 20:00, Colación: 14:00 a 14:45
-              if (hm < 660 || hm > 1200 || (hm >= 840 && hm < 885)) return false;
-           }
+           if (timeObj.getDay() === 0) return false; 
            return true;
         });
 
+        // Aseguramos que el horario no esté ocupado 
         const available = validSlots.filter(s => !bookedTimes.includes(s));
 
         timeSelect.innerHTML = available.length

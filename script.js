@@ -280,28 +280,10 @@ async function refreshTimePills() {
   }
 
   // Generate Fixed Interval Slots (45 mins stricto)
-  const SLOT_STEP = 45;
   const serviceMins = parseDurationMins(state.duration);
-  const openTime = isWeekend ? parseHM('10:00') : parseHM('11:00');
-  const closeTime = isWeekend ? parseHM('18:15') : parseHM('20:00');
-  const lunchStart = isWeekend ? parseHM('13:45') : parseHM('14:00');
-  const lunchEnd = isWeekend ? parseHM('14:30') : parseHM('14:45');
-
-  const candidateSlots = [];
+  const fixedSlots = ['11:00', '11:45', '12:30', '13:15', '14:45', '15:30', '16:15', '17:00', '17:45', '18:30', '19:15'];
   
-  // Morning slots
-  let curr = openTime;
-  while (curr + serviceMins <= lunchStart) {
-      candidateSlots.push(curr);
-      curr += SLOT_STEP;
-  }
-  
-  // Afternoon slots
-  curr = lunchEnd;
-  while (curr + serviceMins <= closeTime) {
-      candidateSlots.push(curr);
-      curr += SLOT_STEP;
-  }
+  const candidateSlots = fixedSlots.map(s => parseHM(s));
 
   // Filter overlapping
   const slots = [];
@@ -334,8 +316,8 @@ async function refreshTimePills() {
       }
 
       // Append to correct section
-      if (tMin < lunchStart && gridManana) gridManana.appendChild(btn);
-      else if (tMin >= lunchStart && tMin < parseHM('18:00') && gridTarde) gridTarde.appendChild(btn);
+      if (tMin < parseHM('14:00') && gridManana) gridManana.appendChild(btn);
+      else if (tMin >= parseHM('14:00') && tMin < parseHM('18:00') && gridTarde) gridTarde.appendChild(btn);
       else if (gridNoche) gridNoche.appendChild(btn);
   });
 
