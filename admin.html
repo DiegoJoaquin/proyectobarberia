@@ -2121,12 +2121,18 @@
         const dlNames = document.getElementById('client-names');
         const dlPhones = document.getElementById('client-phones');
         if (dlNames && dlPhones) {
-            dlNames.innerHTML = '';
-            dlPhones.innerHTML = '';
+            let namesHtml = '', phonesHtml = '';
+            // Only process unique phones to avoid explosive dropdown sizes
+            const seenPhones = new Set();
             allClients.forEach(c => {
-                if(c.name) dlNames.innerHTML += `<option value="${esc(c.name)}">${c.phone || ''}</option>`;
-                if(c.phone) dlPhones.innerHTML += `<option value="${esc(c.phone)}">${c.name || ''}</option>`;
+                if (c.phone && !seenPhones.has(c.phone)) {
+                    seenPhones.add(c.phone);
+                    if(c.name) namesHtml += `<option value="${esc(c.name)}">${c.phone}</option>`;
+                    phonesHtml += `<option value="${esc(c.phone)}">${c.name || ''}</option>`;
+                }
             });
+            dlNames.innerHTML = namesHtml;
+            dlPhones.innerHTML = phonesHtml;
             
             // Smart input completion
             const wiPhone = document.getElementById('wi-phone');
@@ -2222,7 +2228,7 @@
         const ROW_HEIGHT = 80; 
         let htmlRows = '';
 
-        const BARBER_COLUMNS = ['Próximamente', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Muñoz Quevedo'];
+        const BARBER_COLUMNS = ['Matías', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Muñoz Quevedo'];
         
         const blocksForDate = allBlocks.filter(b => b.block_date === targetIso);
 
@@ -2243,8 +2249,6 @@
                      if (h >= startH && h < endH) isBlocked = true;
                  }
              });
-             
-             if (bName === 'Próximamente') isBlocked = true;
              
              if (isBlocked) {
                  bStyle = 'bg-[rgba(235,0,41,0.03)] opacity-60 pointer-events-none custom-stripes';

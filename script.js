@@ -196,10 +196,8 @@ const state = {
   time: null,
   barber: null,
 };
-
 const BARBERS = [
-  'Próximamente',
-  'Matías Nuñez',
+  'Matías N.',
   'Ángel',
   'Benjamín',
   'Gonzalo',
@@ -281,26 +279,37 @@ async function refreshTimePills() {
       busyIntervals.push({ start: parseHM('14:00'), end: parseHM('14:45') });
   }
 
-  // Generate slots
+  // Generate Fixed Interval Slots (45 mins stricto)
+  const SLOT_STEP = 45;
   const serviceMins = parseDurationMins(state.duration);
   const openTime = isWeekend ? parseHM('10:00') : parseHM('11:00');
   const closeTime = isWeekend ? parseHM('18:15') : parseHM('20:00');
   const lunchStart = isWeekend ? parseHM('13:45') : parseHM('14:00');
+  const lunchEnd = isWeekend ? parseHM('14:30') : parseHM('14:45');
 
+  const candidateSlots = [];
+  
+  // Morning slots
   let curr = openTime;
-  const slots = [];
-
-  while (curr + serviceMins <= closeTime) {
-      const slotEnd = curr + serviceMins;
-      const overlap = busyIntervals.find(b => curr < b.end && slotEnd > b.start);
-      if (overlap) {
-          curr = overlap.end;
-      } else {
-          // It's a valid slot! 
-          slots.push(curr);
-          curr = slotEnd; // Jump by strict service duration
-      }
+  while (curr + serviceMins <= lunchStart) {
+      candidateSlots.push(curr);
+      curr += SLOT_STEP;
   }
+  
+  // Afternoon slots
+  curr = lunchEnd;
+  while (curr + serviceMins <= closeTime) {
+      candidateSlots.push(curr);
+      curr += SLOT_STEP;
+  }
+
+  // Filter overlapping
+  const slots = [];
+  candidateSlots.forEach(slotStart => {
+      const slotEnd = slotStart + Math.max(serviceMins, 15); // Minimun block checking
+      const overlap = busyIntervals.some(b => slotStart < b.end && slotEnd > b.start);
+      if (!overlap) slots.push(slotStart);
+  });
 
   // Render slots 
   slots.forEach(tMin => {
