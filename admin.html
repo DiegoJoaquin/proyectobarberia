@@ -1316,64 +1316,153 @@
       </div>
     </div>
 
-    <!-- ══ MODAL: CAJA / POS (NUEVO) ══════════════════════════════ -->
-    <div id="pos-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:2500;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
-      <div style="background:#1a1a1d;border:1px solid #2b2b30;border-radius:10px;padding:32px;width:90%;max-width:550px;position:relative;">
-        <button id="pos-close-btn" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#a3a3ab;font-size:1.4rem;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+    <!-- ══ MODAL: CAJERO VIRTUAL (FULLSCREEN POS) ══════════════════════════════ -->
+    <div id="pos-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2500;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+      <div style="background:var(--grey-90);border:1px solid #2b2b30;border-radius:10px;width:95%;max-width:1100px;max-height:95vh;overflow-y:auto;position:relative;display:flex;flex-direction:column;">
         
-        <h2 style="font-family:var(--font-serif);color:var(--white);font-size:1.4rem;margin-bottom:8px;"><i class="fa-solid fa-cash-register" style="color:var(--gold);margin-right:8px;"></i> Caja y <em style="color:var(--gold);font-style:italic;">POS</em></h2>
-        
-        <div style="background:#111;border:1px solid #2b2b30;border-radius:6px;padding:14px;margin-bottom:20px;">
-           <p style="font-size:1rem;color:var(--white);font-weight:600;" id="pos-client-name">—</p>
-           <p style="font-size:.8rem;color:var(--grey-40);margin-top:4px;" id="pos-service-name">—</p>
-           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;border-top:1px dashed #333;padding-top:12px;">
-              <span style="font-size:.8rem;color:var(--grey-30);text-transform:uppercase;letter-spacing:1px;">Total Original</span>
-              <span style="font-size:1.1rem;color:var(--white);font-weight:700;" id="pos-original-price">$0</span>
-           </div>
+        <!-- Header -->
+        <div style="padding:20px 24px;border-bottom:1px solid #2b2b30;display:flex;justify-content:space-between;align-items:center;background:#111;position:sticky;top:0;z-index:10;">
+            <h2 style="font-family:var(--font-serif);color:var(--white);font-size:1.4rem;margin:0;"><i class="fa-solid fa-cash-register" style="color:var(--gold);margin-right:10px;"></i>Cajero <em style="color:var(--gold);font-style:italic;">Virtual</em></h2>
+            <button id="pos-close-btn" style="background:none;border:none;color:#a3a3ab;font-size:1.6rem;cursor:pointer;transition:color 0.2s;"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-           <div>
-              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Tipo de Descuento</label>
-              <select id="pos-discount-type" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px;color:var(--white);font-size:.85rem;outline:none;">
-                 <option value="none">Sin descuento</option>
-                 <option value="percent">Porcentaje (%)</option>
-                 <option value="fixed">Monto Fijo ($)</option>
-              </select>
-           </div>
-           <div>
-              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Valor Descuento</label>
-              <input type="number" id="pos-discount-val" value="0" min="0" disabled style="width:100%;background:var(--grey-90);border:1px solid var(--grey-70);border-radius:4px;padding:10px;color:var(--white);font-size:.85rem;outline:none;" />
-           </div>
-        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:20px;">
+            <!-- Cliente Info -->
+            <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.03);padding:14px;border-radius:6px;border:1px solid #2b2b30;">
+                <span style="color:var(--grey-40);font-size:0.9rem;">¿A quién le estás vendiendo?</span>
+                <div style="display:flex;align-items:center;gap:8px;background:#111;padding:6px 16px;border-radius:4px;border:1px solid #333;">
+                   <i class="fa-solid fa-user" style="color:var(--gold);font-size:0.85rem;"></i>
+                   <strong style="color:var(--white);font-size:0.95rem;letter-spacing:0.5px;" id="pos-client-name">—</strong>
+                </div>
+            </div>
 
-        <div style="margin-bottom:20px;">
-           <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2b2b30;padding-bottom:6px;margin-bottom:12px;">
-             <h3 style="font-size:.8rem;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin:0;">Desglose de Pago (Split)</h3>
-             <button id="pos-add-method-btn" class="btn btn-ghost btn-sm" style="font-size:.65rem;"><i class="fa-solid fa-plus"></i> Añadir Pago</button>
-           </div>
-           
-           <div id="pos-dynamic-payments" style="display:flex;flex-direction:column;gap:10px;">
-              <!-- Dynamic Rows inserted here -->
-           </div>
-        </div>
+            <!-- Two Columns Layout -->
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
+                
+                <!-- Left Column -->
+                <div style="display:flex;flex-direction:column;gap:20px;">
+                    <!-- Información de la Venta (Servicios) -->
+                    <div style="background:#111;border:1px solid #2b2b30;border-radius:8px;overflow:hidden;">
+                        <div style="padding:12px 16px;border-bottom:1px solid #2b2b30;background:#1a1a1d;">
+                            <h3 style="color:var(--grey-20);font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Información de la venta</h3>
+                        </div>
+                        <div style="padding:16px;">
+                            <table style="width:100%;text-align:left;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="color:var(--grey-50);font-size:0.75rem;text-transform:uppercase;border-bottom:1px solid #333;">
+                                        <th style="padding-bottom:10px;">Ítem</th>
+                                        <th style="padding-bottom:10px;text-align:center;">Cant.</th>
+                                        <th style="padding-bottom:10px;">Total</th>
+                                        <th style="padding-bottom:10px;">Descuento (%)</th>
+                                        <th style="padding-bottom:10px;">Comisión (%)</th>
+                                        <th style="padding-bottom:10px;">Profesional</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding-top:14px;color:var(--white);font-size:0.9rem;" id="pos-service-name">—</td>
+                                        <td style="padding-top:14px;text-align:center;"><input type="number" value="1" disabled style="width:40px;background:#222;border:1px solid #333;color:#fff;text-align:center;padding:4px;border-radius:4px;"></td>
+                                        <td style="padding-top:14px;"><input type="text" id="pos-original-price" disabled style="width:80px;background:#222;border:1px solid #333;color:var(--gold);padding:4px 8px;border-radius:4px;font-weight:600;" value="0"></td>
+                                        <td style="padding-top:14px;"><input type="number" id="pos-discount-input" value="0" min="0" max="100" style="width:70px;background:var(--grey-90);border:1px solid var(--grey-70);color:#fff;padding:4px 8px;border-radius:4px;"></td>
+                                        <td style="padding-top:14px;"><input type="number" id="pos-comision-input" value="50.0" step="0.5" min="0" max="100" style="width:70px;background:var(--grey-90);border:1px solid var(--grey-70);color:#fff;padding:4px 8px;border-radius:4px;"></td>
+                                        <td style="padding-top:14px;">
+                                            <input type="text" id="pos-barber-name" disabled style="width:100%;background:#222;border:1px solid #333;color:var(--white);padding:4px 8px;border-radius:4px;">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-        <div style="background:rgba(184,151,90,.05);border:1px solid rgba(184,151,90,.2);border-radius:6px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
-           <div>
-              <p style="font-size:.75rem;color:var(--grey-40);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total a Cobrar</p>
-              <p style="font-size:1.3rem;color:var(--gold);font-weight:700;" id="pos-final-total">$0</p>
-           </div>
-           <div style="text-align:right;">
-              <p style="font-size:.75rem;color:var(--grey-40);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Ingresado</p>
-              <p style="font-size:1.3rem;color:var(--green);font-weight:700;" id="pos-entered-total">$0</p>
-           </div>
+                    <!-- Métodos de Pago -->
+                    <div style="background:#111;border:1px solid #2b2b30;border-radius:8px;overflow:hidden;">
+                        <div style="padding:12px 16px;border-bottom:1px solid #2b2b30;background:#1a1a1d;display:flex;justify-content:space-between;align-items:center;">
+                            <h3 style="color:var(--grey-20);font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Métodos de pago</h3>
+                            <button id="pos-add-method-btn" style="background:#2b2b30;border:1px solid #444;color:var(--white);padding:4px 10px;border-radius:4px;font-size:0.8rem;cursor:pointer;"><i class="fa-solid fa-plus" style="color:var(--green);"></i> Añadir Fila</button>
+                        </div>
+                        <div style="padding:16px;">
+                           <div id="pos-dynamic-payments" style="display:flex;flex-direction:column;gap:12px;">
+                              <!-- Dynamic Rows appended here -->
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (Resumen) -->
+                <div style="background:#111;border:1px solid #2b2b30;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:16px;">
+                    <h3 style="color:var(--gold);font-size:1rem;text-transform:uppercase;letter-spacing:1px;font-weight:600;border-bottom:1px solid #333;padding-bottom:12px;">Resumen de la Venta</h3>
+                    
+                    <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--grey-30);">
+                        <span>Fecha Venta:</span>
+                        <strong style="color:var(--white);" id="pos-fecha-venta">--/--/----</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--grey-30);">
+                        <span>Subtotal:</span>
+                        <strong style="color:var(--white);" id="pos-resumen-subtotal">$0</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.9rem;color:var(--grey-30);">
+                        <span>Monto Descuento:</span>
+                        <strong style="color:#e74c3c;" id="pos-resumen-descuento">-$0</strong>
+                    </div>
+                    
+                    <div style="background:rgba(255,255,255,0.03);border:1px solid #333;padding:16px;border-radius:6px;margin-top:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                           <span style="font-size:0.85rem;color:var(--grey-40);text-transform:uppercase;letter-spacing:1px;">Total a Pagar</span>
+                           <span style="font-size:1.6rem;color:var(--gold);font-weight:700;" id="pos-final-total">$0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px dashed #444;padding-top:8px;">
+                           <span style="font-size:0.75rem;color:var(--grey-50);text-transform:uppercase;letter-spacing:1px;">Ingreso Caja</span>
+                           <span style="font-size:1.1rem;color:var(--green);font-weight:700;" id="pos-entered-total">$0</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label style="font-size:0.8rem;color:var(--grey-40);display:block;margin-bottom:6px;">Comentario Interno:</label>
+                        <textarea id="pos-notes-input" rows="2" placeholder="Opcional..." style="width:100%;background:var(--grey-90);border:1px solid var(--grey-70);color:var(--white);padding:8px 12px;border-radius:4px;font-size:0.85rem;outline:none;resize:none;"></textarea>
+                    </div>
+
+                    <p id="pos-error" style="color:#e74c3c;font-size:.8rem;text-align:center;min-height:16px;margin:0;"></p>
+                    
+                    <button id="pos-confirm-btn" class="btn btn-green" style="width:100%;padding:16px;font-size:1.05rem;justify-content:center;border-radius:6px;margin-top:auto;">
+                       <i class="fa-solid fa-check-double"></i> ATENDIDO Y PAGADO
+                    </button>
+                </div>
+            </div>
         </div>
-        
-        <p id="pos-error" style="color:#e74c3c;font-size:.8rem;margin-bottom:12px;text-align:center;min-height:16px;"></p>
-        
-        <button id="pos-confirm-btn" class="btn btn-green" style="width:100%;padding:14px;font-size:1rem;justify-content:center;border-radius:6px;">
-           <i class="fa-solid fa-check-double"></i> Confirmar Pago y Atendido
-        </button>
+      </div>
+    </div>
+
+    <!-- ══ MODAL: REAGENDAR ══════════════════════════════════════ -->
+    <div id="reagendar-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:3000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+      <div style="background:#1a1a1d;border:1px solid #2b2b30;border-radius:8px;padding:32px;width:100%;max-width:400px;position:relative;">
+         <button onclick="document.getElementById('reagendar-modal').style.display='none'" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#a3a3ab;font-size:1.2rem;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+         <h2 style="font-family:var(--font-serif);color:var(--white);margin-bottom:4px;font-size:1.4rem;">Reagendar <em style="color:var(--gold);font-style:italic;">Cita</em></h2>
+         <p style="font-size:0.75rem;color:var(--grey-40);margin-bottom:20px;">Mueve la cita a un nuevo bloque horario. El registro original se actualizará.</p>
+         
+         <div style="display:flex;flex-direction:column;gap:16px;">
+             <div>
+                <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
+                <select id="reag-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:10px;border-radius:4px;font-size:.85rem;outline:none;">
+                   <option value="Gonzalo">Gonzalo</option>
+                   <option value="Matías N.">Matías N.</option>
+                   <option value="Benjamín">Benjamín</option>
+                   <option value="Ángel">Ángel</option>
+                   <option value="Matias Muñoz Quevedo">Matias Muñoz Quevedo</option>
+                </select>
+             </div>
+             <div>
+                <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Nueva Fecha</label>
+                <input type="date" id="reag-date" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:10px;border-radius:4px;font-size:.85rem;outline:none;" />
+             </div>
+             <div>
+                <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Nueva Hora (45mins)</label>
+                <select id="reag-time" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:10px;border-radius:4px;font-size:.85rem;outline:none;">
+                   <!-- Llenado dinámicamente con ALL_SLOTS -->
+                </select>
+             </div>
+         </div>
+         
+         <button id="reagendar-confirm-btn" class="btn btn-gold" style="width:100%;margin-top:24px;justify-content:center;padding:12px;"><i class="fa-solid fa-calendar-check"></i> Efectuar Cambio</button>
       </div>
     </div>
 
@@ -2153,16 +2242,35 @@
             dlNames.innerHTML = namesHtml;
             dlPhones.innerHTML = phonesHtml;
             
-            // Smart input completion
-            const wiPhone = document.getElementById('wi-phone');
+            // Smart input completion (rut/phone)
+            const wiRut = document.getElementById('wi-rut');
             const wiName = document.getElementById('wi-name');
-            wiPhone.oninput = () => {
-                const match = allClients.find(c => c.phone === wiPhone.value);
-                if (match && !wiName.value) wiName.value = match.name;
-            };
-            wiName.oninput = () => {
-                const match = allClients.find(c => c.name === wiName.value);
-                if (match && !wiPhone.value) wiPhone.value = match.phone;
+            const cleanStr = (s) => String(s||'').replace(/\D/g, ''); // Deja solo rut numerico o celular
+            
+            wiRut.oninput = () => {
+                const query = cleanStr(wiRut.value);
+                if (query.length < 6) return; // Wait
+                const match = allClients.find(c => {
+                   return cleanStr(c.phone).includes(query) || (c.rut && cleanStr(c.rut).includes(query));
+                });
+                
+                const stat = document.getElementById('wi-rut-status');
+                const histBtn = document.getElementById('wi-history-btn');
+                
+                if (match && !wiName.value) {
+                    wiName.value = match.name;
+                    document.getElementById('wi-phone').value = match.phone || '';
+                    stat.textContent = `Cliente encontrado: ${match.name}`;
+                    stat.style.color = 'var(--green)';
+                    if(histBtn) {
+                        histBtn.disabled = false;
+                        histBtn.onclick = (e) => { e.preventDefault(); openClientProfile(match.id); };
+                    }
+                } else if (!match) {
+                    stat.textContent = "Cliente nuevo...";
+                    stat.style.color = 'var(--gold)';
+                    if(histBtn) histBtn.disabled = true;
+                }
             };
         }
         
@@ -2269,6 +2377,21 @@
              const endStr = `${dateIsoT}T${endDate.getHours().toString().padStart(2,'0')}:${endDate.getMinutes().toString().padStart(2,'0')}:00`;
 
              const isAttended = b.attended;
+             const status = b.status || (isAttended ? 'Atendido' : 'Pendiente');
+             
+             let bgColor = 'rgba(30,30,35,0.95)';
+             let bdColor = '#333';
+             
+             if (status === 'Confirmado') {
+                 bgColor = 'rgba(0, 255, 0, 0.1)'; bdColor = 'var(--green)';
+             } else if (status === 'Atendido') {
+                 bgColor = 'rgba(184, 151, 90, 0.18)'; bdColor = 'var(--gold)';
+             } else if (status === 'No llegó') {
+                 bgColor = 'rgba(231, 76, 60, 0.15)'; bdColor = '#e74c3c';
+             } else if (status === 'Llegó') {
+                 bgColor = 'rgba(0, 200, 245, 0.15)'; bdColor = '#00c8f5';
+             }
+
              return {
                  id: b.id,
                  resourceId: b.barber.split(' ')[0], 
@@ -2276,8 +2399,8 @@
                  end: endStr,
                  title: `${b.name} - ${b.service}`,
                  extendedProps: { ...b },
-                 backgroundColor: isAttended ? 'rgba(184,151,90,0.18)' : 'rgba(30,30,35,0.95)',
-                 borderColor: isAttended ? 'var(--gold)' : '#333',
+                 backgroundColor: bgColor,
+                 borderColor: bdColor,
                  textColor: 'var(--white)'
              };
         }).filter(e => e !== null);
@@ -2379,11 +2502,11 @@
          
          const btnNoLleg = `<button id="pop-nolleg-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--gold);"><i class="fa-solid fa-user-slash"></i> No llegó</button>`;
          const btnEsp = `<button id="pop-esp-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--grey-50);"><i class="fa-solid fa-hourglass-half"></i> Lista de espera</button>`;
-         const btnSusp = `<button id="pop-cancel-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--gold);border:1px solid rgba(184,151,90,0.3);"><i class="fa-solid fa-ban"></i> Suspender</button>`;
+         const btnReag = `<button id="pop-reagendar-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--gold);border:1px solid rgba(184,151,90,0.3);"><i class="fa-solid fa-calendar-plus"></i> Reagendar</button>`;
          const btnElim = `<button id="pop-delete-btn" class="btn btn-danger btn-sm" style="font-size:0.65rem;"><i class="fa-solid fa-trash"></i> Eliminar</button>`;
          
          html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">${btnNoLleg}${btnEsp}</div>`;
-         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px;">${btnSusp}${btnElim}</div>`;
+         html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px;">${btnReag}${btnElim}</div>`;
          html += `<button id="pop-close-btn" class="btn btn-ghost btn-sm" style="margin-top:6px;"><i class="fa-solid fa-xmark"></i> Cerrar</button>`;
          
          pop.innerHTML = html;
@@ -2399,20 +2522,26 @@
              openPaymentModal(booking);
          });
          
-         const cancelBtn = document.getElementById('pop-cancel-btn');
-         if (cancelBtn) cancelBtn.addEventListener('click', async () => {
-             pop.remove();
-             const isWebpay = (booking.payment_method || '').toLowerCase().includes('webpay');
-             if (isWebpay) {
-                 const diffMs = new Date(booking.date + 'T' + booking.time).getTime() - new Date().getTime();
-                 if (diffMs / 3600000 < 1 && diffMs > 0) {
-                     alert("ADVERTENCIA DE POLÍTICA: Faltan menos de 1 hora. Responsabilidad del administrador suspender.");
-                     if (!confirm('¿Forzar suspensión?')) return;
+         const syncToCRM = async (bk) => {
+             // Si el cliente no existe en CRM o necesita update, lo hacemos silencioso
+             if (bk.client_id) return; // Ya referenciado
+             const pts = window.ptsForService ? window.ptsForService(bk.service, bk.price) : 0;
+             if (bk.phone) {
+                 const { data: cl } = await sb.from('clients').select('id, points, total_visits').eq('phone', bk.phone).maybeSingle();
+                 if (!cl) {
+                     await sb.from('clients').insert({
+                         name: bk.name, phone: bk.phone, email: bk.email || '',
+                         points: pts, total_visits: 1,
+                         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+                     });
                  }
              }
-             if (!confirm(`¿Suspender turno? El horario quedará libre pero el registro se conservará como Suspendido.`)) return;
-             await sb.from('bookings').update({ status: 'Suspendido' }).eq('id', booking.id);
-             await loadAll();
+         };
+
+         const reagBtn = document.getElementById('pop-reagendar-btn');
+         if (reagBtn) reagBtn.addEventListener('click', () => {
+             pop.remove();
+             openReagendarModal(booking);
          });
 
          const delBtn = document.getElementById('pop-delete-btn');
@@ -2425,8 +2554,8 @@
 
          const updateStatus = async (st) => {
              pop.remove();
-             const statusVal = st; // 'Confirmado', 'Llegó', 'No llegó', 'En Espera'
-             await sb.from('bookings').update({ status: statusVal }).eq('id', booking.id);
+             if (st === 'Confirmado' || st === 'Llegó') await syncToCRM(booking);
+             await sb.from('bookings').update({ status: st }).eq('id', booking.id);
              await loadAll();
          };
          
@@ -2447,14 +2576,49 @@
          }, 50);
       }
       
-      // Lógica Modal POS (Caja y Cobro Múltiple)
+      // Lógica Modal REAGENDAR
+      function openReagendarModal(booking) {
+          const modal = document.getElementById('reagendar-modal');
+          const btnObj = document.getElementById('reagendar-confirm-btn');
+          
+          document.getElementById('reag-barber').value = booking.barber || 'Gonzalo';
+          const currentDateIso = booking.date.split(' ')[0]; // o un parse if needed
+          document.getElementById('reag-date').value = currentDateIso;
+          
+          const selTime = document.getElementById('reag-time');
+          selTime.innerHTML = ALL_SLOTS.map(s => `<option value="${s}" ${s === booking.time ? 'selected' : ''}>${s}</option>`).join('');
+          
+          btnObj.onclick = async () => {
+              const nB = document.getElementById('reag-barber').value;
+              const nD = document.getElementById('reag-date').value;
+              const nT = document.getElementById('reag-time').value;
+              
+              btnObj.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+              btnObj.disabled = true;
+              
+              try {
+                  await sb.from('bookings').update({ barber: nB, date: nD, time: nT }).eq('id', booking.id);
+                  modal.style.display = 'none';
+                  await loadAll();
+              } catch(err) {
+                  console.error("Reagendar error", err);
+                  alert("Error al reagendar. Intenta de nuevo.");
+              } finally {
+                  btnObj.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Efectuar Cambio';
+                  btnObj.disabled = false;
+              }
+          };
+          modal.style.display = 'flex';
+      }
+
+      // Lógica Modal POS (Cajero Virtual FullScreen)
       function openPaymentModal(booking) {
           const modal = document.getElementById('pos-modal');
           const errEl = document.getElementById('pos-error');
           errEl.textContent = '';
           
-          document.getElementById('pos-client-name').textContent = booking.name;
-          document.getElementById('pos-service-name').textContent = booking.service || 'Servicio General';
+          document.getElementById('pos-client-name').textContent = booking.name || 'Cliente Sin Nombre';
+          document.getElementById('pos-barber-name').value = booking.barber || 'Gonzalo';
           
           // Parse original price
           let originalP = 0;
@@ -2462,12 +2626,24 @@
               const match = String(booking.price).match(/(\d+)/g);
               if (match) originalP = parseInt(match.join(''), 10);
           }
+          if (originalP === 0) originalP = 15000; // Fallback
           
-          document.getElementById('pos-original-price').textContent = '$' + originalP.toLocaleString('es-CL');
-          document.getElementById('pos-final-total').textContent = '$' + originalP.toLocaleString('es-CL');
-          document.getElementById('pos-entered-total').textContent = '$0';
+          document.getElementById('pos-service-name').textContent = booking.service || 'Servicio de Salon';
+          document.getElementById('pos-original-price').value = originalP;
           
-          // Array de Métodos de Pago dinámicos
+          const today = new Date();
+          document.getElementById('pos-fecha-venta').textContent = `${today.getDate().toString().padStart(2,'0')}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getFullYear()}`;
+          
+          const dInput = document.getElementById('pos-discount-input');
+          const cInput = document.getElementById('pos-comision-input');
+          const subT = document.getElementById('pos-resumen-subtotal');
+          const dResumen = document.getElementById('pos-resumen-descuento');
+          const finalArr = [document.getElementById('pos-final-total')];
+          const entEl = document.getElementById('pos-entered-total');
+          
+          dInput.value = 0;
+          cInput.value = 50.0;
+          
           let methodsArr = [{ id: Date.now(), method: 'Efectivo', amount: 0 }];
           
           function renderPosMethods() {
@@ -2478,30 +2654,27 @@
               methodsArr.forEach((item, index) => {
                   const row = document.createElement('div');
                   row.style.display = 'grid';
-                  row.style.gridTemplateColumns = '120px 1fr 30px';
+                  row.style.gridTemplateColumns = '2fr 1fr 40px';
                   row.style.gap = '10px';
                   row.style.alignItems = 'center';
-                  row.style.marginBottom = '8px';
                   
                   const sel = document.createElement('select');
                   ['Efectivo', 'Débito', 'Crédito', 'Transferencia'].forEach(m => {
                       sel.add(new Option(m, m, false, item.method === m));
                   });
-                  sel.className = 'pos-split-type';
-                  sel.style.cssText = 'background:#111;border:1px solid #333;color:var(--grey-30);padding:8px;font-size:.85rem;border-radius:4px;outline:none;';
+                  sel.style.cssText = 'background:#1a1a1d;border:1px solid #333;color:var(--white);padding:8px 12px;border-radius:4px;outline:none;font-size:0.9rem;';
                   sel.onchange = (e) => { item.method = e.target.value; recalcPos(); };
                   
                   const input = document.createElement('input');
                   input.type = 'number';
                   input.value = item.amount || '';
                   input.placeholder = '$0';
-                  input.className = 'pos-split-val';
-                  input.style.cssText = 'width:100%;background:#111;border:1px solid #333;border-radius:4px;padding:8px 12px;color:var(--green);font-size:.9rem;font-weight:600;outline:none;';
+                  input.style.cssText = 'width:100%;background:#1a1a1d;border:1px solid #333;color:var(--green);font-size:1rem;font-weight:700;padding:8px 12px;border-radius:4px;outline:none;';
                   input.oninput = (e) => { item.amount = parseInt(e.target.value, 10) || 0; recalcPos(); };
                   
                   const delBtn = document.createElement('button');
                   delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-                  delBtn.style.cssText = 'background:none;border:none;color:#e74c3c;cursor:pointer;opacity:0.6;';
+                  delBtn.style.cssText = 'background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:#e74c3c;padding:8px;border-radius:4px;cursor:pointer;opacity:0.8;';
                   delBtn.onclick = () => { methodsArr.splice(index, 1); renderPosMethods(); recalcPos(); };
                   
                   row.append(sel, input, methodsArr.length > 1 ? delBtn : document.createElement('div'));
@@ -2517,26 +2690,22 @@
           let finalToPay = originalP;
           
           function recalcPos() {
-              const errEl = document.getElementById('pos-error');
-              let discount = 0;
-              const dType = typeSelect.value;
-              const dVal = parseInt(valInput.value, 10) || 0;
+              let discountPct = parseFloat(dInput.value) || 0;
+              let discountAm = Math.round(originalP * (discountPct / 100));
+              finalToPay = Math.max(0, originalP - discountAm);
               
-              if (dType === 'percent' && dVal > 0) discount = Math.round(originalP * (dVal / 100));
-              else if (dType === 'fixed' && dVal > 0) discount = dVal;
-              
-              finalToPay = Math.max(0, originalP - discount);
-              document.getElementById('pos-final-total').textContent = '$' + finalToPay.toLocaleString('es-CL');
+              subT.textContent = '$' + originalP.toLocaleString('es-CL');
+              dResumen.textContent = '-$' + discountAm.toLocaleString('es-CL');
+              finalArr.forEach(el => el.textContent = '$' + finalToPay.toLocaleString('es-CL'));
               
               let entered = 0;
               methodsArr.forEach(m => entered += m.amount);
               
-              const entEl = document.getElementById('pos-entered-total');
               entEl.textContent = '$' + entered.toLocaleString('es-CL');
               entEl.style.color = entered === finalToPay ? 'var(--green)' : (entered > finalToPay ? 'var(--gold)' : '#e74c3c');
               
               if (entered !== finalToPay) {
-                 errEl.textContent = 'El monto total ingresado debe ser exactamente $' + finalToPay.toLocaleString('es-CL');
+                 errEl.textContent = 'El monto total ingresado debe calzar exactamente con $' + finalToPay.toLocaleString('es-CL');
                  document.getElementById('pos-confirm-btn').disabled = true;
                  document.getElementById('pos-confirm-btn').style.opacity = '0.5';
               } else {
@@ -2544,16 +2713,11 @@
                  document.getElementById('pos-confirm-btn').disabled = false;
                  document.getElementById('pos-confirm-btn').style.opacity = '1';
               }
-              
               return { finalToPay, entered };
           }
           
-          typeSelect.onchange = () => {
-              valInput.disabled = typeSelect.value === 'none';
-              if (typeSelect.value === 'none') valInput.value = '0';
-              recalcPos();
-          };
-          valInput.oninput = recalcPos;
+          dInput.oninput = recalcPos;
+          cInput.oninput = recalcPos;
           
           renderPosMethods();
           recalcPos();
@@ -2570,27 +2734,31 @@
               const primaryMethod = methodsArr.length === 1 ? methodsArr[0].method : (methodsArr.length > 0 ? 'Mixto' : 'Efectivo');
               let finalNotes = booking.notes || '';
               
-              if (isMulti || typeSelect.value !== 'none') {
-                  const dText = typeSelect.value !== 'none' ? ` | Dsc: ${typeSelect.value === 'percent' ? valInput.value+'%' : '$'+valInput.value}` : '';
-                  const mText = methodsArr.map(m => `${m.method}: $${m.amount}`).join(' + ');
-                  finalNotes += `\n[POS] Pago: ${mText}${dText}`;
-              }
+              const internalComment = document.getElementById('pos-notes-input').value.trim();
+              if(internalComment) finalNotes += `\n[NOTA CAJA]: ${internalComment}`;
+              
+              const pct = dInput.value;
+              const coms = cInput.value;
+              const dText = parseFloat(pct) > 0 ? ` | Dsc: ${pct}%` : '';
+              const mText = methodsArr.map(m => `${m.method}: $${m.amount}`).join(' + ');
+              finalNotes += `\n[POS] Pago: ${mText}${dText} (Com: ${coms}%)`;
               
               newConfirmBtn.disabled = true;
-              newConfirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Procesando...';
+              newConfirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROCESANDO VENTA...';
               
               try {
                   const pts = window.ptsForService ? window.ptsForService(booking.service, finalToPay) : 0;
                   
                   await sb.from('bookings').update({ 
                       attended: true,
+                      status: 'Atendido',
                       payment_method: primaryMethod,
                       price: `$${finalToPay.toLocaleString('es-CL')}`,
                       notes: finalNotes.trim(),
                       points_earned: pts
                   }).eq('id', booking.id);
                   
-                  // Loyalty
+                  // CRM Loyalty Sync Integrado Directo Abajo
                   if (booking.client_id) {
                      const { data: cl } = await sb.from('clients').select('points, total_visits').eq('id', booking.client_id).single();
                      if (cl) {
@@ -2600,9 +2768,15 @@
                              updated_at: new Date().toISOString()
                          }).eq('id', booking.client_id);
                      }
-                  } else if (booking.phone) {
-                     const { data: cl } = await sb.from('clients').select('id, points, total_visits').eq('phone', booking.phone).maybeSingle();
-                     if (cl) {
+                  } else if (booking.phone || booking.name) {
+                     // Usa Phone o Nombre para empatar en caso de Walk-ins puros
+                     let qry = sb.from('clients').select('id, points, total_visits');
+                     if(booking.phone) qry = qry.eq('phone', booking.phone);
+                     else qry = qry.eq('name', booking.name);
+                     
+                     const { data: clList } = await qry.limit(1);
+                     if (clList && clList.length > 0) {
+                         const cl = clList[0];
                          await sb.from('clients').update({
                              points: (cl.points || 0) + pts,
                              total_visits: (cl.total_visits || 0) + 1,
@@ -2610,7 +2784,7 @@
                          }).eq('id', cl.id);
                      } else {
                          await sb.from('clients').insert({
-                             name: booking.name, phone: booking.phone,
+                             name: booking.name, phone: booking.phone || '',
                              points: pts, total_visits: 1,
                              created_at: new Date().toISOString(), updated_at: new Date().toISOString()
                          });
@@ -2620,10 +2794,11 @@
                   modal.style.display = 'none';
                   await loadAll();
               } catch (err) {
-                  errEl.textContent = 'Error al procesar el pago.';
+                  errEl.textContent = 'Error al procesar la venta. Verifique logs.';
                   console.error(err);
+              } finally {
                   newConfirmBtn.disabled = false;
-                  newConfirmBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Confirmar Pago y Atendido';
+                  newConfirmBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> ATENDIDO Y PAGADO';
               }
           };
           
