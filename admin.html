@@ -1221,12 +1221,12 @@
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Barbero *</label>
               <select id="m-barber" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
-                <option value="">— Selecciona un barbero —</option>
-                <option value="Próximamente" disabled style="color:var(--grey-50);">Próximamente (no disponible)</option>
+                <option value="Emanuel">Emanuel</option>
                 <option value="Matías N.">Matías N.</option>
                 <option value="Ángel">Ángel</option>
                 <option value="Benjamín">Benjamín</option>
                 <option value="Gonzalo">Gonzalo</option>
+                <option value="Matias Muñoz Quevedo">Matias Muñoz Quevedo</option>
               </select>
             </div>
             <div>
@@ -1444,10 +1444,11 @@
              <div>
                 <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
                 <select id="reag-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:10px;border-radius:4px;font-size:.85rem;outline:none;">
-                   <option value="Gonzalo">Gonzalo</option>
+                   <option value="Emanuel">Emanuel</option>
                    <option value="Matías N.">Matías N.</option>
-                   <option value="Benjamín">Benjamín</option>
                    <option value="Ángel">Ángel</option>
+                   <option value="Benjamín">Benjamín</option>
+                   <option value="Gonzalo">Gonzalo</option>
                    <option value="Matias Muñoz Quevedo">Matias Muñoz Quevedo</option>
                 </select>
              </div>
@@ -1539,6 +1540,7 @@
                 <option value="Ángel">Ángel</option>
                 <option value="Benjamín">Benjamín</option>
                 <option value="Gonzalo">Gonzalo</option>
+                <option value="Matias Muñoz Quevedo">Matias Muñoz Quevedo</option>
               </select>
             </div>
             <div>
@@ -1582,6 +1584,7 @@
               <option value="Ángel">Ángel</option>
               <option value="Benjamín">Benjamín</option>
               <option value="Gonzalo">Gonzalo</option>
+              <option value="Matias Muñoz Quevedo">Matias Muñoz Quevedo</option>
             </select>
           </div>
           <div>
@@ -2402,7 +2405,7 @@
         
         if (calendar) calendar.destroy();
         
-        const BARBER_COLUMNS = ['Matías', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Quevedo'];
+        const BARBER_COLUMNS = ['Emanuel', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Quevedo'];
         const blocksForDate = allBlocks.filter(b => b.block_date === targetIso);
 
         const events = dayBookings.map(b => {

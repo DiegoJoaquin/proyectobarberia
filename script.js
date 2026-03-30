@@ -197,6 +197,7 @@ const state = {
   barber: null,
 };
 const BARBERS = [
+  'Emanuel',
   'Matías N.',
   'Ángel',
   'Benjamín',
