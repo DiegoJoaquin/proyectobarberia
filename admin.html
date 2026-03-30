@@ -970,26 +970,26 @@
       <div class="section-header flex justify-between items-end">
         <div>
           <h1 class="section-title">Agenda <em>Visual</em></h1>
-          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Time-blocking por barbero</p>
+          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Time-blocking por barbero interactiva</p>
         </div>
-        <div class="flex gap-2">
-          <button class="btn btn-ghost" id="agenda-prev-btn"><i class="fa-solid fa-chevron-left"></i></button>
+        <div class="flex gap-2 items-center">
           <button class="btn btn-ghost" id="agenda-today-btn"><i class="fa-solid fa-calendar-day"></i> Hoy</button>
-          <button class="btn btn-ghost" id="agenda-next-btn"><i class="fa-solid fa-chevron-right"></i></button>
+          <input type="date" id="agenda-date-picker" class="filter-input" style="padding: 8px 12px; margin: 0; min-width: 140px; cursor: pointer; color-scheme: dark;">
         </div>
       </div>
       
       <!-- Agenda Grid Container -->
       <div class="bg-[#161619] border border-[#2b2b30] rounded overflow-x-auto">
-        <div class="min-w-[800px]">
+        <div class="min-w-[900px]">
           <!-- Header Row (Barbers) -->
-          <div class="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] border-b border-[#2b2b30] bg-[#1d1d21]">
+          <div class="grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr] border-b border-[#2b2b30] bg-[#1d1d21]">
             <div class="p-3 text-center border-r border-[#2b2b30] flex items-center justify-center text-[--grey-40] text-xs font-semibold tracking-widest uppercase">Hora</div>
-            <div class="p-3 text-center border-r border-[#2b2b30] text-[--grey-50] font-semibold" style="opacity:.5;">Próximamente</div>
-            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold">Matías N.</div>
-            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold">Ángel</div>
-            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold">Benjamín</div>
-            <div class="p-3 text-center text-[--white] font-semibold">Gonzalo</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--grey-50] font-semibold" style="opacity:.5;"><i class="fa-solid fa-user-plus text-xs block mb-1"></i>Próximamente</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold"><i class="fa-solid fa-user-tie text-[--gold] text-xs block mb-1"></i>Matías N.</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold"><i class="fa-solid fa-user-tie text-[--gold] text-xs block mb-1"></i>Ángel</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold"><i class="fa-solid fa-user-tie text-[--gold] text-xs block mb-1"></i>Benjamín</div>
+            <div class="p-3 text-center border-r border-[#2b2b30] text-[--white] font-semibold"><i class="fa-solid fa-user-tie text-[--gold] text-xs block mb-1"></i>Gonzalo</div>
+            <div class="p-3 text-center text-[--white] font-semibold text-sm leading-tight"><i class="fa-solid fa-user-tie text-[--gold] text-xs block mb-1"></i>Matias Quevedo</div>
           </div>
 
           <!-- Time Rows Structure -->
@@ -1311,6 +1311,77 @@
       </div>
     </div>
 
+    <!-- ══ MODAL: CAJA / POS (NUEVO) ══════════════════════════════ -->
+    <div id="pos-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:2500;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+      <div style="background:#1a1a1d;border:1px solid #2b2b30;border-radius:10px;padding:32px;width:90%;max-width:550px;position:relative;">
+        <button id="pos-close-btn" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#a3a3ab;font-size:1.4rem;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        
+        <h2 style="font-family:var(--font-serif);color:var(--white);font-size:1.4rem;margin-bottom:8px;"><i class="fa-solid fa-cash-register" style="color:var(--gold);margin-right:8px;"></i> Caja y <em style="color:var(--gold);font-style:italic;">POS</em></h2>
+        
+        <div style="background:#111;border:1px solid #2b2b30;border-radius:6px;padding:14px;margin-bottom:20px;">
+           <p style="font-size:1rem;color:var(--white);font-weight:600;" id="pos-client-name">—</p>
+           <p style="font-size:.8rem;color:var(--grey-40);margin-top:4px;" id="pos-service-name">—</p>
+           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;border-top:1px dashed #333;padding-top:12px;">
+              <span style="font-size:.8rem;color:var(--grey-30);text-transform:uppercase;letter-spacing:1px;">Total Original</span>
+              <span style="font-size:1.1rem;color:var(--white);font-weight:700;" id="pos-original-price">$0</span>
+           </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+           <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Tipo de Descuento</label>
+              <select id="pos-discount-type" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px;color:var(--white);font-size:.85rem;outline:none;">
+                 <option value="none">Sin descuento</option>
+                 <option value="percent">Porcentaje (%)</option>
+                 <option value="fixed">Monto Fijo ($)</option>
+              </select>
+           </div>
+           <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Valor Descuento</label>
+              <input type="number" id="pos-discount-val" value="0" min="0" disabled style="width:100%;background:var(--grey-90);border:1px solid var(--grey-70);border-radius:4px;padding:10px;color:var(--white);font-size:.85rem;outline:none;" />
+           </div>
+        </div>
+
+        <div style="margin-bottom:20px;">
+           <h3 style="font-size:.8rem;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;border-bottom:1px solid #2b2b30;padding-bottom:6px;">Desglose de Pago (Split)</h3>
+           
+           <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin-bottom:8px;">
+              <span style="font-size:.85rem;color:var(--grey-30);">💵 Efectivo</span>
+              <input type="number" class="pos-split-input" data-method="Efectivo" placeholder="$0" style="width:100%;background:#111;border:1px solid #333;border-radius:4px;padding:8px 12px;color:var(--green);font-size:.9rem;font-weight:600;outline:none;" />
+           </div>
+           <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin-bottom:8px;">
+              <span style="font-size:.85rem;color:var(--grey-30);">💳 Débito</span>
+              <input type="number" class="pos-split-input" data-method="Débito" placeholder="$0" style="width:100%;background:#111;border:1px solid #333;border-radius:4px;padding:8px 12px;color:var(--green);font-size:.9rem;font-weight:600;outline:none;" />
+           </div>
+           <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin-bottom:8px;">
+              <span style="font-size:.85rem;color:var(--grey-30);">🏦 Crédito</span>
+              <input type="number" class="pos-split-input" data-method="Crédito" placeholder="$0" style="width:100%;background:#111;border:1px solid #333;border-radius:4px;padding:8px 12px;color:var(--green);font-size:.9rem;font-weight:600;outline:none;" />
+           </div>
+           <div style="display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin-bottom:8px;">
+              <span style="font-size:.85rem;color:var(--grey-30);">📲 Transferencia</span>
+              <input type="number" class="pos-split-input" data-method="Transferencia" placeholder="$0" style="width:100%;background:#111;border:1px solid #333;border-radius:4px;padding:8px 12px;color:var(--green);font-size:.9rem;font-weight:600;outline:none;" />
+           </div>
+        </div>
+
+        <div style="background:rgba(184,151,90,.05);border:1px solid rgba(184,151,90,.2);border-radius:6px;padding:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
+           <div>
+              <p style="font-size:.75rem;color:var(--grey-40);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total a Cobrar</p>
+              <p style="font-size:1.3rem;color:var(--gold);font-weight:700;" id="pos-final-total">$0</p>
+           </div>
+           <div style="text-align:right;">
+              <p style="font-size:.75rem;color:var(--grey-40);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Ingresado</p>
+              <p style="font-size:1.3rem;color:var(--green);font-weight:700;" id="pos-entered-total">$0</p>
+           </div>
+        </div>
+        
+        <p id="pos-error" style="color:#e74c3c;font-size:.8rem;margin-bottom:12px;text-align:center;min-height:16px;"></p>
+        
+        <button id="pos-confirm-btn" class="btn btn-green" style="width:100%;padding:14px;font-size:1rem;justify-content:center;border-radius:6px;">
+           <i class="fa-solid fa-check-double"></i> Confirmar Pago y Atendido
+        </button>
+      </div>
+    </div>
+
     <!-- MODAL: ATENCIÓN EN SITIO (Walk-In) -->
     <div id="walkin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
       <div style="background:#1a1a1d;border:1px solid #2b2b30;border-radius:8px;padding:32px;width:100%;max-width:480px;position:relative;">
@@ -1322,11 +1393,13 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
               <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Nombre del cliente</label>
-              <input id="wi-name" type="text" placeholder="Juan Pérez" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
+              <input id="wi-name" type="text" list="client-names" placeholder="Juan Pérez" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" autocomplete="off">
+              <datalist id="client-names"></datalist>
             </div>
             <div>
               <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Teléfono</label>
-              <input id="wi-phone" type="tel" placeholder="+56 9 ···" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
+              <input id="wi-phone" type="tel" list="client-phones" placeholder="+56 9 ···" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" autocomplete="off">
+              <datalist id="client-phones"></datalist>
             </div>
           </div>
 
@@ -1654,7 +1727,13 @@
         return Math.floor(numericPrice * 0.1);
       }
 
-      let allBookings = [], allClients = [];
+      let allBookings = [], allClients = [], allBlocks = [];
+
+      async function fetchAllBlocks() {
+         const { data, error } = await sb.from('barber_blocks').select('*');
+         if (error) { console.warn('Blocks fetch error:', error); return []; }
+         return data || [];
+      }
 
       // Source badge
       const badge = document.getElementById('source-badge');
@@ -2032,10 +2111,35 @@
         document.getElementById('loading-clients').style.display = 'block';
         document.getElementById('table-section').style.display = 'none';
         document.getElementById('clients-grid').innerHTML = '';
-        [allBookings, allClients] = await Promise.all([fetchBookings(), fetchClients()]);
+        [allBookings, allClients, allBlocks] = await Promise.all([fetchBookings(), fetchClients(), fetchAllBlocks()]);
         
         window.allBookings = allBookings;
         window.allClients = allClients;
+        window.allBlocks = allBlocks;
+        
+        // Cargar Autocompletado CRM
+        const dlNames = document.getElementById('client-names');
+        const dlPhones = document.getElementById('client-phones');
+        if (dlNames && dlPhones) {
+            dlNames.innerHTML = '';
+            dlPhones.innerHTML = '';
+            allClients.forEach(c => {
+                if(c.name) dlNames.innerHTML += `<option value="${esc(c.name)}">${c.phone || ''}</option>`;
+                if(c.phone) dlPhones.innerHTML += `<option value="${esc(c.phone)}">${c.name || ''}</option>`;
+            });
+            
+            // Smart input completion
+            const wiPhone = document.getElementById('wi-phone');
+            const wiName = document.getElementById('wi-name');
+            wiPhone.oninput = () => {
+                const match = allClients.find(c => c.phone === wiPhone.value);
+                if (match && !wiName.value) wiName.value = match.name;
+            };
+            wiName.oninput = () => {
+                const match = allClients.find(c => c.name === wiName.value);
+                if (match && !wiPhone.value) wiPhone.value = match.phone;
+            };
+        }
         
         renderBookings(document.getElementById('search-bookings').value);
         renderClients(document.getElementById('search-clients').value);
@@ -2047,28 +2151,63 @@
       /* ── AGENDA VISUAL ───────────────────────────────── */
       let currentAgendaDateObj = new Date();
       
-      document.getElementById('agenda-prev-btn').addEventListener('click', () => {
-        currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() - 1);
-        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() - 1); 
-        renderAgenda();
-      });
-      document.getElementById('agenda-next-btn').addEventListener('click', () => {
-        currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() + 1);
-        if (currentAgendaDateObj.getDay() === 0) currentAgendaDateObj.setDate(currentAgendaDateObj.getDate() + 1); 
-        renderAgenda();
-      });
+      // Selector Mensual/Diario
+      const dp = document.getElementById('agenda-date-picker');
+      if (dp) {
+         dp.addEventListener('change', (e) => {
+            if (!e.target.value) return;
+            const parts = e.target.value.split('-'); 
+            currentAgendaDateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10)-1, parseInt(parts[2], 10));
+            renderAgenda();
+         });
+      }
       document.getElementById('agenda-today-btn').addEventListener('click', () => {
         currentAgendaDateObj = new Date();
         renderAgenda();
       });
 
+      window.openManualTab = (timeStr, barberStr, dateIso) => {
+         document.querySelectorAll('.tab-nav-btn').forEach(btn => btn.classList.remove('active'));
+         document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+         const manualBtn = document.querySelector('[data-tab="manual"]');
+         if (manualBtn) manualBtn.classList.add('active');
+         const manualTab = document.getElementById('tab-manual');
+         if (manualTab) manualTab.classList.add('active');
+         
+         const dInput = document.getElementById('m-date');
+         const bInput = document.getElementById('m-barber');
+         
+         if (dInput) { dInput.value = dateIso; dInput.dispatchEvent(new Event('change')); }
+         if (bInput && barberStr) {
+            Array.from(bInput.options).forEach(opt => {
+               if (opt.value.toLowerCase().includes(barberStr.split(' ')[0].toLowerCase())) bInput.value = opt.value;
+            });
+            bInput.dispatchEvent(new Event('change'));
+         }
+         
+         setTimeout(() => {
+            const tInput = document.getElementById('m-time');
+            if (tInput) {
+               // Add it if not exists just to prefill
+               let exists = false;
+               Array.from(tInput.options).forEach(o => { if (o.value === timeStr) exists = true; });
+               if (!exists) {
+                   const opt = document.createElement('option');
+                   opt.value = timeStr; opt.textContent = timeStr + ' (Desde la agenda)';
+                   tInput.appendChild(opt);
+               }
+               tInput.value = timeStr;
+            }
+         }, 400); // Give time for generateManualSlots
+      };
+
       function renderAgenda() {
         const titleDate = `${DAYS[currentAgendaDateObj.getDay()]} ${currentAgendaDateObj.getDate()} ${MONTHS[currentAgendaDateObj.getMonth()]}`;
-        const headerBtn = document.getElementById('agenda-today-btn');
-        headerBtn.innerHTML = `<i class="fa-solid fa-calendar-day"></i> ${titleDate}`;
         
         const targetDateLabel = titleDate; 
         const targetIso = currentAgendaDateObj.toISOString().split('T')[0];
+        
+        if (dp && !dp.value) dp.value = targetIso;
         
         const dayBookings = allBookings.filter(b => b.date === targetDateLabel || b.date === targetIso);
         
@@ -2076,27 +2215,86 @@
         canvas.innerHTML = '';
 
         const grid = document.createElement('div');
-        grid.className = 'grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr] relative';
+        grid.className = 'grid grid-cols-[80px_1fr_1fr_1fr_1fr_1fr_1fr] relative';
         
         const START_HOUR = 9;
         const END_HOUR = 20;
         const ROW_HEIGHT = 80; 
         let htmlRows = '';
 
+        const BARBER_COLUMNS = ['Próximamente', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Muñoz Quevedo'];
+        
+        const blocksForDate = allBlocks.filter(b => b.block_date === targetIso);
+
         for (let h = START_HOUR; h <= END_HOUR; h++) {
           const hourStr = h < 10 ? `0${h}:00` : `${h}:00`;
-          htmlRows += `
-            <div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2" style="height:${ROW_HEIGHT}px;">${hourStr}</div>
-            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
-            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
-            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
-            <div class="border-b border-r border-[#2b2b30] border-dashed relative"></div>
-            <div class="border-b border-[#2b2b30] border-dashed relative"></div>
-          `;
+          let rowHTML = `<div class="border-b border-r border-[#2b2b30] text-[--grey-50] text-xs text-center pt-2 select-none" style="height:${ROW_HEIGHT}px;">${hourStr}</div>`;
+          
+          BARBER_COLUMNS.forEach(bName => {
+             let isBlocked = false;
+             let bStyle = 'transition-colors hover:bg-[rgba(255,255,255,0.02)] cursor-pointer';
+             
+             const barberBlocks = blocksForDate.filter(bk => bk.barber_name.toLowerCase().includes(bName.split(' ')[0].toLowerCase()));
+             barberBlocks.forEach(bk => {
+                 if (bk.block_type === 'full_day') isBlocked = true;
+                 else if (bk.block_type === 'hours' && bk.start_time && bk.end_time) {
+                     const startH = parseInt(bk.start_time.split(':')[0], 10);
+                     const endH = parseInt(bk.end_time.split(':')[0], 10);
+                     if (h >= startH && h < endH) isBlocked = true;
+                 }
+             });
+             
+             if (bName === 'Próximamente') isBlocked = true;
+             
+             if (isBlocked) {
+                 bStyle = 'bg-[rgba(235,0,41,0.03)] opacity-60 pointer-events-none custom-stripes';
+             }
+
+             rowHTML += `<div class="border-b border-r border-[#2b2b30] border-dashed relative agenda-cell ${bStyle}" data-barber="${bName}" data-hour="${h}" ${isBlocked ? 'data-blocked="true"' : ''}></div>`;
+          });
+          htmlRows += rowHTML;
         }
         grid.innerHTML = htmlRows;
-        
-        const BARBER_COLUMNS = ['Próximamente', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo'];
+
+        // Clicks Empty Cells and Drag & Drop 
+        grid.querySelectorAll('.agenda-cell').forEach(cell => {
+           if (cell.dataset.blocked === 'true') return;
+           
+           cell.addEventListener('dragover', e => e.preventDefault());
+           cell.addEventListener('drop', async e => {
+              e.preventDefault();
+              const bookingId = e.dataTransfer.getData('text/plain');
+              if (!bookingId) return;
+              
+              const rect = cell.getBoundingClientRect();
+              const yOffset = e.clientY - rect.top;
+              const fraction = yOffset / ROW_HEIGHT;
+              let mins = Math.round((fraction * 60) / 15) * 15;
+              let finalH = parseInt(cell.dataset.hour, 10);
+              if (mins === 60) { finalH++; mins = 0; }
+              const timeStr = `${finalH < 10 ? '0'+finalH : finalH}:${mins < 10 ? '0'+mins : mins}`;
+              
+              const newBarber = cell.dataset.barber;
+              if (confirm(`¿Mover reserva libremente a ${newBarber} a las ${timeStr}?`)) {
+                 try {
+                     const { error } = await sb.from('bookings').update({ barber: newBarber, time: timeStr }).eq('id', bookingId);
+                     if (!error) loadAll();
+                 } catch (err) { console.error(err); }
+              }
+           });
+
+           cell.addEventListener('click', e => {
+              const rect = cell.getBoundingClientRect();
+              const yOffset = e.clientY - rect.top;
+              const fraction = yOffset / ROW_HEIGHT;
+              let mins = Math.round((fraction * 60) / 15) * 15;
+              let finalH = parseInt(cell.dataset.hour, 10);
+              if (mins === 60) { finalH++; mins = 0; }
+              const timeStr = `${finalH < 10 ? '0'+finalH : finalH}:${mins < 10 ? '0'+mins : mins}`;
+              
+              openManualTab(timeStr, cell.dataset.barber, targetIso);
+           });
+        });
 
         dayBookings.forEach(b => {
            if (!b.time || !b.barber) return;
@@ -2121,10 +2319,11 @@
            }
            const heightPx = Math.max(34, (durMins / 60) * ROW_HEIGHT);
            
-           const leftCalc = `calc(80px + ((100% - 80px) / 5) * ${colIndex} + 4px)`;
-           const widthCalc = `calc(((100% - 80px) / 5) - 8px)`;
+           const leftCalc = `calc(80px + ((100% - 80px) / 6) * ${colIndex} + 4px)`;
+           const widthCalc = `calc(((100% - 80px) / 6) - 8px)`;
            
            const card = document.createElement('div');
+           card.draggable = true;
            card.style.position = 'absolute';
            card.style.top = `${topPx}px`;
            card.style.left = leftCalc;
@@ -2132,11 +2331,23 @@
            card.style.height = `${heightPx - 3}px`; 
            card.style.zIndex = '5';
            
+           card.addEventListener('dragstart', e => {
+               e.dataTransfer.setData('text/plain', b.id);
+               card.style.opacity = '0.5';
+           });
+           card.addEventListener('dragend', () => card.style.opacity = '1');
+
+           // Click card for POS/Action Menu
+           card.addEventListener('click', e => {
+               e.stopPropagation();
+               if(typeof openAgendaActionMenu === 'function') openAgendaActionMenu(e, b);
+           });
+           
            const isAttended = b.attended;
            const accentColor = isAttended ? 'var(--gold)' : 'var(--white)';
            
            card.innerHTML = `
-             <div style="background:${isAttended ? 'rgba(184,151,90,0.18)' : 'rgba(30,30,35,0.95)'}; border:1px solid ${isAttended ? 'var(--gold)' : '#333'}; border-left:3px solid ${accentColor}; border-radius:4px; padding:4px 8px; overflow:hidden; display:flex; flex-direction:column; justify-content:center; height:100%; cursor:pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+             <div style="background:${isAttended ? 'rgba(184,151,90,0.18)' : 'rgba(30,30,35,0.95)'}; border:1px solid ${isAttended ? 'var(--gold)' : '#333'}; border-left:3px solid ${accentColor}; border-radius:4px; padding:4px 8px; overflow:hidden; display:flex; flex-direction:column; justify-content:center; height:100%; cursor:grab; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
                 <p style="color:var(--white); font-size:0.75rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; justify-content:space-between; align-items:center; line-height:1.2;">
                   ${esc(b.name.split(' ')[0])} ${isAttended ? '<span style="color:var(--green); font-size:0.65rem;"><i class="fa-solid fa-check"></i></span>' : ''}
                 </p>
@@ -2160,6 +2371,7 @@
              timeLine.style.right = '0';
              timeLine.style.borderTop = '2px solid var(--gold)';
              timeLine.style.zIndex = '10';
+             timeLine.style.pointerEvents = 'none';
              timeLine.innerHTML = `<span style="position:absolute; left:-40px; top:-8px; background:var(--gold); color:var(--black); font-size:0.6rem; font-weight:700; padding:1px 4px; border-radius:4px;">${nh}:${nm<10?'0':''}${nm}</span>`;
              grid.appendChild(timeLine);
            }
@@ -2167,6 +2379,217 @@
 
         canvas.appendChild(grid);
       }
+      
+      // Agenda Context Menu (Action Popover)
+      function openAgendaActionMenu(e, booking) {
+         let existing = document.getElementById('agenda-popover');
+         if (existing) existing.remove();
+         
+         const pop = document.createElement('div');
+         pop.id = 'agenda-popover';
+         pop.style.position = 'fixed';
+         pop.style.left = e.clientX + 'px';
+         pop.style.top = e.clientY + 'px';
+         pop.style.background = 'var(--grey-90)';
+         pop.style.border = '1px solid var(--grey-70)';
+         pop.style.borderRadius = '6px';
+         pop.style.padding = '12px';
+         pop.style.zIndex = '9999';
+         pop.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
+         pop.style.display = 'flex';
+         pop.style.flexDirection = 'column';
+         pop.style.gap = '8px';
+         pop.style.minWidth = '180px';
+         
+         const isAttended = booking.attended;
+         let html = `<p style="color:var(--white); font-size:0.8rem; font-weight:600; margin-bottom:4px; border-bottom:1px solid var(--grey-70); padding-bottom:6px;">${esc(booking.name)}</p>`;
+         
+         if (!isAttended) {
+            html += `<button id="pop-pay-btn" class="btn btn-gold btn-sm"><i class="fa-solid fa-cash-register"></i> Pagar / Atendido</button>`;
+         }
+         html += `<button id="pop-cancel-btn" class="btn btn-danger btn-sm"><i class="fa-solid fa-ban"></i> Suspender</button>`;
+         html += `<button id="pop-close-btn" class="btn btn-ghost btn-sm" style="margin-top:4px;"><i class="fa-solid fa-xmark"></i> Cerrar</button>`;
+         
+         pop.innerHTML = html;
+         document.body.appendChild(pop);
+         
+         // Event Listeners
+         const closeBtn = document.getElementById('pop-close-btn');
+         if (closeBtn) closeBtn.addEventListener('click', () => pop.remove());
+         
+         const payBtn = document.getElementById('pop-pay-btn');
+         if (payBtn) payBtn.addEventListener('click', () => {
+             pop.remove();
+             openPaymentModal(booking);
+         });
+         
+         const cancelBtn = document.getElementById('pop-cancel-btn');
+         if (cancelBtn) cancelBtn.addEventListener('click', async () => {
+             pop.remove();
+             if (!confirm(`¿Deseas suspender y eliminar la reserva libremente?`)) return;
+             await sb.from('bookings').delete().eq('id', booking.id);
+             await loadAll();
+         });
+         
+         // Click outside to close
+         setTimeout(() => {
+            const listener = (evt) => {
+               if(!pop.contains(evt.target)) {
+                  pop.remove();
+                  document.removeEventListener('click', listener);
+               }
+            };
+            document.addEventListener('click', listener);
+         }, 50);
+      }
+      
+      // Lógica Modal POS (Caja y Cobro Múltiple)
+      function openPaymentModal(booking) {
+          const modal = document.getElementById('pos-modal');
+          const errEl = document.getElementById('pos-error');
+          errEl.textContent = '';
+          
+          document.getElementById('pos-client-name').textContent = booking.name;
+          document.getElementById('pos-service-name').textContent = booking.service || 'Servicio General';
+          
+          // Parse original price
+          let originalP = 0;
+          if (booking.price) {
+              const match = String(booking.price).match(/(\d+)/g);
+              if (match) originalP = parseInt(match.join(''), 10);
+          }
+          
+          document.getElementById('pos-original-price').textContent = '$' + originalP.toLocaleString('es-CL');
+          document.getElementById('pos-final-total').textContent = '$' + originalP.toLocaleString('es-CL');
+          document.getElementById('pos-entered-total').textContent = '$0';
+          
+          const typeSelect = document.getElementById('pos-discount-type');
+          const valInput = document.getElementById('pos-discount-val');
+          const splitInputs = document.querySelectorAll('.pos-split-input');
+          
+          // Reset fields
+          typeSelect.value = 'none';
+          valInput.value = '0';
+          valInput.disabled = true;
+          splitInputs.forEach(i => i.value = '');
+          
+          let finalToPay = originalP;
+          
+          function recalcPos() {
+              let discount = 0;
+              const dType = typeSelect.value;
+              const dVal = parseInt(valInput.value, 10) || 0;
+              
+              if (dType === 'percent' && dVal > 0) discount = Math.round(originalP * (dVal / 100));
+              else if (dType === 'fixed' && dVal > 0) discount = dVal;
+              
+              finalToPay = Math.max(0, originalP - discount);
+              document.getElementById('pos-final-total').textContent = '$' + finalToPay.toLocaleString('es-CL');
+              
+              let entered = 0;
+              splitInputs.forEach(i => { entered += (parseInt(i.value, 10) || 0); });
+              const entEl = document.getElementById('pos-entered-total');
+              entEl.textContent = '$' + entered.toLocaleString('es-CL');
+              entEl.style.color = entered === finalToPay ? 'var(--green)' : (entered > finalToPay ? 'var(--gold)' : '#e74c3c');
+              
+              return { finalToPay, entered };
+          }
+          
+          typeSelect.onchange = () => {
+              valInput.disabled = typeSelect.value === 'none';
+              if (typeSelect.value === 'none') valInput.value = '0';
+              recalcPos();
+          };
+          valInput.oninput = recalcPos;
+          splitInputs.forEach(i => i.oninput = recalcPos);
+          
+          const confirmBtn = document.getElementById('pos-confirm-btn');
+          const newConfirmBtn = confirmBtn.cloneNode(true); // Remove old listeners
+          confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+          
+          newConfirmBtn.onclick = async () => {
+              const { finalToPay, entered } = recalcPos();
+              if (entered < finalToPay) {
+                  errEl.textContent = 'El monto ingresado es menor al Total a Cobrar.';
+                  return;
+              }
+              if (finalToPay > 0 && entered === 0) {
+                  errEl.textContent = 'Debes ingresar el monto en al menos un método de pago.';
+                  return;
+              }
+              
+              // Build Payment Methods Array
+              let methods = [];
+              splitInputs.forEach(i => {
+                  const val = parseInt(i.value, 10) || 0;
+                  if (val > 0) methods.push({ method: i.dataset.method, amount: val });
+              });
+              
+              const isMulti = methods.length > 1;
+              const primaryMethod = methods.length === 1 ? methods[0].method : (methods.length > 0 ? 'Mixto' : 'Efectivo');
+              let finalNotes = booking.notes || '';
+              if (isMulti || typeSelect.value !== 'none') {
+                  const dText = typeSelect.value !== 'none' ? ` | Descuento aplicado: ${typeSelect.value === 'percent' ? valInput.value+'%' : '$'+valInput.value}` : '';
+                  const mText = methods.map(m => `${m.method}: $${m.amount}`).join(' + ');
+                  finalNotes += `\n[POS] Pago: ${mText}${dText}`;
+              }
+              
+              newConfirmBtn.disabled = true;
+              newConfirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Procesando...';
+              
+              try {
+                  const pts = window.ptsForService ? window.ptsForService(booking.service, finalToPay) : 0;
+                  
+                  await sb.from('bookings').update({ 
+                      attended: true,
+                      payment_method: primaryMethod,
+                      price: `$${finalToPay.toLocaleString('es-CL')}`,
+                      notes: finalNotes.trim(),
+                      points_earned: pts
+                  }).eq('id', booking.id);
+                  
+                  // Loyalty
+                  if (booking.client_id) {
+                     const { data: cl } = await sb.from('clients').select('points, total_visits').eq('id', booking.client_id).single();
+                     if (cl) {
+                         await sb.from('clients').update({
+                             points: (cl.points || 0) + pts,
+                             total_visits: (cl.total_visits || 0) + 1,
+                             updated_at: new Date().toISOString()
+                         }).eq('id', booking.client_id);
+                     }
+                  } else if (booking.phone) {
+                     const { data: cl } = await sb.from('clients').select('id, points, total_visits').eq('phone', booking.phone).maybeSingle();
+                     if (cl) {
+                         await sb.from('clients').update({
+                             points: (cl.points || 0) + pts,
+                             total_visits: (cl.total_visits || 0) + 1,
+                             updated_at: new Date().toISOString()
+                         }).eq('id', cl.id);
+                     } else {
+                         await sb.from('clients').insert({
+                             name: booking.name, phone: booking.phone,
+                             points: pts, total_visits: 1,
+                             created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+                         });
+                     }
+                  }
+                  
+                  modal.style.display = 'none';
+                  await loadAll();
+              } catch (err) {
+                  errEl.textContent = 'Error al procesar el pago.';
+                  console.error(err);
+                  newConfirmBtn.disabled = false;
+                  newConfirmBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Confirmar Pago y Atendido';
+              }
+          };
+          
+          modal.style.display = 'flex';
+      }
+      document.getElementById('pos-close-btn').addEventListener('click', () => {
+          document.getElementById('pos-modal').style.display = 'none';
+      });
 
       /* ── FINANZAS ─────────────────────────────────────── */
       function updateFinanzas() {

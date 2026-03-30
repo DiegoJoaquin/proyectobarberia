@@ -370,7 +370,8 @@
             <li><span class="day">Sábado (mañana)</span><span>10:00 – 13:45</span></li>
             <li><span class="day">Sábado (tarde)</span><span>14:30 – 18:15</span></li>
             <li><span class="day">Domingo y Feriados</span><span class="closed">Cerrado</span></li>
-            <li style="font-size:.72rem;color:var(--grey-50);margin-top:4px;"><span class="day">Víspera feriados irren.</span><span>Cierre 18:30</span></li>
+            <li style="font-size:.72rem;color:var(--grey-50);margin-top:4px;"><span class="day">Víspera feriados
+                irren.</span><span>Cierre 18:30</span></li>
           </ul>
         </div>
 
@@ -409,6 +410,12 @@
               <div class="barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
               <div class="barber-info">
                 <p class="barber-name">Gonzalo</p>
+              </div>
+            </div>
+            <div class="barber-item" data-barber="5" role="button" tabindex="0">
+              <div class="barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="barber-info">
+                <p class="barber-name">Matias Muñoz Quevedo</p>
               </div>
             </div>
           </div>
@@ -459,8 +466,11 @@
             <!-- 0. Prueba Transbank -->
             <div class="barber-pick-card modal-service-card" data-srv-name="PRUEBA TRANSBANK" data-srv-price="$200"
               data-srv-duration="15 min" style="border-color:var(--green);">
-              <div style="position:absolute;top:-8px;right:10px;background:var(--green);color:var(--black);font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.1em;">Test</div>
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Servicio de Prueba Transbank</p>
+              <div
+                style="position:absolute;top:-8px;right:10px;background:var(--green);color:var(--black);font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.1em;">
+                Test</div>
+              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Servicio de Prueba
+                Transbank</p>
               <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$200
                 <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 15 min</span>
               </p>
@@ -649,6 +659,13 @@
                 <p class="bpc-avail">Disponible hoy</p>
               </div>
             </div>
+            <div class="barber-pick-card" data-barber-idx="5">
+              <div class="modal-barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
+              <div>
+                <p class="bpc-name">Matias Muñoz Quevedo</p>
+                <p class="bpc-avail">Disponible hoy</p>
+              </div>
+            </div>
           </div>
 
           <div class="step-nav">
@@ -667,33 +684,21 @@
           <div class="time-section">
             <p class="time-label">Mañana</p>
             <div class="time-grid">
-              <button class="time-pill" data-time="09:00">09:00</button>
-              <button class="time-pill" data-time="09:45">09:45</button>
-              <button class="time-pill" data-time="10:30">10:30</button>
-              <button class="time-pill" data-time="11:15">11:15</button>
-              <button class="time-pill" data-time="12:00">12:00</button>
-              <button class="time-pill" data-time="12:45">12:45</button>
+              <!-- JS generará estrictamente los bloques Back-to-Back -->
             </div>
           </div>
 
           <div class="time-section">
             <p class="time-label">Tarde</p>
             <div class="time-grid">
-              <button class="time-pill" data-time="13:30">13:30</button>
-              <button class="time-pill" data-time="14:15">14:15</button>
-              <button class="time-pill" data-time="15:00">15:00</button>
-              <button class="time-pill" data-time="15:45">15:45</button>
-              <button class="time-pill" data-time="16:30">16:30</button>
-              <button class="time-pill" data-time="17:15">17:15</button>
+              <!-- JS -->
             </div>
           </div>
 
           <div class="time-section">
             <p class="time-label">Noche</p>
             <div class="time-grid">
-              <button class="time-pill" data-time="18:00">18:00</button>
-              <button class="time-pill" data-time="18:45">18:45</button>
-              <button class="time-pill" data-time="19:30">19:30</button>
+              <!-- JS -->
             </div>
           </div>
 
@@ -739,8 +744,11 @@
               <i class="fa-solid fa-credit-card" style="color:#f4f2ee;font-size:1.1rem;opacity:.8;"></i>
             </div>
             <div>
-              <p style="font-size:.8rem;font-weight:600;color:#f4f2ee;margin-bottom:3px;">Selecciona tu medio de pago en el siguiente paso</p>
-              <p style="font-size:.73rem;color:#81818a;line-height:1.5;">Al confirmar, irás a <strong style="color:#f4f2ee;">Webpay Plus</strong> donde podrás pagar con <strong style="color:#f4f2ee;">Debito, Crédito o Prepago</strong> de forma 100% segura.</p>
+              <p style="font-size:.8rem;font-weight:600;color:#f4f2ee;margin-bottom:3px;">Selecciona tu medio de pago en
+                el siguiente paso</p>
+              <p style="font-size:.73rem;color:#81818a;line-height:1.5;">Al confirmar, irás a <strong
+                  style="color:#f4f2ee;">Webpay Plus</strong> donde podrás pagar con <strong
+                  style="color:#f4f2ee;">Debito, Crédito o Prepago</strong> de forma 100% segura.</p>
             </div>
           </div>
           <!-- Aviso de política de cancelación -->
@@ -826,7 +834,8 @@
         </div>
 
         <div class="summary-cta-note">
-          <i class="fa-solid fa-shield-halved"></i> Tu reserva será valida luego de pagar el servicio via webpay.
+          <i class="fa-solid fa-shield-halved"></i> La reserva será válida si la pagas. Si no pagas hasta 15 minutos la
+          hora que tomaste pasará a estar disponible nuevamente.
         </div>
       </aside>
 
@@ -854,8 +863,10 @@
           <p style="font-size:.82rem;color:var(--grey-50);line-height:1.7;max-width:300px;margin-bottom:24px;">Barbería
             de élite en el corazón de Machalí. Disciplina, precisión y el arte del grooming de la guardia espartana.</p>
           <div class="footer-social">
-            <a href="https://www.instagram.com/spartanbarber.co/" target="_blank" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://www.facebook.com/spartanbarber.co" target="_blank" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="https://www.instagram.com/spartan_barber_co/?hl=es-la" target="_blank" class="social-btn"
+              aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://www.facebook.com/spartanbarber.co" target="_blank" class="social-btn"
+              aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
             <a href="https://wa.me/56982679620" target="_blank" class="social-btn" aria-label="WhatsApp"><i
                 class="fa-brands fa-whatsapp"></i></a>
           </div>
@@ -927,14 +938,13 @@
         que debe ser pagado.</p>
 
       <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Responsabilidad y Puntualidad:</strong> Hay una
-        responsabilidad en disponer del servicio y del barbero. El cliente debe llegar a la hora con un máximo de
-        retraso de 10 minutos. Puede reagendar la reserva con 1 hora de anticipación para que otro cliente pueda ocupar
-        esa hora.</p>
+        responsabilidad en disponer del servicio y del barbero. Tiempo máximo de tolerancia por retraso: 10 minutos.
+        Puede reagendar la reserva con 1 hora de anticipación para que otro cliente pueda ocupar esa hora sin costo
+        adicional, llamando o mandando whatsapp a la barbería.</p>
 
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Cancelación y No Show:</strong> Al no llegar o
-        no avisar el reagendamiento previo, el cliente perderá la reserva y con ello el 50% del dinero pagado. La
-        cancelación de la hora solo puede realizarse llamando al número de la barbería, en cuyo caso se devolverá el 50%
-        a la tarjeta con la que pagó.</p>
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Política de pago:</strong> No realizamos
+        devoluciones de dinero. No se eliminan las horas, se suspenden. No se cancelan horas, solo reagendar manual.
+        Para reagendar (sin el aviso de 1 hr anticipación) debes pagar el 50% del servicio.</p>
 
       <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Otros medios de pago y reserva:</strong> Se
         puede reservar horas por otros canales como WhatsApp, mensaje de Instagram, vía telefónica, etc. También estará

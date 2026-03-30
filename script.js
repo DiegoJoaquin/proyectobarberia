@@ -125,21 +125,21 @@ async function upsertClient(booking, bookingId) {
 }
 
 /**
- * Returns array of booked time strings for a given date label AND barber
+ * Returns array of booked slots { time, duration } for a given date label AND barber
  */
 async function getBookedTimesForBarber(dateStr, barberName) {
   if (SUPABASE_ON) {
     const datesToSearch = state.dateIso ? [dateStr, state.dateIso] : [dateStr];
     const { data, error } = await sb
       .from('bookings')
-      .select('time')
+      .select('time, duration')
       .in('date', datesToSearch)
       .eq('barber', barberName)
       .in('status', ['confirmed', 'waiting_payment']);
     if (error) { console.warn('Supabase select error:', error); }
-    return (data || []).map(r => r.time);
+    return (data || []).map(r => ({ time: r.time, duration: r.duration }));
   }
-  return lsGetAll().filter(b => b.date === dateStr && b.barber === barberName).map(b => b.time);
+  return lsGetAll().filter(b => b.date === dateStr && b.barber === barberName).map(b => ({ time: b.time, duration: b.duration }));
 }
 
 // Suscripción Real-Time para que los slots se liberen/ocupen al instante
@@ -198,11 +198,12 @@ const state = {
 };
 
 const BARBERS = [
-  'Emanuel',
+  'Próximamente',
   'Matías Nuñez',
   'Ángel',
   'Benjamín',
-  'Gonzalo'
+  'Gonzalo',
+  'Matias Muñoz Quevedo'
 ];
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -220,88 +221,113 @@ function updateSummary() {
 /* ──────────────────────────────────────────────────────────────
    TIME FILTERING
    ────────────────────────────────────────────────────────────── */
-function parseHM(str) { const [h, m] = str.split(':').map(Number); return h * 60 + m; }
+function parseHM(str) { const [h, m] = (str||'').split(':').map(Number); return (h||0) * 60 + (m||0); }
+function toHM(mins) { const h = Math.floor(mins/60); const m = mins%60; return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`; }
+
+function parseDurationMins(dStr) {
+  if (!dStr) return 30;
+  const s = dStr.toLowerCase();
+  if (s.includes('1 hr 15')) return 75;
+  if (s.includes('1 hr 30')) return 90;
+  if (s.includes('1 hr') || s.includes('1h')) return 60;
+  const match = s.match(/(\d+)/);
+  if (match) return parseInt(match[1], 10);
+  return 30; // fallback
+}
 
 async function refreshTimePills() {
-  const pills = document.querySelectorAll('.time-pill');
+  const isWeekend = state.dateObj && state.dateObj.getDay() === 6;
+  const isSunday = state.dateObj && state.dateObj.getDay() === 0;
+
+  // Clear existing grids
+  const gridManana = document.querySelector('.time-section:nth-of-type(2) .time-grid');
+  const gridTarde = document.querySelector('.time-section:nth-of-type(3) .time-grid');
+  const gridNoche = document.querySelector('.time-section:nth-of-type(4) .time-grid');
+  if(gridManana) gridManana.innerHTML = '';
+  if(gridTarde) gridTarde.innerHTML = '';
+  if(gridNoche) gridNoche.innerHTML = '';
+
+  if (!state.date || !state.barber || !state.duration || isSunday) return;
+
   const now = new Date();
-  const isToday = state.dateObj &&
-    state.dateObj.getFullYear() === now.getFullYear() &&
-    state.dateObj.getMonth() === now.getMonth() &&
-    state.dateObj.getDate() === now.getDate();
-
-  // Fetch booked times for specific barber
-  const bookedTimes = state.date && state.barber ? await getBookedTimesForBarber(state.date, state.barber) : [];
-  
-  // Fetch barber blocks to see if they are in lunch / day off
-  const blocks = state.dateObj ? await getBarberBlocksForDate(state.dateObj) : [];
-  const fullDayBlock = blocks.find(b => b.barber_name === state.barber && b.block_type === 'full_day');
-  const hourBlock = blocks.find(b => b.barber_name === state.barber && b.block_type === 'hours');
-
+  const isToday = state.dateObj.getFullYear() === now.getFullYear() &&
+                  state.dateObj.getMonth() === now.getMonth() &&
+                  state.dateObj.getDate() === now.getDate();
   const nowMin = now.getHours() * 60 + now.getMinutes() + 45; // 45-min buffer
 
-  const isWeekend = state.dateObj && state.dateObj.getDay() === 6; // Sábado
+  // Data fetching
+  const bookedSlots = await getBookedTimesForBarber(state.date, state.barber);
+  const blocks = await getBarberBlocksForDate(state.dateObj);
+  const fullDayBlock = blocks.find(b => b.barber_name === state.barber && b.block_type === 'full_day');
+  if (fullDayBlock) return; // Completely busy this day
+
+  const hourBlocks = blocks.filter(b => b.barber_name === state.barber && b.block_type === 'hours');
   
-  pills.forEach(pill => {
-    const t = pill.dataset.time;
-    if (!t) return;
+  // Build busy intervals
+  let busyIntervals = [];
+  bookedSlots.forEach(b => {
+      const st = parseHM(b.time);
+      const dur = parseDurationMins(b.duration);
+      busyIntervals.push({ start: st, end: st + dur });
+  });
+  hourBlocks.forEach(b => {
+      if(b.start_time && b.end_time) busyIntervals.push({ start: parseHM(b.start_time), end: parseHM(b.end_time) });
+  });
 
-    // Reglas de colación y apertura estricta
-    const hm = parseHM(t);
-    let outOfBounds = false;
-    
-    if (state.dateObj && state.dateObj.getDay() === 0) {
-       outOfBounds = true; // Domingo cerrado
-    } else if (isWeekend) {
-       // Sábado: 10:00 a 13:45, 14:30 a 18:15
-       if (hm < parseHM('10:00') || hm > parseHM('18:15') || (hm >= parseHM('13:45') && hm < parseHM('14:30'))) outOfBounds = true;
-    } else {
-       // Lun-Vie: 11:00 a 20:00, Colación: 14:00 a 14:45
-       if (hm < parseHM('11:00') || hm > parseHM('20:00') || (hm >= parseHM('14:00') && hm < parseHM('14:45'))) outOfBounds = true;
-    }
-    
-    if (outOfBounds) {
-       pill.style.display = 'none';
-       return;
-    } else {
-       pill.style.display = 'inline-flex';
-    }
+  // Add Lunch break to busy intervals
+  if (isWeekend) {
+      busyIntervals.push({ start: parseHM('13:45'), end: parseHM('14:30') });
+  } else {
+      busyIntervals.push({ start: parseHM('14:00'), end: parseHM('14:45') });
+  }
 
-    pill.classList.remove('past', 'booked', 'selected', 'busy');
+  // Generate slots
+  const serviceMins = parseDurationMins(state.duration);
+  const openTime = isWeekend ? parseHM('10:00') : parseHM('11:00');
+  const closeTime = isWeekend ? parseHM('18:15') : parseHM('20:00');
+  const lunchStart = isWeekend ? parseHM('13:45') : parseHM('14:00');
 
-    // 0. Full day blocks
-    if (fullDayBlock) {
-      pill.classList.add('busy'); pill.disabled = true;
-      pill.setAttribute('aria-label', `${t} — No disponible`);
-      return;
-    }
+  let curr = openTime;
+  const slots = [];
 
-    // 0.5. Hour blocks
-    if (hourBlock && hourBlock.start_time && hourBlock.end_time) {
-      function hm(ts) { const [h, m] = ts.split(':').map(Number); return h * 60 + m; }
-      const thisMin = hm(t);
-      if (thisMin >= hm(hourBlock.start_time) && thisMin < hm(hourBlock.end_time)) {
-        pill.classList.add('busy'); pill.disabled = true;
-        pill.setAttribute('aria-label', `${t} — Bloqueado`);
-        return;
+  while (curr + serviceMins <= closeTime) {
+      const slotEnd = curr + serviceMins;
+      const overlap = busyIntervals.find(b => curr < b.end && slotEnd > b.start);
+      if (overlap) {
+          curr = overlap.end;
+      } else {
+          // It's a valid slot! 
+          slots.push(curr);
+          curr = slotEnd; // Jump by strict service duration
       }
-    }
+  }
 
-    // 1. Already booked
-    if (bookedTimes.includes(t)) {
-      pill.classList.add('busy'); pill.disabled = true;
-      pill.setAttribute('aria-label', `${t} — Reservado`);
-      return;
-    }
-    // 2. Past time today
-    if (isToday && parseHM(t) <= nowMin) {
-      pill.classList.add('busy', 'past'); pill.disabled = true;
-      pill.setAttribute('aria-label', `${t} — No disponible`);
-      return;
-    }
-    // 3. Available
-    pill.classList.remove('busy'); pill.disabled = false;
-    pill.setAttribute('aria-label', t);
+  // Render slots 
+  slots.forEach(tMin => {
+      const timeStr = toHM(tMin);
+      const isPast = isToday && tMin <= nowMin;
+      const btn = document.createElement('button');
+      btn.className = 'time-pill' + (isPast ? ' busy past' : '');
+      btn.dataset.time = timeStr;
+      btn.textContent = timeStr;
+      if (isPast) {
+          btn.disabled = true;
+          btn.setAttribute('aria-label', `${timeStr} — No disponible`);
+      } else {
+          btn.disabled = false;
+          btn.setAttribute('aria-label', timeStr);
+          btn.onclick = () => {
+              document.querySelectorAll('.time-pill').forEach(p => p.classList.remove('selected'));
+              btn.classList.add('selected');
+              state.time = timeStr;
+              updateSummary();
+          };
+      }
+
+      // Append to correct section
+      if (tMin < lunchStart && gridManana) gridManana.appendChild(btn);
+      else if (tMin >= lunchStart && tMin < parseHM('18:00') && gridTarde) gridTarde.appendChild(btn);
+      else if (gridNoche) gridNoche.appendChild(btn);
   });
 
   // Deselect if current choice became unavailable
@@ -356,17 +382,9 @@ function buildDayPicker() {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   TIME PILLS — click
+   TIME PILLS — delegated click now inside refreshTimePills
    ────────────────────────────────────────────────────────────── */
-document.querySelectorAll('.time-pill').forEach(pill => {
-  pill.addEventListener('click', () => {
-    if (pill.classList.contains('busy') || pill.disabled) return;
-    document.querySelectorAll('.time-pill').forEach(p => p.classList.remove('selected'));
-    pill.classList.add('selected');
-    state.time = pill.dataset.time;
-    updateSummary();
-  });
-});
+
 
 /* ──────────────────────────────────────────────────────────────
    MODAL OPEN / CLOSE
