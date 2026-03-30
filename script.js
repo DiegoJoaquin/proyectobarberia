@@ -135,7 +135,7 @@ async function getBookedTimesForBarber(dateStr, barberName) {
       .select('time, duration')
       .in('date', datesToSearch)
       .eq('barber', barberName)
-      .in('status', ['confirmed', 'waiting_payment']);
+      .in('status', ['confirmed', 'waiting_payment', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente']);
     if (error) { console.warn('Supabase select error:', error); }
     return (data || []).map(r => ({ time: r.time, duration: r.duration }));
   }

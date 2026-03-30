@@ -2557,6 +2557,15 @@
          pop.innerHTML = html;
          document.body.appendChild(pop);
          
+         // Ajuste de posicionamiento si se sale de la pantalla
+         const rect = pop.getBoundingClientRect();
+         if (rect.bottom > window.innerHeight) {
+             pop.style.top = (e.clientY - rect.height) + 'px';
+         }
+         if (rect.right > window.innerWidth) {
+             pop.style.left = (e.clientX - rect.width) + 'px';
+         }
+         
          // Event Listeners
          const closeBtn = document.getElementById('pop-close-btn');
          if (closeBtn) closeBtn.addEventListener('click', () => pop.remove());
@@ -3528,7 +3537,7 @@
       if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
 
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment)`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
           headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
         });
         const booked = await res.json();
@@ -3607,7 +3616,7 @@
 
       try {
         // 1. Anti-colisión: verificar que el slot sigue libre
-        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&time=eq.${time}&status=in.(confirmed,waiting_payment)`, {
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&time=eq.${time}&status=in.(confirmed,waiting_payment,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
           headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
         });
         const existing = await checkRes.json();
