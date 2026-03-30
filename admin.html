@@ -1166,15 +1166,16 @@
           <div style="display:grid;gap:14px;">
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Nombre completo *</label>
-              <input type="text" id="m-name" placeholder="Diego González" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+              <input type="text" id="m-name" list="client-names" placeholder="Diego González" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
             </div>
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">RUT</label>
-              <input type="text" id="m-rut" placeholder="12.345.678-9" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+              <input type="text" id="m-rut" placeholder="12.345.678-9" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
+              <p id="m-rut-status" style="font-size:0.65rem;color:var(--gold);margin-top:6px;min-height:12px;"></p>
             </div>
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Teléfono (WhatsApp) *</label>
-              <input type="tel" id="m-phone" placeholder="+56 9 XXXX XXXX" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" />
+              <input type="tel" id="m-phone" list="client-phones" placeholder="+56 9 XXXX XXXX" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
             </div>
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Correo (opcional)</label>
@@ -2279,13 +2280,29 @@
             if (mRut) {
                 mRut.oninput = () => {
                    const query = cleanStr(mRut.value);
-                   if (query.length < 6) return;
+                   const stat = document.getElementById('m-rut-status');
+                   
+                   if (query.length < 6) {
+                       if (stat) stat.textContent = '';
+                       return;
+                   }
+                   
                    const match = allClients.find(c => cleanStr(c.phone).includes(query) || (c.rut && cleanStr(c.rut).includes(query)));
                    if (match && !document.getElementById('m-name').value) {
                        document.getElementById('m-name').value = match.name;
                        document.getElementById('m-phone').value = match.phone || '';
                        const mEmail = document.getElementById('m-email');
                        if (mEmail && match.email) mEmail.value = match.email;
+                       
+                       if (stat) {
+                           stat.textContent = `Cliente encontrado: ${match.name}`;
+                           stat.style.color = 'var(--green)';
+                       }
+                   } else if (!match) {
+                       if (stat) {
+                           stat.textContent = "Cliente nuevo. El sistema lo guardará automáticamente.";
+                           stat.style.color = 'var(--gold)';
+                       }
                    }
                 };
             }
