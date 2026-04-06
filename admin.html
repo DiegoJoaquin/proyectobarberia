@@ -880,112 +880,110 @@
   <!-- MAIN -->
   <main>
 
-    <!-- ══ TAB: DASHBOARD (NUEVO) ════════════════════════════════════════ -->
+    <!-- ══ TAB: DASHBOARD (NUEVO - Cuentas & Pagos) ════════════════════════════════════════ -->
     <div class="tab-panel active" id="tab-dashboard">
       <div class="section-header flex justify-between items-end" style="flex-wrap: wrap; gap: 16px;">
         <div>
-          <h1 class="section-title">Centro de <em>Mando</em></h1>
-          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Visión global de Spartan Barber Co.</p>
+          <h1 class="section-title">Caja & <em>Pagos</em></h1>
+          <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Detalle contable y medios de recaudación.</p>
         </div>
         <div class="flex gap-2">
           <select id="dashboard-period" class="filter-input" style="padding:10px 14px; background:var(--grey-80); border:1px solid var(--grey-70); border-radius:var(--radius); color:var(--white); font-size:0.88rem; outline:none; cursor:pointer;">
-            <option value="today">Hoy</option>
+            <option value="today" selected>Hoy</option>
             <option value="week">Esta semana</option>
-            <option value="month" selected>Este mes</option>
+            <option value="month">Este mes</option>
             <option value="year">Este año</option>
             <option value="all">Todo el historial</option>
           </select>
         </div>
       </div>
       
-      <!-- KPIs -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
-          <p class="text-[--gold] font-serif text-2xl" id="kpi-today">$145.500</p>
-          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Ingresos de Hoy</p>
+      <!-- KPIs - Flujo de Caja -->
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 text-left flex justify-between items-center relative overflow-hidden">
+          <div class="absolute right-0 top-0 opacity-5 -mt-6 -mr-4 text-8xl text-emerald-500"><i class="fa-solid fa-coins"></i></div>
+          <div class="z-10">
+            <p class="text-[--grey-40] text-[0.7rem] uppercase tracking-widest font-semibold mb-1">Ingresos de Caja</p>
+            <p class="text-[--gold] font-serif text-3xl" id="kpi-today">$0</p>
+          </div>
         </div>
-        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
-          <p class="text-[--gold] font-serif text-2xl" id="kpi-month">$2.85M</p>
-          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Ingresos del Mes</p>
-        </div>
-        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
-          <p class="text-[--gold] font-serif text-2xl" id="kpi-new">34</p>
-          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Nuevos Clientes (Mes)</p>
-        </div>
-        <div class="bg-[#161619] border border-[#2b2b30] rounded p-4 text-center">
-          <p class="text-[--gold] font-serif text-2xl" id="kpi-ticket">$18.990</p>
-          <p class="text-[--grey-50] text-[0.65rem] uppercase tracking-widest font-semibold mt-1">Ticket Promedio</p>
+        <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 text-left flex justify-between items-center relative overflow-hidden">
+          <div class="absolute right-0 top-0 opacity-5 -mt-6 -mr-4 text-8xl text-blue-500"><i class="fa-solid fa-users"></i></div>
+          <div class="z-10">
+            <p class="text-[--grey-40] text-[0.7rem] uppercase tracking-widest font-semibold mb-1">Servicios Pagados</p>
+            <p class="text-[--white] font-serif text-3xl" id="kpi-new">0</p>
+          </div>
         </div>
       </div>
 
-      <!-- Gráficos -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Fila Split: Resumen gráfico vs Lista detallada -->
+      <div class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 mt-6">
         
-        <!-- Chart 1: Evolución -->
-        <div class="lg:col-span-2 bg-[#161619] border border-[#2b2b30] rounded p-6">
-          <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Evolución de Rendimiento (6 Meses)</p>
-          <div class="relative h-64 w-full">
-            <canvas id="chart-evolution"></canvas>
-          </div>
-        </div>
-
-        <!-- Columna Derecha (Doughnuts) -->
+        <!-- Columna Izquierda: Medios de pago -->
         <div class="flex flex-col gap-6">
-          <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 flex-1">
-            <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Actividad por Barbero</p>
-            <div class="relative h-44 w-full flex justify-center">
-              <canvas id="chart-barbers"></canvas>
+          <div class="bg-[#161619] border border-[#2b2b30] rounded p-6">
+            <p class="text-[--grey-30] text-[0.75rem] font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Distribución de Pagos</p>
+            <div class="relative h-48 w-full flex justify-center mb-4">
+              <canvas id="chart-payment"></canvas>
+            </div>
+            
+            <div id="payment-stats-list" class="flex flex-col gap-3 pt-2">
+              <div class="flex justify-between items-center text-[0.8rem]">
+                <span class="text-[--grey-40]"><i class="fa-solid fa-money-bill-wave text-green-500 w-5"></i> Efectivo</span>
+                <span class="text-[--white] font-semibold" id="pay-stat-efectivo">—</span>
+              </div>
+              <div class="flex justify-between items-center text-[0.8rem]">
+                <span class="text-[--grey-40]"><i class="fa-solid fa-credit-card text-yellow-500 w-5"></i> Débito</span>
+                <span class="text-[--white] font-semibold" id="pay-stat-debito">—</span>
+              </div>
+              <div class="flex justify-between items-center text-[0.8rem]">
+                <span class="text-[--grey-40]"><i class="fa-solid fa-building-columns text-blue-500 w-5"></i> Crédito</span>
+                <span class="text-[--white] font-semibold" id="pay-stat-credito">—</span>
+              </div>
+              <div class="flex justify-between items-center text-[0.8rem]">
+                <span class="text-[--grey-40]"><i class="fa-solid fa-mobile-screen text-indigo-400 w-5"></i> Transferencia</span>
+                <span class="text-[--white] font-semibold" id="pay-stat-transferencia">—</span>
+              </div>
+              <div class="flex justify-between items-center text-[0.8rem]">
+                <span class="text-red-400 font-semibold"><i class="fa-solid fa-globe w-5"></i> Webpay Plus (Online)</span>
+                <span class="text-[--white] font-semibold" id="pay-stat-webpay">—</span>
+              </div>
+              <div class="flex justify-between items-center text-[0.8rem]">
+                <span class="text-purple-400 font-semibold"><i class="fa-solid fa-star w-5"></i> Canje de Puntos</span>
+                <span class="text-[--white] font-semibold" id="pay-stat-canje">—</span>
+              </div>
             </div>
           </div>
-          <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 flex-1">
-            <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Estado de Citas (Mes)</p>
-            <div class="relative h-44 w-full flex justify-center">
-              <canvas id="chart-status"></canvas>
-            </div>
+        </div>
+
+        <!-- Columna Derecha: Tabla de Detalle -->
+        <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 flex flex-col h-full">
+          <div class="flex justify-between items-end border-b border-[#2b2b30] pb-2 mb-4">
+             <p class="text-[--grey-30] text-[0.75rem] font-semibold uppercase tracking-wider">Detalle Transaccional</p>
+             <p class="text-[--grey-50] text-xs">Excluye reservas sin pagar</p>
+          </div>
+          
+          <div class="flex-1 overflow-x-auto">
+            <table class="w-full text-left" style="font-size:0.82rem; border-collapse: separate; border-spacing: 0 4px;">
+              <thead>
+                <tr class="text-[--grey-50] uppercase tracking-wider text-[0.68rem]">
+                  <th class="font-semibold pb-2 px-2">Cliente / Fecha</th>
+                  <th class="font-semibold pb-2 px-2">Servicio / Profesional</th>
+                  <th class="font-semibold pb-2 px-2">Método</th>
+                  <th class="font-semibold pb-2 px-2 text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-tx-tbody">
+                <!-- Data filled by JS -->
+                <tr>
+                   <td colspan="4" class="text-center py-8 text-[--grey-50]">Cargando detalle...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
         
       </div>
-
-      <!-- Fila inferior: Métodos de Pago -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <div class="bg-[#161619] border border-[#2b2b30] rounded p-6">
-          <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Distribución por Método de Pago</p>
-          <div class="relative h-52 w-full flex justify-center">
-            <canvas id="chart-payment"></canvas>
-          </div>
-        </div>
-        <div class="bg-[#161619] border border-[#2b2b30] rounded p-6">
-          <p class="text-[--grey-30] text-sm font-semibold uppercase tracking-wider mb-4 border-b border-[#2b2b30] pb-2">Resumen de Medios (Mes)</p>
-          <div id="payment-stats-list" class="flex flex-col gap-3 pt-2">
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-[--grey-40]">💵 Efectivo</span>
-              <span class="text-[--white] font-semibold" id="pay-stat-efectivo">—</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-[--grey-40]">💳 Débito</span>
-              <span class="text-[--white] font-semibold" id="pay-stat-debito">—</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-[--grey-40]">🏦 Crédito</span>
-              <span class="text-[--white] font-semibold" id="pay-stat-credito">—</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-[--grey-40]">📲 Transferencia</span>
-              <span class="text-[--white] font-semibold" id="pay-stat-transferencia">—</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span style="color:#eb0029" class="font-semibold">💳 Webpay Plus (Online)</span>
-              <span class="text-[--white] font-semibold" id="pay-stat-webpay">—</span>
-            </div>
-            <div class="border-t border-[#2b2b30] pt-3 flex justify-between items-center text-sm">
-              <span class="text-[--grey-50] font-semibold uppercase tracking-wider text-xs">Sin registrar</span>
-              <span class="text-[--grey-50] font-semibold" id="pay-stat-sin">—</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- ══ TAB: AGENDA (NUEVO) ════════════════════════════════════════ -->
     <div class="tab-panel" id="tab-agenda">
@@ -3395,72 +3393,27 @@
       Chart.defaults.font.family = "'Inter', sans-serif";
       
       const gold = '#B67A43';
-      const red = '#7f1d1d';
       const green = '#3ECF8E';
+      const blue = '#5f6fe0';
       const darkBorder = '#2b2b30';
 
-      // 1. Gráfico de Evolución (Líneas)
-      const ctxEvo = document.getElementById('chart-evolution')?.getContext('2d');
-      if (ctxEvo) {
-        window._evoChart = new Chart(ctxEvo, {
-          type: 'line',
-          data: { labels: [], datasets: [
-            { label: 'Ingresos Netos Totales', data: [], borderColor: gold, backgroundColor: 'rgba(182, 122, 67, 0.1)', tension: 0.4, fill: true }
-          ]},
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-            scales: {
-              y: { grid: { color: darkBorder }, ticks: { callback: (v) => '$' + (v >= 1000 ? (v/1000)+'k' : v) }},
-              x: { grid: { color: darkBorder } }
-            }
-          }
-        });
-      }
-
-      // 2. Gráfico por Barbero (Doughnut)
-      const ctxBarbers = document.getElementById('chart-barbers')?.getContext('2d');
-      if (ctxBarbers) {
-        window._barbersChart = new Chart(ctxBarbers, {
-          type: 'doughnut',
-          data: {
-            labels: [],
-            datasets: [{ data: [], backgroundColor: ['#B67A43', '#9A6331', '#7F4D21', '#633713', '#482408'], borderWidth: 0, hoverOffset: 4 }]
-          },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } }, cutout: '70%' }
-        });
-      }
-
-      // 3. Gráfico Estado de Citas (Doughnut)
-      const ctxStatus = document.getElementById('chart-status')?.getContext('2d');
-      if (ctxStatus) {
-        window._statusChart = new Chart(ctxStatus, {
-          type: 'doughnut',
-          data: {
-            labels: ['Atendidos', 'Pendientes/Futuras'],
-            datasets: [{ data: [0, 0], backgroundColor: [green, gold], borderWidth: 0, hoverOffset: 4 }]
-          },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } }, cutout: '70%' }
-        });
-      }
-
-      // 4. Gráfico de Métodos de Pago
+      // 1. Gráfico único: Métodos de Pago
       const ctxPay = document.getElementById('chart-payment')?.getContext('2d');
       if (ctxPay) {
         window._paymentChart = new Chart(ctxPay, {
           type: 'doughnut',
           data: {
-            labels: ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Webpay Plus'],
-            datasets: [{ data: [0, 0, 0, 0, 0], backgroundColor: [green, gold, '#5f6fe0', '#e05f6f', '#eb0029'], borderWidth: 0, hoverOffset: 4 }]
+            labels: ['Efectivo', 'Débito', 'Crédito', 'Transferencia', 'Webpay Plus', 'Canje'],
+            datasets: [{ data: [0, 0, 0, 0, 0, 0], backgroundColor: [green, gold, blue, '#a8b8e0', '#eb0029', '#a85fe0'], borderWidth: 0, hoverOffset: 4 }]
           },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12 } } }, cutout: '68%' }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display:false } }, cutout: '75%' }
         });
       }
 
-      // Función para obtener fecha real de la cita
+      // Helper para la fecha de la cita
       const MONTHS_MAP = { 'ene':0, 'feb':1, 'mar':2, 'abr':3, 'may':4, 'jun':5, 'jul':6, 'ago':7, 'sep':8, 'oct':9, 'nov':10, 'dic':11 };
       function getAppointmentDate(b) {
-         if (!b.date) return new Date(b.created_at || b.createdAt); // Fallback si no tiene fecha "Día N Mes"
+         if (!b.date) return new Date(b.created_at || b.createdAt);
          const parts = b.date.split(' ');
          if (parts.length >= 3) {
              const mStr = parts[2].substring(0,3).toLowerCase();
@@ -3468,7 +3421,6 @@
              const d = parseInt(parts[1], 10);
              if (m !== undefined && !isNaN(d)) {
                  const currentY = new Date().getFullYear();
-                 // Asume que la cita fue este año. Si el sistema necesita años cruzados requerirá backend changes
                  return new Date(currentY, m, d);
              }
          }
@@ -3478,158 +3430,122 @@
       window.updateDashboardCharts = function() {
          if (!window.allBookings) return;
          const periodSelect = document.getElementById('dashboard-period');
-         const period = periodSelect ? periodSelect.value : 'month';
+         const period = periodSelect ? periodSelect.value : 'today';
+         
          const now = new Date();
-         let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+         let start = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // start of today
+         let end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59); // end of today
          
          if (period === 'week') {
             const day = now.getDay();
             const diff = now.getDate() - day + (day === 0 ? -6 : 1);
             start = new Date(now.getFullYear(), now.getMonth(), diff);
+            // end is already end of today, which is fine for current week
          } else if (period === 'month') {
             start = new Date(now.getFullYear(), now.getMonth(), 1);
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
          } else if (period === 'year') {
             start = new Date(now.getFullYear(), 0, 1);
+            end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
          } else if (period === 'all') {
             start = new Date(2000, 0, 1);
+            end = new Date(2099, 11, 31, 23, 59, 59);
          }
 
-         const filteredBookings = window.allBookings.filter(b => {
-             return getAppointmentDate(b) >= start;
-         });
-
-         // --- 1. KPIs Globales
-         let todayIncome = 0;
-         let monthIncome = 0;
-         let ticketTotal = 0;
-         let ticketCount = 0;
-         
-         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-         window.allBookings.forEach(b => {
+         // Filtrar las reservas cobradas (Efectivo/Transferencia "Atendido", o Webpay Confirmado)
+         const paidBookings = window.allBookings.filter(b => {
              const bd = getAppointmentDate(b);
-             if (isNaN(bd)) return;
+             const isPaid = b.attended || b.status === 'confirmed' || (b.payment_method||'').includes('Webpay') || (b.payment_method||'').includes('Canje');
+             return isPaid && bd >= start && bd <= end;
+         });
+         
+         // Ordenar de más reciente a más antigua
+         paidBookings.sort((a,b) => getAppointmentDate(b) - getAppointmentDate(a));
+
+         let totalIncome = 0;
+         const methodsCount = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, 'Webpay Plus': 0, 'Canje': 0 };
+
+         const tbody = document.getElementById('dashboard-tx-tbody');
+         if (tbody) tbody.innerHTML = '';
+         
+         if (paidBookings.length === 0 && tbody) {
+             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-[--grey-50]">No hay servicios facturados en este periodo.</td></tr>';
+         }
+
+         paidBookings.forEach(b => {
              const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
              const px = parseInt(pxStr, 10) || 0;
-             const isOnline = b.payment_method === 'Webpay Plus' || b.payment_method === 'Webpay Plus (Online)';
-             const isCollected = b.attended || isOnline;
+             totalIncome += px;
              
-             if (isCollected) {
-                 if (bd >= todayStart) todayIncome += px;
-                 if (bd >= monthStart) monthIncome += px;
-                 if (bd >= start) { ticketTotal += px; ticketCount++; }
+             let pm = b.payment_method || 'Efectivo';
+             if (pm.toLowerCase().includes('webpay')) pm = 'Webpay Plus';
+             else if (pm.toLowerCase().includes('canje')) pm = 'Canje';
+             else if (pm.toLowerCase().includes('transf')) pm = 'Transferencia';
+             else if (pm.toLowerCase().includes('ébito')) pm = 'Débito';
+             else if (pm.toLowerCase().includes('rédito')) pm = 'Crédito';
+             else if (pm.toLowerCase().includes('efectivo')) pm = 'Efectivo';
+             else pm = 'Efectivo'; // Fallback
+             
+             if (methodsCount[pm] !== undefined) methodsCount[pm] += px;
+
+             // Añadir a la tabla de detalle
+             if (tbody) {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-[#1f1f23] transition duration-150";
+                
+                let pmIcon = '<i class="fa-solid fa-money-bill-wave text-green-500"></i>';
+                if (pm === 'Débito') pmIcon = '<i class="fa-solid fa-credit-card text-yellow-500"></i>';
+                else if (pm === 'Crédito') pmIcon = '<i class="fa-solid fa-building-columns text-blue-500"></i>';
+                else if (pm === 'Transferencia') pmIcon = '<i class="fa-solid fa-mobile-screen text-indigo-400"></i>';
+                else if (pm === 'Webpay Plus') pmIcon = '<i class="fa-solid fa-globe text-red-400"></i>';
+                else if (pm === 'Canje') pmIcon = '<i class="fa-solid fa-star text-purple-400"></i>';
+
+                const shortDate = b.date ? b.date.split(' ').slice(0,3).join(' ') : 'Reciente';
+
+                tr.innerHTML = `
+                  <td class="py-3 px-2 border-b border-[#222]">
+                     <p class="font-semibold text-[--white] mb-0.5" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${b.name||'Cliente'}</p>
+                     <p class="text-[0.65rem] text-[--grey-50] uppercase tracking-wider">${shortDate} — ${b.time||''}</p>
+                  </td>
+                  <td class="py-3 px-2 border-b border-[#222]">
+                     <p class="text-[--grey-30] mb-0.5" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">${b.service||'Servicio'}</p>
+                     <p class="text-[0.65rem] text-[--gold] font-semibold">${b.barber||''}</p>
+                  </td>
+                  <td class="py-3 px-2 border-b border-[#222] text-[0.75rem] text-[--grey-30]">
+                     <span class="flex items-center gap-1.5">${pmIcon} ${pm}</span>
+                  </td>
+                  <td class="py-3 px-2 border-b border-[#222] text-right font-serif text-[--white] font-semibold text-[0.95rem]">
+                     $${px.toLocaleString('es-CL')}
+                  </td>
+                `;
+                tbody.appendChild(tr);
              }
          });
-         
-         const avgTicket = ticketCount > 0 ? (ticketTotal / ticketCount) : 0;
-         const newClientsThisMonth = window.allClients ? window.allClients.filter(c => new Date(c.created_at) >= monthStart).length : 0;
 
+         // Actualiza KPIs
          const el = id => document.getElementById(id);
-         if (el('kpi-today')) el('kpi-today').textContent = '$' + todayIncome.toLocaleString('es-CL');
-         if (el('kpi-month')) el('kpi-month').textContent = '$' + monthIncome.toLocaleString('es-CL');
-         if (el('kpi-new')) el('kpi-new').textContent = newClientsThisMonth;
-         if (el('kpi-ticket')) el('kpi-ticket').textContent = '$' + Math.round(avgTicket).toLocaleString('es-CL');
+         if (el('kpi-today')) el('kpi-today').textContent = '$' + totalIncome.toLocaleString('es-CL');
+         if (el('kpi-new')) el('kpi-new').textContent = paidBookings.length;
 
-         // --- 2. Barbero Doughnut
-         const barbersCount = {
-             'Emanuel': 0, 'Matías': 0, 'Ángel': 0, 'Benjamín': 0, 'Gonzalo': 0
-         };
-         // Colores muy distintos: Dorado, Verde claro, Rojo suave, Púrpura, Azul rey
-         const barberColors = ['#B67A43', '#3ECF8E', '#e05f6f', '#965fe0', '#009ee3', '#a3a3ab']; 
-
-         filteredBookings.forEach(b => {
-             const isOnline = b.payment_method === 'Webpay Plus' || b.payment_method === 'Webpay Plus (Online)';
-             if (b.attended || isOnline) {
-                 const fullName = b.barber || 'Otro';
-                 let matched = false;
-                 for (const k of Object.keys(barbersCount)) {
-                     if (fullName.includes(k) || fullName.includes(k.replace('í','i'))) {
-                         barbersCount[k]++;
-                         matched = true;
-                         break;
-                     }
-                 }
-                 if (!matched) barbersCount[fullName.split(' ')[0]] = (barbersCount[fullName.split(' ')[0]] || 0) + 1;
-             }
-         });
-         
-         if (window._barbersChart) {
-             const labels = Object.keys(barbersCount);
-             const data = Object.values(barbersCount);
-             window._barbersChart.data.labels = labels;
-             window._barbersChart.data.datasets[0].data = data;
-             window._barbersChart.data.datasets[0].backgroundColor = barberColors;
-             window._barbersChart.update();
-         }
-
-         // --- 3. Estado de Citas
-         let atendidas = 0, pendientes = 0;
-         filteredBookings.forEach(b => {
-             if (b.attended) atendidas++;
-             else pendientes++;
-         });
-         if (window._statusChart) {
-             window._statusChart.data.datasets[0].data = [atendidas, pendientes];
-             window._statusChart.update();
-         }
-
-         // --- 4. Payment Stats
-         const counts = { 'Efectivo': 0, 'Débito': 0, 'Crédito': 0, 'Transferencia': 0, 'Webpay Plus': 0, '': 0 };
-         filteredBookings.forEach(b => {
-           let pm = b.payment_method || '';
-           if (!pm && b.notes && b.notes.toLowerCase().includes('Webpay Plus')) pm = 'Webpay Plus';
-           if (pm === 'webpay (Online)') pm = 'Webpay Plus';
-           
-           if (pm in counts) counts[pm]++;
-           else if (pm.includes('Transf')) counts['Transferencia']++;
-           else if (pm.includes('Efectivo')) counts['Efectivo']++;
-           else if (pm.includes('ébito')) counts['Débito']++;
-           else if (pm.includes('rédito')) counts['Crédito']++;
-           else counts['']++;
-         });
-         
+         // Actualiza Gráfico
          if (window._paymentChart) {
-           window._paymentChart.data.datasets[0].data = [
-             counts['Efectivo'], counts['Débito'], counts['Crédito'], counts['Transferencia'], counts['Webpay Plus']
-           ];
-           window._paymentChart.update();
+             window._paymentChart.data.datasets[0].data = [
+                 methodsCount['Efectivo'], methodsCount['Débito'], methodsCount['Crédito'],
+                 methodsCount['Transferencia'], methodsCount['Webpay Plus'], methodsCount['Canje']
+             ];
+             window._paymentChart.update();
          }
-
-         const setEl = (id, n) => { const x = document.getElementById(id); if (x) x.textContent = n + ' reservas'; };
-         setEl('pay-stat-efectivo', counts['Efectivo']);
-         setEl('pay-stat-debito', counts['Débito']);
-         setEl('pay-stat-credito', counts['Crédito']);
-         setEl('pay-stat-transferencia', counts['Transferencia']);
-         setEl('pay-stat-webpay', counts['Webpay Plus']);
-         setEl('pay-stat-sin', counts['']);
-
-         // --- 5. Evolución Line Chart
-         if (window._evoChart) {
-             const dataMap = {};
-             filteredBookings.forEach(b => {
-                 const isOnline = b.payment_method === 'Webpay Plus' || b.payment_method === 'webpay (Online)';
-                 if (b.attended || isOnline) {
-                     const bd = getAppointmentDate(b);
-                     const label = bd.getDate() + '/' + (bd.getMonth()+1);
-                     const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
-                     dataMap[label] = (dataMap[label] || 0) + (parseInt(pxStr, 10) || 0);
-                 }
-             });
-             
-             const labels = Object.keys(dataMap).sort((a,b) => {
-                 const [dA,mA]=a.split('/'); const [dB,mB]=b.split('/');
-                 if(mA!==mB) return mA-mB; return dA-dB;
-             });
-             const dataPoints = labels.map(l => dataMap[l]);
-             
-             window._evoChart.data.labels = labels.length ? labels : ['0'];
-             window._evoChart.data.datasets[0].data = dataPoints.length ? dataPoints : [0];
-             window._evoChart.update();
-         }
+         
+         // Actualiza Lista textual
+         const setVal = (id, val) => { if (el(id)) el(id).textContent = '$' + val.toLocaleString('es-CL'); };
+         setVal('pay-stat-efectivo', methodsCount['Efectivo']);
+         setVal('pay-stat-debito', methodsCount['Débito']);
+         setVal('pay-stat-credito', methodsCount['Crédito']);
+         setVal('pay-stat-transferencia', methodsCount['Transferencia']);
+         setVal('pay-stat-webpay', methodsCount['Webpay Plus']);
+         setVal('pay-stat-canje', methodsCount['Canje']);
       };
 
-      // Event Listener filter
       document.getElementById('dashboard-period')?.addEventListener('change', window.updateDashboardCharts);
     });
   </script>
