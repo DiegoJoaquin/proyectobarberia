@@ -24,22 +24,61 @@
   <!-- EmailJS — envío de correos sin backend -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
-    /* Fix for modal service wrapping */
-    .bpc-avail {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      white-space: nowrap !important;
-      width: 100%;
-      margin-top: 4px;
+    /* ── Barber Pick Card: estructura interna ─────────────────── */
+    /* El div interno (que contiene nombre + disponible) va en columna */
+    .barber-pick-card > div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
     }
 
-    .bpc-avail span {
-      font-size: 0.75rem !important;
+    /* "Disponible hoy" debe ir pegado abajo del nombre, sin correrse */
+    .barber-pick-card .bpc-avail {
+      margin-top: 0;
+      font-size: 0.7rem;
+      color: var(--grey-50);
     }
 
-    .bpc-name {
-      white-space: normal !important;
+    .barber-pick-card .bpc-avail::before {
+      background: #32cd32; /* verde disponible */
+    }
+
+    /* ── Modal Service Card: precio + duración en línea ──────── */
+    .modal-service-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .modal-service-card .bpc-name {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--white);
+      line-height: 1.35;
+      white-space: normal;
+    }
+
+    /* Precio + duración: en línea, sin ::before (no queremos punto) */
+    .modal-service-card .bpc-avail {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--white);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .modal-service-card .bpc-avail::before {
+      display: none;
+    }
+
+    .modal-service-card .bpc-avail span {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--grey-50);
     }
   </style>
 </head>
@@ -459,36 +498,36 @@
             <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello" data-srv-price="$16.690"
               data-srv-duration="45 min">
 
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$16.690
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span>
+              <p class="bpc-name">Corte de Cabello</p>
+              <p class="bpc-avail">$16.690
+                <span>· 45 min</span>
               </p>
             </div>
             <!-- 2. Barba -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Retoque de Barba" data-srv-price="$12.500"
               data-srv-duration="30 min">
 
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Retoque de Barba</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$12.500
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span>
+              <p class="bpc-name">Retoque de Barba</p>
+              <p class="bpc-avail">$12.500
+                <span>· 30 min</span>
               </p>
             </div>
             <!-- 3. Ritual Barba -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Ritual de Barba Premium"
               data-srv-price="$16.500" data-srv-duration="30 min">
 
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Ritual Barba Premium</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$16.500
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 30 min</span>
+              <p class="bpc-name">Ritual Barba Premium</p>
+              <p class="bpc-avail">$16.500
+                <span>· 30 min</span>
               </p>
             </div>
             <!-- 4. Corte + Cejas -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello + Perfilado de Cejas"
               data-srv-price="$19.690" data-srv-duration="45 min">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello +
+              <p class="bpc-name">Corte de Cabello +
                 Perfilado de Cejas</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$19.690
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span>
+              <p class="bpc-avail">$19.690
+                <span>· 45 min</span>
               </p>
             </div>
             <!-- 5. Corte + Barba -->
@@ -497,95 +536,95 @@
               <div
                 style="position:absolute;top:-8px;right:10px;background:var(--gold);color:var(--black);font-size:.6rem;font-weight:700;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.1em;">
                 Popular</div>
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello + Retoque
+              <p class="bpc-name">Corte de Cabello + Retoque
                 de Barba</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$27.190
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span>
+              <p class="bpc-avail">$27.190
+                <span>· 1 hr</span>
               </p>
             </div>
             <!-- 6. Corte + Facial -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello + Limpieza Facial"
               data-srv-price="$27.190" data-srv-duration="1 hr">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello +
+              <p class="bpc-name">Corte de Cabello +
                 Limpieza Facial</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$27.190
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span>
+              <p class="bpc-avail">$27.190
+                <span>· 1 hr</span>
               </p>
             </div>
             <!-- 7. Corte + Ritual -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Corte de Cabello + Ritual de Barba Premium"
               data-srv-price="$31.190" data-srv-duration="1 hr">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello + Ritual
+              <p class="bpc-name">Corte de Cabello + Ritual
                 de Barba Premium</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$31.190
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span>
+              <p class="bpc-avail">$31.190
+                <span>· 1 hr</span>
               </p>
             </div>
             <!-- 8. Limpieza Facial -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Limpieza Facial" data-srv-price="$12.500"
               data-srv-duration="15 min">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Limpieza Facial</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$12.500
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 15 min</span>
+              <p class="bpc-name">Limpieza Facial</p>
+              <p class="bpc-avail">$12.500
+                <span>· 15 min</span>
               </p>
             </div>
             <!-- 9. Ritual + Facial -->
             <div class="barber-pick-card modal-service-card" data-srv-name="Ritual de Barba Premium + Limpieza Facial"
               data-srv-price="$27.000" data-srv-duration="45 min">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Ritual de Barba Premium +
+              <p class="bpc-name">Ritual de Barba Premium +
                 Limpieza Facial</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$27.000
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 45 min</span>
+              <p class="bpc-avail">$27.000
+                <span>· 45 min</span>
               </p>
             </div>
             <!-- 10. Corte + Barba + Cejas -->
             <div class="barber-pick-card modal-service-card"
               data-srv-name="Corte de Cabello + Retoque de Barba + Perfilado de Cejas" data-srv-price="$30.190"
               data-srv-duration="1 hr">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello + Retoque
+              <p class="bpc-name">Corte de Cabello + Retoque
                 de Barba + Perfilado de Cejas</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$30.190
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span>
+              <p class="bpc-avail">$30.190
+                <span>· 1 hr</span>
               </p>
             </div>
             <!-- 11. Corte + Cejas + Facial -->
             <div class="barber-pick-card modal-service-card"
               data-srv-name="Corte de Cabello + Perfilado de Cejas + Limpieza Facial" data-srv-price="$30.690"
               data-srv-duration="1 hr">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello +
+              <p class="bpc-name">Corte de Cabello +
                 Perfilado de Cejas + Limpieza Facial</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$30.690
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span>
+              <p class="bpc-avail">$30.690
+                <span>· 1 hr</span>
               </p>
             </div>
             <!-- 12. Corte + Ritual + Cejas -->
             <div class="barber-pick-card modal-service-card"
               data-srv-name="Corte de Cabello + Ritual de Barba Premium + Perfilado de Cejas" data-srv-price="$34.190"
               data-srv-duration="1 hr">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello + Ritual
+              <p class="bpc-name">Corte de Cabello + Ritual
                 de Barba Premium + Perfilado de Cejas</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$34.190
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1 hr</span>
+              <p class="bpc-avail">$34.190
+                <span>· 1 hr</span>
               </p>
             </div>
             <!-- 13. Corte + Barba + Facial -->
             <div class="barber-pick-card modal-service-card"
               data-srv-name="Corte de Cabello + Retoque de Barba + Limpieza Facial" data-srv-price="$37.690"
               data-srv-duration="1 hr 15 min">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello + Retoque
+              <p class="bpc-name">Corte de Cabello + Retoque
                 de Barba + Limpieza Facial</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$37.690
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 15m</span>
+              <p class="bpc-avail">$37.690
+                <span>· 1h 15m</span>
               </p>
             </div>
             <!-- 14. Corte + Ritual + Facial -->
             <div class="barber-pick-card modal-service-card"
               data-srv-name="Corte de Cabello + Ritual de Barba Premium + Limpieza Facial" data-srv-price="$41.690"
               data-srv-duration="1 hr 15 min">
-              <p class="bpc-name" style="font-size:.8rem;margin-bottom:2px;line-height:1.3;">Corte de Cabello + Ritual
+              <p class="bpc-name">Corte de Cabello + Ritual
                 de Barba Premium + Limpieza Facial</p>
-              <p class="bpc-avail" style="font-family:var(--font-serif);color:var(--white);font-size:.8rem;">$41.690
-                <span style="font-family:var(--font-sans);font-size:.7rem;color:var(--grey-50);">· 1h 15m</span>
+              <p class="bpc-avail">$41.690
+                <span>· 1h 15m</span>
               </p>
             </div>
           </div>
@@ -687,9 +726,12 @@
           <!-- RUT PRIMERO — autocompletado desde Supabase -->
           <div class="form-row">
             <div class="form-group" style="position:relative">
-              <label class="form-label" for="f-rut">RUT <span style="font-size:.65rem;color:var(--grey-50);font-weight:400">(Ingresa tu RUT para autocompletar)</span></label>
+              <label class="form-label" for="f-rut">RUT <span
+                  style="font-size:.65rem;color:var(--grey-50);font-weight:400">(Ingresa tu RUT para
+                  autocompletar)</span></label>
               <input class="form-input" id="f-rut" type="text" placeholder="Ej. 12.345.678-9" autocomplete="off" />
-              <span id="rut-lookup-status" style="position:absolute;bottom:-18px;left:0;font-size:.68rem;color:var(--grey-40);"></span>
+              <span id="rut-lookup-status"
+                style="position:absolute;bottom:-18px;left:0;font-size:.68rem;color:var(--grey-40);"></span>
             </div>
           </div>
           <div class="form-row" style="margin-top:24px;">
@@ -698,14 +740,17 @@
               <input class="form-input" id="f-name" type="text" placeholder="Ej. Diego González" autocomplete="name" />
             </div>
             <div class="form-group">
-              <label class="form-label" for="f-phone">Teléfono <span style="font-size:.65rem;color:var(--grey-50);font-weight:400">(+569...)</span></label>
+              <label class="form-label" for="f-phone">Teléfono <span
+                  style="font-size:.65rem;color:var(--grey-50);font-weight:400">(+569...)</span></label>
               <input class="form-input" id="f-phone" type="tel" placeholder="+56 9 XXXX XXXX" autocomplete="tel" />
-              <span id="phone-error" style="font-size:.68rem;color:#eb0029;display:none;margin-top:4px;">Formato requerido: +569XXXXXXXX</span>
+              <span id="phone-error" style="font-size:.68rem;color:#eb0029;display:none;margin-top:4px;">Formato
+                requerido: +569XXXXXXXX</span>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="f-email">Correo electrónico <span style="font-size:.65rem;color:var(--grey-50);font-weight:400">(opcional)</span></label>
+              <label class="form-label" for="f-email">Correo electrónico <span
+                  style="font-size:.65rem;color:var(--grey-50);font-weight:400">(opcional)</span></label>
               <input class="form-input" id="f-email" type="email" placeholder="tu@correo.com" autocomplete="email" />
             </div>
           </div>
@@ -717,10 +762,15 @@
               <p
                 style="font-size:.75rem;font-weight:700;color:#eb0029;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">
                 Política de Pago Exigida</p>
-              <ul style="font-size:.7rem;color:var(--grey-40);line-height:1.7;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">
+              <ul
+                style="font-size:.7rem;color:var(--grey-40);line-height:1.7;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">
                 <li>💸 <strong>Devoluciones:</strong> No hacemos devolución de dinero, solo reagendamos citas.</li>
-                <li>📢 <strong>Inasistencia:</strong> Si no asistes, perderás el 50% del abono. Con el 50% de saldo a favor, podrás agendar una nueva cita manualmente, pagando el saldo restante en la sucursal al recibir la atención. <em>(Esta cita reagendada es por única vez, sin otra fecha válida).</em></li>
-                <li>🔄 <strong>Suspensión:</strong> Puedes suspender tu asistencia y reagendar tu cita con al menos 1 hora de anticipación avisando por teléfono, WhatsApp o Instagram. Así la hora quedará disponible para otro cliente.</li>
+                <li>📢 <strong>Inasistencia:</strong> Si no asistes, perderás el 50% del abono. Con el 50% de saldo a
+                  favor, podrás agendar una nueva cita manualmente, pagando el saldo restante en la sucursal al recibir
+                  la atención. <em>(Esta cita reagendada es por única vez, sin otra fecha válida).</em></li>
+                <li>🔄 <strong>Suspensión:</strong> Puedes suspender tu asistencia y reagendar tu cita con al menos 1
+                  hora de anticipación avisando por teléfono, WhatsApp o Instagram. Así la hora quedará disponible para
+                  otro cliente.</li>
                 <li>⏰ <strong>Retrasos:</strong> Sin reembolso de dinero.</li>
               </ul>
             </div>
@@ -789,7 +839,8 @@
         </div>
 
         <div class="summary-cta-note">
-          <i class="fa-solid fa-shield-halved"></i> La reserva será válida si la pagas. Tienes <strong>10 minutos</strong> para pagar, si no lo haces, la hora pasará a estar disponible nuevamente.
+          <i class="fa-solid fa-shield-halved"></i> La reserva será válida si la pagas. Tienes <strong>10
+            minutos</strong> para pagar, si no lo haces, la hora pasará a estar disponible nuevamente.
         </div>
       </aside>
 
@@ -832,8 +883,7 @@
           <ul class="footer-links">
             <li><a href="#panel-corte">Corte</a></li>
             <li><a href="#panel-barba">Barba</a></li>
-            <li><a href="#panel-combo">Combos</a></li>
-            <li><a href="#panel-premium">Facial & Premium</a></li>
+            <li><a href="#panel-combo">Combos y pack</a></li>
           </ul>
         </div>
 
@@ -884,19 +934,28 @@
         style="position:absolute;top:16px;right:20px;background:none;border:none;color:#a3a3ab;font-size:1.4rem;cursor:pointer;"><i
           class="fa-solid fa-xmark"></i></button>
 
-      <p style="font-family:var(--font-serif);font-size:1.1rem;color:var(--white);margin-bottom:20px;">Términos y Condiciones</p>
+      <p style="font-family:var(--font-serif);font-size:1.1rem;color:var(--white);margin-bottom:20px;">Términos y
+        Condiciones</p>
 
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Devoluciones:</strong> No hacemos devolución de dinero, solo reagendamos citas.</p>
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Devoluciones:</strong> No hacemos devolución de
+        dinero, solo reagendamos citas.</p>
 
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Inasistencia:</strong> Si no asistes, perderás el 50% del abono. Con el 50% de saldo a favor, podrás agendar una nueva cita manualmente, pagando el saldo restante en la sucursal al recibir la atención. <em>(Esta cita reagendada es por única vez, sin otra fecha válida).</em></p>
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Inasistencia:</strong> Si no asistes, perderás
+        el 50% del abono. Con el 50% de saldo a favor, podrás agendar una nueva cita manualmente, pagando el saldo
+        restante en la sucursal al recibir la atención. <em>(Esta cita reagendada es por única vez, sin otra fecha
+          válida).</em></p>
 
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Suspensión y Reagendamiento:</strong> Puedes suspender tu asistencia y reagendar tu cita con al menos 1 hora de anticipación avisando por teléfono, WhatsApp o Instagram. Así la hora quedará disponible para otro cliente.</p>
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Suspensión y Reagendamiento:</strong> Puedes
+        suspender tu asistencia y reagendar tu cita con al menos 1 hora de anticipación avisando por teléfono, WhatsApp
+        o Instagram. Así la hora quedará disponible para otro cliente.</p>
 
       <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Retrasos:</strong> Sin reembolso de dinero.</p>
 
-      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Pago:</strong> La reserva será válida si la pagas. Tienes 10 minutos para pagar, si no lo haces, la hora pasará a estar disponible nuevamente.</p>
+      <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Pago:</strong> La reserva será válida si la
+        pagas. Tienes 10 minutos para pagar, si no lo haces, la hora pasará a estar disponible nuevamente.</p>
 
-      <p><strong style="color:var(--gold);">Integridad del servicio:</strong> Es importante que quien reciba el servicio sea autovalente y que no esté bajo los efectos del alcohol o drogas. Nos reservamos el derecho de atención.</p>
+      <p><strong style="color:var(--gold);">Integridad del servicio:</strong> Es importante que quien reciba el servicio
+        sea autovalente y que no esté bajo los efectos del alcohol o drogas. Nos reservamos el derecho de atención.</p>
     </div>
   </div>
 
