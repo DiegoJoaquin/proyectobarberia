@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -1894,7 +1894,8 @@
         if (!data || data.length === 0) {
           try { return (JSON.parse(localStorage.getItem(LS) || '[]')).reverse(); } catch { return []; }
         }
-        return data.map(r => ({
+        // Excluir reservas "fantasma" que están en proceso de pago o abandonadas
+        return data.filter(r => r.status !== 'waiting_payment').map(r => ({
           id: r.id, name: r.name, phone: r.phone, email: r.email,
           service: r.service, price: r.price, duration: r.duration,
           date: r.date, time: r.time, barber: r.barber, notes: r.notes,
@@ -2688,7 +2689,28 @@
               btnObj.disabled = true;
               
               try {
+                  // 1. Actualizar la reserva en Supabase
                   await sb.from('bookings').update({ barber: nB, date: nD, time: nT }).eq('id', booking.id);
+                  
+                  // 2. Enviar WhatsApp de confirmación al cliente
+                  // El webhook de DB solo dispara en INSERT, no en UPDATE → hay que llamarlo manualmente
+                  try {
+                    await sb.functions.invoke('send-booking-whatsapp', {
+                      body: {
+                        record: {
+                          ...booking,
+                          barber: nB,
+                          date: nD,
+                          time: nT,
+                          status: 'confirmed'  // forzar para bypassear el filtro waiting_payment
+                        }
+                      }
+                    });
+                    console.log('[Reagendar] WhatsApp de confirmación enviado al cliente.');
+                  } catch(wErr) {
+                    console.warn('[Reagendar] WhatsApp no enviado (no crítico):', wErr);
+                  }
+
                   modal.style.display = 'none';
                   await loadAll();
               } catch(err) {

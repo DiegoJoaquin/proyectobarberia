@@ -132,12 +132,24 @@ async function getBookedTimesForBarber(dateStr, barberName) {
     const datesToSearch = state.dateIso ? [dateStr, state.dateIso] : [dateStr];
     const { data, error } = await sb
       .from('bookings')
-      .select('time, duration')
+      .select('time, duration, status, created_at')
       .in('date', datesToSearch)
       .eq('barber', barberName)
       .in('status', ['confirmed', 'waiting_payment', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente']);
     if (error) { console.warn('Supabase select error:', error); }
-    return (data || []).map(r => ({ time: r.time, duration: r.duration }));
+    
+    // Filtrar waiting_payment con > 10 minutos (bloqueo caducado por abandono de Webpay)
+    const now = new Date().getTime();
+    const validData = (data || []).filter(r => {
+      if (r.status === 'waiting_payment') {
+        const created = new Date(r.created_at).getTime();
+        const diffMinutes = (now - created) / 60000;
+        if (diffMinutes > 10) return false; // Libera la hora
+      }
+      return true;
+    });
+
+    return validData.map(r => ({ time: r.time, duration: r.duration }));
   }
   return lsGetAll().filter(b => b.date === dateStr && b.barber === barberName).map(b => ({ time: b.time, duration: b.duration }));
 }
