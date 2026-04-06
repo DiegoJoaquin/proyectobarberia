@@ -537,70 +537,70 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
     if (statusEl) statusEl.textContent = '';
     return;
   }
-  
-  // Validar y formatear (tolerante: acepta con/sin puntos)
+
   const isValid = validateRUT(rut);
   if (!isValid) {
     if (statusEl) { statusEl.textContent = '\u26a0\ufe0f RUT inv\u00e1lido'; statusEl.style.color = '#eb0029'; }
     return;
   }
-  
-  const formattedRut = formatRUT(rut);  // ej: "13.097.529-1"
+
+  const formattedRut  = formatRUT(rut);          // "13.097.529-1"
+  const rutSinPuntos  = formattedRut.replace(/\./g, '');        // "13097529-1"
+  const rutSinTodo    = formattedRut.replace(/[.\-]/g, '');     // "130975291"
+  // Patrón ilike correcto: busca dentro del valor almacenado con puntos, ignorando el dígito verif.
+  const rutBodyConPuntos = formattedRut.replace(/-[0-9kK]$/, ''); // "13.097.529"
+
   this.value = formattedRut;
-  
-  // Variantes de formato para buscar en Supabase
-  // Algunos RUTs pueden estar guardados sin puntos: "13097529-1" o sin guión: "130975291"
-  const rutSinPuntos = formattedRut.replace(/\./g, '');           // "13097529-1"
-  const rutSinTodo   = formattedRut.replace(/[.\-]/g, '');        // "130975291"
-  
-  if (statusEl) { statusEl.textContent = 'Buscando cliente...'; statusEl.style.color = 'var(--grey-40)'; }
+  if (statusEl) { statusEl.textContent = 'Buscando...'; statusEl.style.color = 'var(--grey-40)'; }
 
   try {
-    // Búsqueda 1: RUT exacto formateado con puntos
-    let { data } = await sb.from('clients')
+    // Usar .in() — maneja caracteres especiales (puntos, guiones) correctamente
+    const { data: rows, error } = await sb
+      .from('clients')
       .select('id, name, phone, email, rut')
-      .eq('rut', formattedRut)
-      .maybeSingle();
+      .in('rut', [formattedRut, rutSinPuntos, rutSinTodo])
+      .limit(1);
 
-    // Búsqueda 2: sin puntos pero con guión  
-    if (!data) {
-      const res2 = await sb.from('clients')
-        .select('id, name, phone, email, rut')
-        .eq('rut', rutSinPuntos)
-        .maybeSingle();
-      data = res2.data;
-    }
+    let data = rows?.[0] || null;
 
-    // Búsqueda 3: ilike para ser tolerante a cualquier formato
-    if (!data) {
-      const res3 = await sb.from('clients')
+    // Fallback: ilike por el cuerpo del RUT (sin dígito verificador)
+    if (!data && !error) {
+      const { data: rows2 } = await sb
+        .from('clients')
         .select('id, name, phone, email, rut')
-        .ilike('rut', `%${rutSinTodo.slice(0, -1)}%`)
+        .ilike('rut', `%${rutBodyConPuntos}%`)
         .limit(1);
-      data = res3.data?.[0] || null;
+      data = rows2?.[0] || null;
     }
 
-    console.log('[RUT Lookup] búsqueda para:', formattedRut, '→ resultado:', data);
+    // Log para diagnóstico — ver en F12 > Console
+    console.log('[RUT v3] formatos buscados:', [formattedRut, rutSinPuntos, rutSinTodo]);
+    console.log('[RUT v3] error:', error);
+    console.log('[RUT v3] resultado:', data);
 
     if (data) {
       const nameEl  = document.getElementById('f-name');
       const phoneEl = document.getElementById('f-phone');
       const emailEl = document.getElementById('f-email');
-      if (nameEl)  { nameEl.value  = data.name  || ''; nameEl.readOnly  = true; nameEl.style.opacity  = '0.7'; }
+      if (nameEl)  { nameEl.value  = data.name  || ''; nameEl.readOnly = true;  nameEl.style.opacity = '0.7'; }
       if (phoneEl && data.phone) { phoneEl.value = data.phone; phoneEl.readOnly = true; phoneEl.style.opacity = '0.7'; }
       if (emailEl && data.email) { emailEl.value = data.email; emailEl.readOnly = true; emailEl.style.opacity = '0.7'; }
-      if (statusEl) { statusEl.textContent = '\u2705 Cliente encontrado \u2014 datos autocargados'; statusEl.style.color = 'var(--green)'; }
+      if (statusEl) { statusEl.textContent = '\u2705 Cliente encontrado \u2014 datos autocargados'; statusEl.style.color = '#32cd32'; }
     } else {
-      // Liberar campos bloqueados de una búsqueda anterior
-      ['f-name','f-phone','f-email'].forEach(id => {
+      ['f-name', 'f-phone', 'f-email'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.readOnly = false; el.style.opacity = '1'; }
       });
-      if (statusEl) { statusEl.textContent = 'Cliente nuevo, ingresa tus datos.'; statusEl.style.color = 'var(--gold)'; }
+      if (error) {
+        console.error('[RUT v3] ERROR completo:', JSON.stringify(error));
+        if (statusEl) { statusEl.textContent = '\u26a0\ufe0f Error: ' + (error.message || error.code); statusEl.style.color = '#eb0029'; }
+      } else {
+        if (statusEl) { statusEl.textContent = 'Cliente nuevo, ingresa tus datos.'; statusEl.style.color = 'var(--gold)'; }
+      }
     }
   } catch(err) {
-    console.warn('RUT lookup error:', err);
-    if (statusEl) { statusEl.textContent = 'Error al buscar. Ingresa tus datos manualmente.'; statusEl.style.color = '#eb0029'; }
+    console.error('[RUT v3] excepci\u00f3n:', err);
+    if (statusEl) { statusEl.textContent = 'Error al conectar. Ingresa tus datos.'; statusEl.style.color = '#eb0029'; }
   }
 });
 
