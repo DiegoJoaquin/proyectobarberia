@@ -2481,10 +2481,11 @@
         blocksForDate.forEach(bk => {
              const rId = BARBER_COLUMNS.find(c => bk.barber_name.toLowerCase().includes(c.toLowerCase()));
              if (!rId) return;
+             const calResId = rId.split(' ')[0];
              if (bk.block_type === 'full_day') {
-                 events.push({ resourceId: rId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: 'rgba(235,0,41,0.2)' });
+                 events.push({ resourceId: calResId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: 'rgba(235,0,41,0.2)' });
              } else if (bk.block_type === 'hours' && bk.start_time && bk.end_time) {
-                 events.push({ resourceId: rId, start: `${targetIso}T${bk.start_time}:00`, end: `${targetIso}T${bk.end_time}:00`, display: 'background', color: 'rgba(235,0,41,0.2)' });
+                 events.push({ resourceId: calResId, start: `${targetIso}T${bk.start_time}:00`, end: `${targetIso}T${bk.end_time}:00`, display: 'background', color: 'rgba(235,0,41,0.2)' });
              }
         });
 
@@ -3720,6 +3721,27 @@
       btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
 
       try {
+        // 0. Validación de Bloqueos de Disponibilidad
+        if (typeof window.allBlocks !== 'undefined') {
+            const blockConflict = window.allBlocks.find(bk => {
+               if (bk.block_date === date && bk.barber_name === barber) {
+                   if (bk.block_type === 'full_day') return true;
+                   if (bk.block_type === 'hours') {
+                       return (time >= bk.start_time && time < bk.end_time);
+                   }
+               }
+               return false;
+            });
+            if (blockConflict) {
+               const msgText = blockConflict.reason ? `Motivo: ${blockConflict.reason}` : `Sin motivo especificado`;
+               if (!confirm(`⚠️ ALERTA: Estás intentando agendar en un horario BLOQUEADO para ${barber}.\n${msgText}\n\n¿Deseas FORZAR la reserva de todas formas?`)) {
+                   btn.disabled = false;
+                   btn.innerHTML = 'Confirmar Reserva';
+                   return;
+               }
+            }
+        }
+
         // 1. Anti-colisión: verificar que el slot sigue libre
         const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&time=eq.${time}&status=in.(confirmed,waiting_payment,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
           headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
