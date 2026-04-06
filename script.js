@@ -533,27 +533,65 @@ document.getElementById('f-rut')?.addEventListener('input', function(e) {
 document.getElementById('f-rut')?.addEventListener('blur', async function() {
   const rut = this.value.trim();
   const statusEl = document.getElementById('rut-lookup-status');
-  if (!rut || !validateRUT(rut) || !SUPABASE_ON) {
-    if (statusEl) statusEl.textContent = rut && !validateRUT(rut) ? '\u26a0\ufe0f RUT inv\u00e1lido' : '';
+  if (!rut || !SUPABASE_ON) {
+    if (statusEl) statusEl.textContent = '';
     return;
   }
-  const formattedRut = formatRUT(rut);
-  this.value = formattedRut;
-  if (statusEl) { statusEl.textContent = 'Buscando cliente...'; statusEl.style.color = 'var(--grey-40)'; }
   
+  // Validar y formatear (tolerante: acepta con/sin puntos)
+  const isValid = validateRUT(rut);
+  if (!isValid) {
+    if (statusEl) { statusEl.textContent = '\u26a0\ufe0f RUT inv\u00e1lido'; statusEl.style.color = '#eb0029'; }
+    return;
+  }
+  
+  const formattedRut = formatRUT(rut);  // ej: "13.097.529-1"
+  this.value = formattedRut;
+  
+  // Variantes de formato para buscar en Supabase
+  // Algunos RUTs pueden estar guardados sin puntos: "13097529-1" o sin guión: "130975291"
+  const rutSinPuntos = formattedRut.replace(/\./g, '');           // "13097529-1"
+  const rutSinTodo   = formattedRut.replace(/[.\-]/g, '');        // "130975291"
+  
+  if (statusEl) { statusEl.textContent = 'Buscando cliente...'; statusEl.style.color = 'var(--grey-40)'; }
+
   try {
-    // Buscar por RUT en tabla clients
-    const { data } = await sb.from('clients').select('name, phone, email').eq('rut', formattedRut).maybeSingle();
+    // Búsqueda 1: RUT exacto formateado con puntos
+    let { data } = await sb.from('clients')
+      .select('id, name, phone, email, rut')
+      .eq('rut', formattedRut)
+      .maybeSingle();
+
+    // Búsqueda 2: sin puntos pero con guión  
+    if (!data) {
+      const res2 = await sb.from('clients')
+        .select('id, name, phone, email, rut')
+        .eq('rut', rutSinPuntos)
+        .maybeSingle();
+      data = res2.data;
+    }
+
+    // Búsqueda 3: ilike para ser tolerante a cualquier formato
+    if (!data) {
+      const res3 = await sb.from('clients')
+        .select('id, name, phone, email, rut')
+        .ilike('rut', `%${rutSinTodo.slice(0, -1)}%`)
+        .limit(1);
+      data = res3.data?.[0] || null;
+    }
+
+    console.log('[RUT Lookup] búsqueda para:', formattedRut, '→ resultado:', data);
+
     if (data) {
-      const nameEl = document.getElementById('f-name');
+      const nameEl  = document.getElementById('f-name');
       const phoneEl = document.getElementById('f-phone');
       const emailEl = document.getElementById('f-email');
-      if (nameEl) { nameEl.value = data.name || ''; nameEl.readOnly = true; nameEl.style.opacity = '0.7'; }
+      if (nameEl)  { nameEl.value  = data.name  || ''; nameEl.readOnly  = true; nameEl.style.opacity  = '0.7'; }
       if (phoneEl && data.phone) { phoneEl.value = data.phone; phoneEl.readOnly = true; phoneEl.style.opacity = '0.7'; }
       if (emailEl && data.email) { emailEl.value = data.email; emailEl.readOnly = true; emailEl.style.opacity = '0.7'; }
-      if (statusEl) { statusEl.textContent = '\u2705 Cliente encontrado — datos autocargados'; statusEl.style.color = 'var(--green)'; }
+      if (statusEl) { statusEl.textContent = '\u2705 Cliente encontrado \u2014 datos autocargados'; statusEl.style.color = 'var(--green)'; }
     } else {
-      // Nuevo cliente: liberar campos por si estaban bloqueados
+      // Liberar campos bloqueados de una búsqueda anterior
       ['f-name','f-phone','f-email'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.readOnly = false; el.style.opacity = '1'; }
@@ -562,7 +600,7 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
     }
   } catch(err) {
     console.warn('RUT lookup error:', err);
-    if (statusEl) statusEl.textContent = '';
+    if (statusEl) { statusEl.textContent = 'Error al buscar. Ingresa tus datos manualmente.'; statusEl.style.color = '#eb0029'; }
   }
 });
 
