@@ -73,6 +73,34 @@ serve(async (req) => {
           const newNotes = (booking.notes || '').replace(/\[FRONT_URL:(.*?)\]/, '') + ` [TBK_AUTH:${txData.authorization_code}]`
           await supabaseClient.from('bookings').update({ status: 'confirmed', notes: newNotes.trim() }).eq('id', booking.id)
 
+          // Guardar a cliente en el directorio global (Upsert)
+          try {
+            const pts = booking.points_earned || 0;
+            const { data: ext } = await supabaseClient.from('clients').select('id, points, total_visits').eq('rut', booking.rut).maybeSingle();
+            if (ext) {
+              await supabaseClient.from('clients').update({
+                points: (ext.points || 0) + pts,
+                total_visits: (ext.total_visits || 0) + 1,
+                last_barber: booking.barber,
+                updated_at: new Date().toISOString()
+              }).eq('id', ext.id);
+            } else {
+              await supabaseClient.from('clients').insert({
+                name: booking.name,
+                phone: booking.phone,
+                email: booking.email || null,
+                rut: booking.rut || '',
+                points: pts,
+                total_visits: 1,
+                last_barber: booking.barber,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            }
+          } catch (cErr: any) {
+            console.error("Error al guardar cliente global:", cErr);
+          }
+
           // --- ENVÍO DE WHATSAPP (TWILIO) ---
           try {
             const rawPhone = (booking.phone || '').replace(/\s/g, '').replace(/^0/, '')
@@ -90,7 +118,7 @@ serve(async (req) => {
                 body: new URLSearchParams({ To: toPhone, From: TWILIO_FROM, ContentSid: 'HX8c4c8a841ed6345ccc60814977cbb058', ContentVariables: JSON.stringify(vars) })
               })
             }
-          } catch(e) { console.error("Error WhatsApp:", e.message) }
+          } catch(e: any) { console.error("Error WhatsApp:", e.message) }
         }
         return Response.redirect(`https://www.spartanbarber.cl/?payment=success&token_ws=${token}`, 303)
       }
@@ -100,7 +128,7 @@ serve(async (req) => {
     if (booking) await supabaseClient.from('bookings').delete().eq('id', booking.id)
     return Response.redirect(`https://www.spartanbarber.cl/?payment=rejected&token_ws=${token}`, 303)
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error Catch:", error.message)
     return Response.redirect(`https://www.spartanbarber.cl/?payment=error`, 303)
   }

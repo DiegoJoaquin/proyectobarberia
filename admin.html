@@ -2570,6 +2570,12 @@
          const isAttended = booking.attended;
          let html = `<p style="color:var(--white); font-size:0.8rem; font-weight:600; margin-bottom:4px; border-bottom:1px solid var(--grey-70); padding-bottom:6px;">${esc(booking.name)}</p>`;
          
+         if (booking.price || booking.payment_method) {
+             let pmTxt = booking.payment_method ? ` · ${esc(booking.payment_method)}` : '';
+             let prTxt = booking.price ? esc(booking.price) : '0';
+             html += `<p style="color:var(--grey-40); font-size:0.75rem; margin-bottom:8px; line-height:1.2;">Cobro: <span style="color:var(--gold);font-weight:600;">${prTxt}</span><br/><span style="font-size:0.65rem;">${pmTxt.replace('·', '').trim()}</span></p>`;
+         }
+         
          html += `<button id="pop-status-btn" class="btn btn-ghost btn-sm" style="color:var(--green);border:1px solid rgba(0,255,0,0.2);"><i class="fa-solid fa-check"></i> Confirmado</button>`;
          html += `<button id="pop-status-btn-lleg" class="btn btn-ghost btn-sm" style="color:#00c8f5;border:1px solid rgba(0,200,245,0.2);"><i class="fa-solid fa-location-dot"></i> Llegó</button>`;
          if (!isAttended) {
@@ -3064,7 +3070,8 @@
                  if (client) {
                      nameEl.value = client.name || '';
                      phoneEl.value = client.phone || '';
-                     statusEl.textContent = 'Cliente recuperado ✅';
+                     const lastBarberText = client.last_barber ? ` (Últ. Barbero: ${client.last_barber})` : '';
+                     statusEl.textContent = `Cliente recuperado ✅${lastBarberText}`;
                      statusEl.style.color = 'var(--green)';
                      histBtn.disabled = false;
                      histBtn.onclick = () => { document.getElementById('walkin-modal').style.display = 'none'; openClientProfile(client.id); };
@@ -3661,7 +3668,8 @@
                   if(nameEl) nameEl.value = client.name || '';
                   if(phoneEl) phoneEl.value = client.phone || '';
                   if(statusEl) {
-                     statusEl.textContent = 'Cliente recuperado ✅';
+                     const lastBarberText = client.last_barber ? ` (Últ. Barbero: ${client.last_barber})` : '';
+                     statusEl.textContent = `Cliente recuperado ✅${lastBarberText}`;
                      statusEl.style.color = 'var(--green)';
                   }
                   if (client.rut) e.target.value = client.rut;
@@ -3741,13 +3749,14 @@
         // la Edge Function send-booking-whatsapp con el registro confirmado.
         // No llamamos manualmente para evitar duplicados.
 
-        // 4. Upsert en tabla clients (puntos + registro)
+        // 4. Upsert en tabla clients (puntos + registro + historial barbero)
         try {
           const { data: ext } = await sb.from('clients').select('id, points, total_visits').eq('phone', phone).maybeSingle();
           if (ext) {
             await sb.from('clients').update({
               points: (ext.points || 0) + (isCanje ? 0 : window.ptsForService(service, price)),
               total_visits: (ext.total_visits || 0) + 1,
+              last_barber: barber,
               updated_at: new Date().toISOString()
             }).eq('id', ext.id);
           } else {
@@ -3756,6 +3765,7 @@
               rut: rut || '',
               points: isCanje ? 0 : window.ptsForService(service, price),
               total_visits: 1,
+              last_barber: barber,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
