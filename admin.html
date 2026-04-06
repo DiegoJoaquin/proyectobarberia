@@ -1055,38 +1055,27 @@
         </div>
       </div>
 
-      <!-- Tabla de Gastos -->
+      <!-- Tabla de Gastos / Detalles (Caja Completa) -->
       <div class="bg-[#161619] border border-[#2b2b30] rounded p-6">
         <div class="flex justify-between items-center mb-6 border-b border-[#2b2b30] pb-4">
-          <p class="text-[--white] font-serif text-lg">Registro de Egresos</p>
+          <p class="text-[--white] font-serif text-lg">Registro de Egresos y Detalles Pagados</p>
           <button class="btn btn-ghost text-xs"><i class="fa-solid fa-plus"></i> Añadir Gasto</button>
         </div>
         
         <div class="table-wrap">
           <table class="w-full text-left">
             <thead>
-              <tr>
-                <th>Hora</th>
-                <th>Concepto / Descripción</th>
-                <th>Monto</th>
-                <th>Método</th>
+              <tr style="color:var(--grey-50);font-size:0.75rem;text-transform:uppercase;border-bottom:1px solid #333;">
+                <th style="padding-bottom:10px;">Cita / Fecha</th>
+                <th style="padding-bottom:10px;">Detalle / Profesional</th>
+                <th style="padding-bottom:10px;">Método</th>
+                <th style="padding-bottom:10px;text-align:right;">Monto</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td class="text-[#a3a3ab]">11:30</td>
-                <td class="text-white font-medium">Compra de Insumos (Papel Cuello, Navajas)</td>
-                <td class="text-red-400 font-semibold">-$15.000</td>
-                <td><span class="bg-[#2b2b30] text-[#c5c5cb] px-2 py-1 rounded text-xs">Efectivo (Caja)</span></td>
-              </tr>
-              <tr>
-                <td class="text-[#a3a3ab]">14:15</td>
-                <td class="text-white font-medium">Pago Aseo local</td>
-                <td class="text-red-400 font-semibold">-$20.000</td>
-                <td><span class="bg-[#2b2b30] text-[#c5c5cb] px-2 py-1 rounded text-xs">Efectivo (Caja)</span></td>
-              </tr>
+            <tbody id="finanzas-tx-tbody">
+              <!-- JS Fills this -->
               <tr class="opacity-50 text-sm">
-                <td colspan="4" class="text-center py-6 text-[#81818a]"><i class="fa-solid fa-receipt block text-xl mb-2"></i> No se han registrado más gastos hoy</td>
+                <td colspan="4" class="text-center py-6 text-[#81818a]"><i class="fa-solid fa-receipt block text-xl mb-2"></i> Cargando tabla de flujo avanzado...</td>
               </tr>
             </tbody>
           </table>
@@ -2359,9 +2348,10 @@
       let fp = null;
       
       const dp = document.getElementById('agenda-date-picker');
+      const flatTheme = { theme: "dark" };
       if (dp && window.flatpickr) {
          fp = flatpickr(dp, {
-            theme: "dark",
+            ...flatTheme,
             defaultDate: currentAgendaDateObj,
             onChange: function(selectedDates, dateStr, instance) {
                currentAgendaDateObj = selectedDates[0];
@@ -2369,6 +2359,14 @@
                renderAgenda();
             }
          });
+      }
+      
+      const bdP = document.getElementById('bl-date');
+      if (bdP && window.flatpickr) flatpickr(bdP, flatTheme);
+      
+      const mdP = document.getElementById('m-date');
+      if (mdP && window.flatpickr) {
+         flatpickr(mdP, { ...flatTheme, onChange: function() { typeof loadAvailableSlots === 'function' && loadAvailableSlots(); }});
       }
       document.getElementById('agenda-today-btn').addEventListener('click', () => {
         currentAgendaDateObj = new Date();
@@ -2530,6 +2528,26 @@
             eventDrop: async function(info) {
                 const newBarber = info.newResource ? info.newResource.title : info.oldResource.title;
                 const newTime = info.event.start.toTimeString().slice(0,5);
+                const targetIso = info.event.start.toLocaleDateString('en-CA');
+                
+                if (typeof window.allBlocks !== 'undefined') {
+                    const blockConflict = window.allBlocks.find(bk => {
+                        if (bk.block_date === targetIso && bk.barber_name === newBarber) {
+                            if (bk.block_type === 'full_day') return true;
+                            if (bk.block_type === 'hours') {
+                                return (newTime >= bk.start_time && newTime < bk.end_time);
+                            }
+                        }
+                        return false;
+                    });
+                    if (blockConflict) {
+                        const msgText = blockConflict.reason ? `Motivo: ${blockConflict.reason}` : `Sin motivo especificado`;
+                        if (!confirm(`⚠️ ALERTA: Estás intentando arrastrar la reserva a un horario BLOQUEADO para ${newBarber}.\n${msgText}\n\n¿Deseas FORZAR el movimiento?`)) {
+                            info.revert();
+                            return;
+                        }
+                    }
+                }
                 
                 if (confirm(`¿Mover reserva de ${info.event.extendedProps.name} a ${newBarber} a las ${newTime}?`)) {
                     await sb.from('bookings').update({ barber: newBarber, time: newTime }).eq('id', info.event.id);
@@ -3017,6 +3035,65 @@
                </div>`;
                todaySummaryEl.innerHTML = html;
             }
+         }
+         
+         const txTbody = el('finanzas-tx-tbody');
+         if (txTbody) {
+             txTbody.innerHTML = '';
+             // Filter bookings inside period
+             const paidBookings = window.allBookings.filter(b => {
+                 const bd = window.getAppointmentDate(b);
+                 if (isNaN(bd)) return false;
+                 const isPaid = b.attended || b.status === 'confirmed' || (b.payment_method||'').includes('Webpay') || (b.payment_method||'').includes('Canje');
+                 return isPaid && bd >= start;
+             });
+             paidBookings.sort((a,b) => window.getAppointmentDate(b) - window.getAppointmentDate(a));
+             
+             if (paidBookings.length === 0) {
+                 txTbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-[--grey-50]">No hay servicios facturados en este periodo.</td></tr>';
+             } else {
+                 paidBookings.forEach(b => {
+                     const pxStr = String(b.price || '0').replace(/[^0-9]/g, '');
+                     const px = parseInt(pxStr, 10) || 0;
+                     let pm = b.payment_method || 'Efectivo';
+                     if (pm.toLowerCase().includes('webpay')) pm = 'Webpay Plus';
+                     else if (pm.toLowerCase().includes('canje')) pm = 'Canje';
+                     else if (pm.toLowerCase().includes('transf')) pm = 'Transferencia';
+                     else if (pm.toLowerCase().includes('ébito')) pm = 'Débito';
+                     else if (pm.toLowerCase().includes('rédito')) pm = 'Crédito';
+                     else if (pm.toLowerCase().includes('efectivo')) pm = 'Efectivo';
+                     else pm = 'Efectivo';
+                     
+                     let pmIcon = '<i class="fa-solid fa-money-bill-wave text-green-500"></i>';
+                     if (pm === 'Débito') pmIcon = '<i class="fa-solid fa-credit-card text-yellow-500"></i>';
+                     else if (pm === 'Crédito') pmIcon = '<i class="fa-solid fa-building-columns text-blue-500"></i>';
+                     else if (pm === 'Transferencia') pmIcon = '<i class="fa-solid fa-mobile-screen text-indigo-400"></i>';
+                     else if (pm === 'Webpay Plus') pmIcon = '<i class="fa-solid fa-globe text-red-400"></i>';
+                     else if (pm === 'Canje') pmIcon = '<i class="fa-solid fa-star text-purple-400"></i>';
+
+                     const shortDate = b.date ? b.date.split(' ').slice(0,3).join(' ') : 'Reciente';
+
+                     const tr = document.createElement('tr');
+                     tr.className = "hover:bg-[#1f1f23] transition duration-150 border-b border-[#222]";
+                     tr.innerHTML = `
+                       <td class="py-3 px-2">
+                          <p class="font-semibold text-[--white] mb-0.5" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${b.name||'Cliente'}</p>
+                          <p class="text-[0.65rem] text-[--grey-50] uppercase tracking-wider">${shortDate} — ${b.time||''}</p>
+                       </td>
+                       <td class="py-3 px-2">
+                          <p class="text-[--grey-30] mb-0.5" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">${b.service||'Servicio'}</p>
+                          <p class="text-[0.65rem] text-[--gold] font-semibold">${b.barber||''}</p>
+                       </td>
+                       <td class="py-3 px-2 text-[0.75rem] text-[--grey-30]">
+                          <span class="flex items-center gap-1.5">${pmIcon} ${pm}</span>
+                       </td>
+                       <td class="py-3 px-2 text-right font-serif text-[--white] font-semibold text-[0.95rem]">
+                          $${px.toLocaleString('es-CL')}
+                       </td>
+                     `;
+                     txTbody.appendChild(tr);
+                 });
+             }
          }
       }
 
