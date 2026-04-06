@@ -3617,6 +3617,52 @@
       dateInput.value = today;
     }
 
+    // Autocompletado RUT para Reserva Manual (Admin)
+    const mRutEl = document.getElementById('m-rut');
+    if (mRutEl) {
+      let mRutTimeout;
+      mRutEl.addEventListener('input', (e) => {
+          clearTimeout(mRutTimeout);
+          const rawVal = e.target.value.trim().toUpperCase();
+          const searchVal = rawVal.replace(/[.\-\s]/g, '');
+          const statusEl = document.getElementById('m-rut-status');
+          const nameEl = document.getElementById('m-name');
+          const phoneEl = document.getElementById('m-phone');
+          
+          if (searchVal.length < 5) {
+              if(statusEl) statusEl.textContent = '';
+              return;
+          }
+          
+          if(statusEl) {
+             statusEl.textContent = 'Buscando cliente...';
+             statusEl.style.color = 'var(--grey-40)';
+          }
+          
+          mRutTimeout = setTimeout(() => {
+              const client = window.allClients && window.allClients.find(c => {
+                 if (!c.rut) return false;
+                 return c.rut.toUpperCase().replace(/[.\-\s]/g, '').includes(searchVal);
+              });
+              
+              if (client) {
+                  if(nameEl) nameEl.value = client.name || '';
+                  if(phoneEl) phoneEl.value = client.phone || '';
+                  if(statusEl) {
+                     statusEl.textContent = 'Cliente recuperado ✅';
+                     statusEl.style.color = 'var(--green)';
+                  }
+                  if (client.rut) e.target.value = client.rut;
+              } else {
+                  if(statusEl) {
+                     statusEl.textContent = 'Cliente nuevo. Se creará al confirmar.';
+                     statusEl.style.color = 'var(--gold)';
+                  }
+              }
+          }, 350);
+      });
+    }
+
     // Confirmar Reserva
     document.getElementById('m-confirm-btn')?.addEventListener('click', async () => {
       const btn = document.getElementById('m-confirm-btn');
@@ -3721,6 +3767,10 @@
         document.getElementById('m-barber').value = '';
         document.getElementById('m-time').innerHTML = '<option value="">— Elige barbero y fecha primero —</option>';
         document.getElementById('m-slots-status').textContent = '';
+
+        // Refrescar inmediatamente la agenda para que la reserva manual aparezca
+        if (typeof window.fetchBookings === 'function') window.fetchBookings();
+        if (typeof loadAvailableSlots === 'function') loadAvailableSlots();
 
       } catch(e) {
         errorText.textContent = e.message || 'Error inesperado.';

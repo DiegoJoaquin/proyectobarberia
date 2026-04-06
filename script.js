@@ -591,12 +591,12 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
 
     let data = rows?.[0] || null;
 
-    // Fallback: ilike por el cuerpo del RUT (sin dígito verificador)
+    // Fallback: buscar por el número base del RUT ignorando puntos y guiones por compelto
     if (!data && !error) {
       const { data: rows2 } = await sb
         .from('clients')
         .select('id, name, phone, email, rut')
-        .ilike('rut', `%${rutBodyConPuntos}%`)
+        .or(`rut.ilike.%${rutBodyConPuntos}%,rut.ilike.%${rutSinTodo.slice(0, -1)}%`)
         .limit(1);
       data = rows2?.[0] || null;
     }
