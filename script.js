@@ -591,12 +591,13 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
 
     let data = rows?.[0] || null;
 
-    // Fallback: buscar por el número base del RUT ignorando puntos y guiones por compelto
+    // Fallback: buscar por el número base entrelazado para ignorar mágicamente cualquier formato (puntos, espacios)
     if (!data && !error) {
+      const wild = '%' + rutSinTodo.slice(0, -1).split('').join('%') + '%';
       const { data: rows2 } = await sb
         .from('clients')
         .select('id, name, phone, email, rut')
-        .or(`rut.ilike.%${rutBodyConPuntos}%,rut.ilike.%${rutSinTodo.slice(0, -1)}%`)
+        .ilike('rut', wild)
         .limit(1);
       data = rows2?.[0] || null;
     }

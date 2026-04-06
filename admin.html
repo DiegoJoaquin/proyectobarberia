@@ -3639,11 +3639,23 @@
              statusEl.style.color = 'var(--grey-40)';
           }
           
-          mRutTimeout = setTimeout(() => {
-              const client = window.allClients && window.allClients.find(c => {
-                 if (!c.rut) return false;
-                 return c.rut.toUpperCase().replace(/[.\-\s]/g, '').includes(searchVal);
-              });
+          mRutTimeout = setTimeout(async () => {
+              let client = null;
+              try {
+                  const wild = searchVal.split('').join('%'); // 1%3%0...
+                  const url = `${SUPABASE_URL}/rest/v1/clients?select=id,name,rut,phone&rut=ilike.*${encodeURIComponent(wild)}*&limit=1`;
+                  const res = await fetch(url, { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } });
+                  const arr = await res.json();
+                  if (arr && arr.length > 0) client = arr[0];
+              } catch(e) { console.warn('Supabase RUT lookup error', e); }
+
+              if (!client) {
+                  // Fallback a memoria local si falla la red
+                  client = window.allClients && window.allClients.find(c => {
+                     if (!c.rut) return false;
+                     return c.rut.toUpperCase().replace(/[.\-\s]/g, '').includes(searchVal);
+                  });
+              }
               
               if (client) {
                   if(nameEl) nameEl.value = client.name || '';
