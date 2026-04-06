@@ -887,14 +887,9 @@
           <h1 class="section-title">Caja & <em>Pagos</em></h1>
           <p style="font-size:.8rem;color:var(--grey-50);margin-top:6px;">Detalle contable y medios de recaudación.</p>
         </div>
-        <div class="flex gap-2">
-          <select id="dashboard-period" class="filter-input" style="padding:10px 14px; background:var(--grey-80); border:1px solid var(--grey-70); border-radius:var(--radius); color:var(--white); font-size:0.88rem; outline:none; cursor:pointer;">
-            <option value="today" selected>Hoy</option>
-            <option value="week">Esta semana</option>
-            <option value="month">Este mes</option>
-            <option value="year">Este año</option>
-            <option value="all">Todo el historial</option>
-          </select>
+        <div class="flex gap-2 items-center">
+          <button class="btn btn-ghost" id="dashboard-today-btn" style="padding:10px 14px; font-size: 0.88rem;"><i class="fa-solid fa-calendar-day"></i> Hoy</button>
+          <input type="date" id="dashboard-date-picker" class="filter-input" style="padding:10px 14px; background:var(--grey-80); border:1px solid var(--grey-70); border-radius:var(--radius); color:var(--white); font-size:0.88rem; outline:none; cursor:pointer;" />
         </div>
       </div>
       
@@ -3429,27 +3424,18 @@
 
       window.updateDashboardCharts = function() {
          if (!window.allBookings) return;
-         const periodSelect = document.getElementById('dashboard-period');
-         const period = periodSelect ? periodSelect.value : 'today';
          
+         const datePicker = document.getElementById('dashboard-date-picker');
+         const dateSelected = datePicker ? datePicker.value : null;
+
          const now = new Date();
          let start = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // start of today
          let end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59); // end of today
          
-         if (period === 'week') {
-            const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-            start = new Date(now.getFullYear(), now.getMonth(), diff);
-            // end is already end of today, which is fine for current week
-         } else if (period === 'month') {
-            start = new Date(now.getFullYear(), now.getMonth(), 1);
-            end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-         } else if (period === 'year') {
-            start = new Date(now.getFullYear(), 0, 1);
-            end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-         } else if (period === 'all') {
-            start = new Date(2000, 0, 1);
-            end = new Date(2099, 11, 31, 23, 59, 59);
+         if (dateSelected) {
+            const [y, m, d] = dateSelected.split('-');
+            start = new Date(y, m - 1, d);
+            end = new Date(y, m - 1, d, 23, 59, 59);
          }
 
          // Filtrar las reservas cobradas (Efectivo/Transferencia "Atendido", o Webpay Confirmado)
@@ -3546,7 +3532,25 @@
          setVal('pay-stat-canje', methodsCount['Canje']);
       };
 
-      document.getElementById('dashboard-period')?.addEventListener('change', window.updateDashboardCharts);
+      // Init Date Picker value on loaded DOM
+      const datePickerD = document.getElementById('dashboard-date-picker');
+      const todayBtnD = document.getElementById('dashboard-today-btn');
+      
+      if (datePickerD) {
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0,10);
+        if(!datePickerD.value) datePickerD.value = localISOTime;
+        datePickerD.addEventListener('change', window.updateDashboardCharts);
+      }
+      
+      if (todayBtnD) {
+        todayBtnD.addEventListener('click', () => {
+          const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+          const localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0,10);
+          if (datePickerD) datePickerD.value = localISOTime;
+          window.updateDashboardCharts();
+        });
+      }
     });
   </script>
 
