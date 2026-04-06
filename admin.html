@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -1050,6 +1050,17 @@
         </div>
       </div>
 
+      <!-- Resumen HOY por método de pago (2.4) -->
+      <div class="bg-[#161619] border border-[#2b2b30] rounded p-6 mb-8">
+        <div class="flex justify-between items-center mb-4 border-b border-[#2b2b30] pb-3">
+          <p class="text-[--white] font-serif text-base"><i class="fa-solid fa-chart-simple" style="color:var(--gold);margin-right:8px;"></i>Desglose del Día por Método de Pago</p>
+          <span style="font-size:.65rem;color:var(--grey-50);text-transform:uppercase;letter-spacing:.1em;">Solo citas atendidas hoy</span>
+        </div>
+        <div id="fin-today-breakdown">
+          <p style="color:var(--grey-50);font-size:.8rem;">Cargando...</p>
+        </div>
+      </div>
+
       <!-- Tabla de Gastos -->
       <div class="bg-[#161619] border border-[#2b2b30] rounded p-6">
         <div class="flex justify-between items-center mb-6 border-b border-[#2b2b30] pb-4">
@@ -1221,8 +1232,7 @@
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Barbero *</label>
               <select id="m-barber" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
-                <option value="Emanuel">Emanuel</option>
-                <option value="Matías N.">Matías N.</option>
+                <<option value="Matías N.">Matías N.</option>
                 <option value="Ángel">Ángel</option>
                 <option value="Benjamín">Benjamín</option>
                 <option value="Gonzalo">Gonzalo</option>
@@ -1444,8 +1454,7 @@
              <div>
                 <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
                 <select id="reag-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:10px;border-radius:4px;font-size:.85rem;outline:none;">
-                   <option value="Emanuel">Emanuel</option>
-                   <option value="Matías N.">Matías N.</option>
+                   <<option value="Matías N.">Matías N.</option>
                    <option value="Ángel">Ángel</option>
                    <option value="Benjamín">Benjamín</option>
                    <option value="Gonzalo">Gonzalo</option>
@@ -1535,8 +1544,7 @@
             <div>
               <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
               <select id="wi-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
-                <option value="Emanuel">Emanuel</option>
-                <option value="Matías N.">Matías N.</option>
+                <<option value="Matías N.">Matías N.</option>
                 <option value="Ángel">Ángel</option>
                 <option value="Benjamín">Benjamín</option>
                 <option value="Gonzalo">Gonzalo</option>
@@ -1579,8 +1587,7 @@
           <div>
             <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
             <select id="bl-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
-              <option value="Emanuel">Emanuel</option>
-              <option value="Matías Nuñez">Matías Nuñez</option>
+              <option value="Matías N.">Matías N.</option>
               <option value="Ángel">Ángel</option>
               <option value="Benjamín">Benjamín</option>
               <option value="Gonzalo">Gonzalo</option>
@@ -2186,15 +2193,40 @@
            btn.addEventListener('click', () => openClientProfile(btn.dataset.id));
         });
 
-        // Redeem
+        // Redeem — 2.5: Redirigir a Agenda con datos del cliente para agendar el premio
         grid.querySelectorAll('.redeem-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
+          btn.addEventListener('click', () => {
             const id = btn.dataset.id;
             const name = btn.dataset.name;
             const pts = parseInt(btn.dataset.pts) || 0;
-            if (!confirm(`¿Canjear el corte gratis de ${name}? Se descontarán ${POINTS_GOAL} puntos.`)) return;
-            await sb.from('clients').update({ points: Math.max(0, pts - POINTS_GOAL), updated_at: new Date().toISOString() }).eq('id', id);
-            await loadAll();
+            if (!confirm(`¿Canjear el corte gratis de ${name}? Se descontarán ${POINTS_GOAL} puntos.\n\nSerás redirigido a la Agenda para agendar la cita.`)) return;
+            // Descontar puntos en background
+            sb.from('clients').update({ points: Math.max(0, pts - POINTS_GOAL), updated_at: new Date().toISOString() }).eq('id', id).then(() => loadAll());
+            // Buscar cliente para pre-cargar datos
+            const client = allClients.find(c => String(c.id) === String(id));
+            // Cambiar a pestaña Agenda y pre-cargar datos en modal manual
+            document.querySelectorAll('.tab-nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            const agendaBtn = document.querySelector('[data-tab="agenda"]');
+            const agendaPanel = document.getElementById('tab-agenda');
+            if (agendaBtn) agendaBtn.classList.add('active');
+            if (agendaPanel) agendaPanel.classList.add('active');
+            // Pre-cargar en Walk-in modal para el canje
+            setTimeout(() => {
+              document.getElementById('walkin-btn')?.click();
+              if (client) {
+                setTimeout(() => {
+                  const wiName = document.getElementById('wi-name');
+                  const wiPhone = document.getElementById('wi-phone');
+                  const wiRut = document.getElementById('wi-rut');
+                  if (wiName) wiName.value = client.name || '';
+                  if (wiPhone) wiPhone.value = client.phone || '';
+                  if (wiRut && client.rut) wiRut.value = client.rut;
+                  const st = document.getElementById('wi-rut-status');
+                  if (st) { st.textContent = `Canje de premio: ${name}`; st.style.color = 'var(--gold)'; }
+                }, 150);
+              }
+            }, 200);
           });
         });
 
@@ -2328,7 +2360,7 @@
 
       /* ── AGENDA VISUAL (FULLCALENDAR + FLATPICKR) ───────────────────────────────── */
       let currentAgendaDateObj = new Date();
-      let calendar = null;
+      window.calendar = null; // Expuesto globalmente para addEvent desde otros módulos
       let fp = null;
       
       const dp = document.getElementById('agenda-date-picker');
@@ -2346,7 +2378,7 @@
       document.getElementById('agenda-today-btn').addEventListener('click', () => {
         currentAgendaDateObj = new Date();
         if (fp) fp.setDate(currentAgendaDateObj);
-        if (calendar) calendar.gotoDate(currentAgendaDateObj);
+        if (window.calendar) window.calendar.gotoDate(currentAgendaDateObj);
         renderAgenda();
       });
 
@@ -2403,9 +2435,9 @@
         const calendarEl = document.getElementById('calendar');
         if (!calendarEl) return;
         
-        if (calendar) calendar.destroy();
-        
-        const BARBER_COLUMNS = ['Emanuel', 'Matías', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Quevedo'];
+        if (window.calendar) window.calendar.destroy();
+        window.calendar = null;
+        const BARBER_COLUMNS = ['Matías N.', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Quevedo'];
         const blocksForDate = allBlocks.filter(b => b.block_date === targetIso);
 
         const events = dayBookings.map(b => {
@@ -2461,7 +2493,7 @@
              }
         });
 
-        calendar = new FullCalendar.Calendar(calendarEl, {
+        window.calendar = new FullCalendar.Calendar(calendarEl, {
             schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
             initialView: 'resourceTimeGridDay',
             initialDate: currentAgendaDateObj,
@@ -2512,7 +2544,11 @@
             }
         });
 
-        calendar.render();
+        // Bug Fix 2.1: Usar requestAnimationFrame para garantizar que el DOM tenga dimensiones
+        // antes de llamar a render(). Esto resuelve el problema de "todo amontonado en una celda".
+        requestAnimationFrame(() => {
+          window.calendar.render();
+        });
       }
       
       // Agenda Context Menu (Action Popover)
@@ -2884,6 +2920,11 @@
          }
 
          let cash = 0, card = 0, mp = 0, total = 0, count = 0, uncollected = 0, uncollectedCount = 0;
+         
+         // Resumen del día agrupado por método de pago (2.4)
+         const todayIso = now.toLocaleDateString('en-CA');
+         const todayByMethod = {};
+         
          allBookings.forEach(b => {
              const bd = window.getAppointmentDate(b);
              if (isNaN(bd)) return;
@@ -2908,6 +2949,14 @@
                    uncollectedCount++;
                 }
              }
+             
+             // Para el resumen diario (siempre hoy)
+             const bDate = (b.date || '').slice(0, 10);
+             if (bDate === todayIso && b.attended) {
+                const px2 = parsePrice(b.price);
+                const method = b.payment_method || 'Efectivo';
+                todayByMethod[method] = (todayByMethod[method] || 0) + px2;
+             }
          });
 
          const el = (id) => document.getElementById(id);
@@ -2918,6 +2967,34 @@
          if (el('fin-count')) el('fin-count').textContent = count + (count === 1 ? ' cita cobrada' : ' citas cobradas');
          if (el('fin-uncollected')) el('fin-uncollected').textContent = '$' + uncollected.toLocaleString('es-CL');
          if (el('fin-uncollected-count')) el('fin-uncollected-count').textContent = uncollectedCount + (uncollectedCount === 1 ? ' cita ptte' : ' citas pttes');
+         
+         // Resumen del día por método (2.4) — inyectar en contenedor si existe
+         const todaySummaryEl = el('fin-today-breakdown');
+         if (todaySummaryEl) {
+            const keys = Object.keys(todayByMethod);
+            if (keys.length === 0) {
+               todaySummaryEl.innerHTML = '<p style="color:var(--grey-50);font-size:.8rem;">Sin citas cobradas hoy aún.</p>';
+            } else {
+               let html = '';
+               let totalHoy = 0;
+               keys.sort().forEach(method => {
+                  const amt = todayByMethod[method];
+                  totalHoy += amt;
+                  const isCash = method === 'Efectivo';
+                  const color = isCash ? 'var(--green)' : 'var(--gold)';
+                  const icon = isCash ? 'fa-money-bill-wave' : 'fa-credit-card';
+                  html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--grey-80);border-radius:4px;margin-bottom:6px;">
+                    <span style="color:var(--grey-30);font-size:.8rem;"><i class="fa-solid ${icon}" style="color:${color};margin-right:8px;"></i>${method}</span>
+                    <span style="color:${color};font-weight:700;font-size:.9rem;">$${amt.toLocaleString('es-CL')}</span>
+                  </div>`;
+               });
+               html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--grey-70);border-radius:4px;margin-top:8px;">
+                 <span style="color:var(--white);font-weight:600;font-size:.85rem;">TOTAL HOY</span>
+                 <span style="color:var(--white);font-weight:700;font-size:1rem;">$${totalHoy.toLocaleString('es-CL')}</span>
+               </div>`;
+               todaySummaryEl.innerHTML = html;
+            }
+         }
       }
 
       /* ── EVENTS ─────────────────────────────────────── */
@@ -3038,7 +3115,7 @@
           }
 
           // 2. Registrar la reserva como atendida directamente
-          await sb.from('bookings').insert({
+          const { data: newBooking } = await sb.from('bookings').insert({
             name, phone,
             service: serviceName,
             price: servicePrice,
@@ -3050,7 +3127,26 @@
             payment_method,
             client_id: clientId,
             created_at: now.toISOString()
-          });
+          }).select('id').single();
+
+          // ✨ Reactividad 2.2: Inyectar evento directo en FullCalendar sin recargar página
+          if (window.calendar && newBooking) {
+            const [hh2, mm2] = timeStr.split(':').map(Number);
+            const endDate2 = new Date(now);
+            endDate2.setMinutes(endDate2.getMinutes() + 45);
+            const endStr2 = endDate2.toTimeString().slice(0,5);
+            window.calendar.addEvent({
+              id: newBooking.id,
+              resourceId: barber.split(' ')[0],
+              start: `${dayStr}T${timeStr}:00`,
+              end: `${dayStr}T${endStr2}:00`,
+              title: `${name} - ${serviceName}`,
+              backgroundColor: 'rgba(184,151,90,0.35)',
+              borderColor: 'var(--gold)',
+              textColor: 'var(--white)',
+              extendedProps: { name, phone, service: serviceName, price: servicePrice, barber, date: dayStr, time: timeStr, attended: true }
+            });
+          }
 
           document.getElementById('walkin-modal').style.display = 'none';
           await loadAll();

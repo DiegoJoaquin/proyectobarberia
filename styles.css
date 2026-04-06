@@ -427,24 +427,29 @@ button {
 }
 
 .barber-avatar {
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--grey-90);
+  background: var(--grey-80);
   color: var(--grey-40);
-  font-size: 1.6rem;
-  margin-bottom: 12px;
+  font-size: 1.3rem;
   border: 2px solid var(--grey-70);
   transition: border-color var(--transition), transform var(--transition), color var(--transition), background var(--transition);
+  overflow: hidden;
+}
+
+.barber-avatar--photo {
+  background: var(--grey-70);
 }
 
 .barber-item:hover .barber-avatar {
   border-color: var(--gold);
   color: var(--gold);
-  transform: translateY(-4px);
+  transform: scale(1.08);
 }
 
 .barber-info {

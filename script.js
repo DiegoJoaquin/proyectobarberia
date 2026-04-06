@@ -197,7 +197,6 @@ const state = {
   barber: null,
 };
 const BARBERS = [
-  'Emanuel',
   'Matías N.',
   'Ángel',
   'Benjamín',
@@ -386,6 +385,18 @@ const backdrop = document.getElementById('modal-backdrop');
 const closeBtn = document.getElementById('modal-close-btn');
 
 function openModal(serviceData) {
+  // Resetear readonly del autocompletado RUT
+  ['f-name','f-phone','f-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.readOnly = false; el.style.opacity = '1'; el.value = ''; }
+  });
+  const rutEl = document.getElementById('f-rut');
+  if (rutEl) rutEl.value = '';
+  const statusEl = document.getElementById('rut-lookup-status');
+  if (statusEl) statusEl.textContent = '';
+  const phoneErr = document.getElementById('phone-error');
+  if (phoneErr) phoneErr.style.display = 'none';
+  
   if (serviceData) { 
     state.service = serviceData.name; state.price = serviceData.price; state.duration = serviceData.duration; 
     // Si viene con servicio (desde tarjetas inicio), ir al Paso 2
@@ -514,8 +525,45 @@ function formatRUT(rut) {
   return rutNum.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
 }
 
+// RUT input — formato auto y lookup en Supabase
 document.getElementById('f-rut')?.addEventListener('input', function(e) {
   this.value = this.value.replace(/[^0-9kK\.\-]/g, '').toUpperCase();
+});
+
+document.getElementById('f-rut')?.addEventListener('blur', async function() {
+  const rut = this.value.trim();
+  const statusEl = document.getElementById('rut-lookup-status');
+  if (!rut || !validateRUT(rut) || !SUPABASE_ON) {
+    if (statusEl) statusEl.textContent = rut && !validateRUT(rut) ? '\u26a0\ufe0f RUT inv\u00e1lido' : '';
+    return;
+  }
+  const formattedRut = formatRUT(rut);
+  this.value = formattedRut;
+  if (statusEl) { statusEl.textContent = 'Buscando cliente...'; statusEl.style.color = 'var(--grey-40)'; }
+  
+  try {
+    // Buscar por RUT en tabla clients
+    const { data } = await sb.from('clients').select('name, phone, email').eq('rut', formattedRut).maybeSingle();
+    if (data) {
+      const nameEl = document.getElementById('f-name');
+      const phoneEl = document.getElementById('f-phone');
+      const emailEl = document.getElementById('f-email');
+      if (nameEl) { nameEl.value = data.name || ''; nameEl.readOnly = true; nameEl.style.opacity = '0.7'; }
+      if (phoneEl && data.phone) { phoneEl.value = data.phone; phoneEl.readOnly = true; phoneEl.style.opacity = '0.7'; }
+      if (emailEl && data.email) { emailEl.value = data.email; emailEl.readOnly = true; emailEl.style.opacity = '0.7'; }
+      if (statusEl) { statusEl.textContent = '\u2705 Cliente encontrado — datos autocargados'; statusEl.style.color = 'var(--green)'; }
+    } else {
+      // Nuevo cliente: liberar campos por si estaban bloqueados
+      ['f-name','f-phone','f-email'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.readOnly = false; el.style.opacity = '1'; }
+      });
+      if (statusEl) { statusEl.textContent = 'Cliente nuevo, ingresa tus datos.'; statusEl.style.color = 'var(--gold)'; }
+    }
+  } catch(err) {
+    console.warn('RUT lookup error:', err);
+    if (statusEl) statusEl.textContent = '';
+  }
 });
 
 /* ──────────────────────────────────────────────────────────────
@@ -529,11 +577,23 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   const notes = document.getElementById('f-notes').value.trim();
   const terms = document.getElementById('f-terms').checked;
 
-  if (!name) { showToast('Por favor ingresa tu nombre.'); return; }
   if (!rut) { showToast('Por favor ingresa tu RUT.'); return; }
-  if (!validateRUT(rut)) { showToast('El RUT ingresado no es válido.'); return; }
-  if (!phone) { showToast('Por favor ingresa tu teléfono.'); return; }
-  if (!terms) { showToast('Debes aceptar los términos para continuar.'); return; }
+  if (!validateRUT(rut)) { showToast('El RUT ingresado no es v\u00e1lido.'); return; }
+  if (!name) { showToast('Por favor ingresa tu nombre.'); return; }
+  if (!phone) { showToast('Por favor ingresa tu tel\u00e9fono.'); return; }
+  // Validaci\u00f3n estricta de formato +569XXXXXXXX
+  const phoneClean = phone.replace(/\s/g, '');
+  const phoneRegex = /^\+569\d{8}$/;
+  if (!phoneRegex.test(phoneClean)) {
+    const errEl = document.getElementById('phone-error');
+    if (errEl) errEl.style.display = 'block';
+    showToast('El tel\u00e9fono debe tener formato +569XXXXXXXX');
+    document.getElementById('f-phone').focus();
+    return;
+  }
+  const errElPhone = document.getElementById('phone-error');
+  if (errElPhone) errElPhone.style.display = 'none';
+  if (!terms) { showToast('Debes aceptar los t\u00e9rminos para continuar.'); return; }
   
   const cleanRut = formatRUT(rut);
 
