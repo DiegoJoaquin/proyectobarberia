@@ -386,10 +386,15 @@ const closeBtn = document.getElementById('modal-close-btn');
 
 function openModal(serviceData) {
   // Resetear readonly del autocompletado RUT
-  ['f-name','f-phone','f-email'].forEach(id => {
+  ['f-name', 'f-email'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.readOnly = false; el.style.opacity = '1'; el.value = ''; }
   });
+  // Resetear campo de dígitos del teléfono
+  const phoneDigits = document.getElementById('f-phone-digits');
+  if (phoneDigits) { phoneDigits.readOnly = false; phoneDigits.style.opacity = '1'; phoneDigits.value = ''; }
+  const phoneHidden = document.getElementById('f-phone');
+  if (phoneHidden) phoneHidden.value = '';
   const rutEl = document.getElementById('f-rut');
   if (rutEl) rutEl.value = '';
   const statusEl = document.getElementById('rut-lookup-status');
@@ -530,6 +535,17 @@ document.getElementById('f-rut')?.addEventListener('input', function(e) {
   this.value = this.value.replace(/[^0-9kK\.\-]/g, '').toUpperCase();
 });
 
+// Teléfono: solo dígitos, formato automático XXXX XXXX al escribir
+document.getElementById('f-phone-digits')?.addEventListener('input', function() {
+  // Solo números
+  let digits = this.value.replace(/\D/g, '').slice(0, 8);
+  // Insertar espacio visual en posición 4: "9876 5432"
+  if (digits.length > 4) {
+    digits = digits.slice(0, 4) + ' ' + digits.slice(4);
+  }
+  this.value = digits;
+});
+
 document.getElementById('f-rut')?.addEventListener('blur', async function() {
   const rut = this.value.trim();
   const statusEl = document.getElementById('rut-lookup-status');
@@ -579,12 +595,23 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
     console.log('[RUT v3] resultado:', data);
 
     if (data) {
-      const nameEl  = document.getElementById('f-name');
-      const phoneEl = document.getElementById('f-phone');
-      const emailEl = document.getElementById('f-email');
-      if (nameEl)  { nameEl.value  = data.name  || ''; nameEl.readOnly = true;  nameEl.style.opacity = '0.7'; }
-      if (phoneEl && data.phone) { phoneEl.value = data.phone; phoneEl.readOnly = true; phoneEl.style.opacity = '0.7'; }
+      const nameEl   = document.getElementById('f-name');
+      const emailEl  = document.getElementById('f-email');
+      const digitsEl = document.getElementById('f-phone-digits');
+      const hiddenEl = document.getElementById('f-phone');
+
+      if (nameEl)  { nameEl.value  = data.name  || ''; nameEl.readOnly  = true; nameEl.style.opacity  = '0.7'; }
       if (emailEl && data.email) { emailEl.value = data.email; emailEl.readOnly = true; emailEl.style.opacity = '0.7'; }
+
+      // Extraer los dígitos después del +569 para mostrar solo el número local
+      if (digitsEl && data.phone) {
+        const stripped = data.phone.replace(/\s/g, '').replace(/^\+?569?/, ''); // quita +56 9 del inicio
+        digitsEl.value = stripped;
+        digitsEl.readOnly = true;
+        digitsEl.style.opacity = '0.7';
+        if (hiddenEl) hiddenEl.value = '+569' + stripped;
+      }
+
       if (statusEl) { statusEl.textContent = '\u2705 Cliente encontrado \u2014 datos autocargados'; statusEl.style.color = '#32cd32'; }
     } else {
       ['f-name', 'f-phone', 'f-email'].forEach(id => {
@@ -608,30 +635,36 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
    CONFIRM BOOKING
    ────────────────────────────────────────────────────────────── */
 document.getElementById('s4-confirm').addEventListener('click', async () => {
-  const name = document.getElementById('f-name').value.trim();
-  const rut = document.getElementById('f-rut').value.trim();
-  const phone = document.getElementById('f-phone').value.trim();
+  const name  = document.getElementById('f-name').value.trim();
+  const rut   = document.getElementById('f-rut').value.trim();
   const email = document.getElementById('f-email').value.trim();
   const notes = document.getElementById('f-notes').value.trim();
   const terms = document.getElementById('f-terms').checked;
 
-  if (!rut) { showToast('Por favor ingresa tu RUT.'); return; }
-  if (!validateRUT(rut)) { showToast('El RUT ingresado no es v\u00e1lido.'); return; }
-  if (!name) { showToast('Por favor ingresa tu nombre.'); return; }
-  if (!phone) { showToast('Por favor ingresa tu tel\u00e9fono.'); return; }
-  // Validaci\u00f3n estricta de formato +569XXXXXXXX
-  const phoneClean = phone.replace(/\s/g, '');
-  const phoneRegex = /^\+569\d{8}$/;
-  if (!phoneRegex.test(phoneClean)) {
+  if (!rut)               { showToast('Por favor ingresa tu RUT.'); return; }
+  if (!validateRUT(rut))  { showToast('El RUT ingresado no es válido.'); return; }
+  if (!name)              { showToast('Por favor ingresa tu nombre.'); return; }
+
+  // Construir el teléfono completo desde el prefijo fijo +569 + dígitos
+  const phoneDigitsEl = document.getElementById('f-phone-digits');
+  const rawDigits     = (phoneDigitsEl?.value || '').replace(/\s/g, '');
+  const phone         = '+569' + rawDigits;
+  const phoneRegex    = /^\+569\d{8}$/;
+
+  if (!rawDigits || rawDigits.length !== 8 || !phoneRegex.test(phone)) {
     const errEl = document.getElementById('phone-error');
     if (errEl) errEl.style.display = 'block';
-    showToast('El tel\u00e9fono debe tener formato +569XXXXXXXX');
-    document.getElementById('f-phone').focus();
+    showToast('Ingresa los 8 dígitos de tu teléfono (ej: 9876 5432)');
+    phoneDigitsEl?.focus();
     return;
   }
   const errElPhone = document.getElementById('phone-error');
   if (errElPhone) errElPhone.style.display = 'none';
-  if (!terms) { showToast('Debes aceptar los t\u00e9rminos para continuar.'); return; }
+  // Guardar teléfono completo en el campo oculto (por si algo lo lee después)
+  const phoneHiddenEl = document.getElementById('f-phone');
+  if (phoneHiddenEl) phoneHiddenEl.value = phone;
+
+  if (!terms) { showToast('Debes aceptar los términos para continuar.'); return; }
   
   const cleanRut = formatRUT(rut);
 

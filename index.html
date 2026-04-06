@@ -24,9 +24,53 @@
   <!-- EmailJS — envío de correos sin backend -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
+    /* ── Phone Input Group ───────────────────────────────────── */
+    .phone-input-group {
+      display: flex;
+      align-items: stretch;
+      border: 1px solid var(--grey-70);
+      border-radius: var(--radius, 4px);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .phone-input-group:focus-within {
+      border-color: var(--gold);
+    }
+
+    .phone-prefix {
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      background: rgba(255,255,255,0.04);
+      border-right: 1px solid var(--grey-70);
+      color: var(--grey-40);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      user-select: none;
+      letter-spacing: 0.03em;
+    }
+
+    .phone-digits-input {
+      flex: 1;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      padding-left: 10px !important;
+      letter-spacing: 0.08em;
+    }
+
+    /* Cuando el campo está bloqueado (autocompletado) */
+    .phone-digits-input:read-only {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
     /* ── Barber Pick Card: estructura interna ─────────────────── */
     /* El div interno (que contiene nombre + disponible) va en columna */
-    .barber-pick-card > div {
+    .barber-pick-card>div {
       display: flex;
       flex-direction: column;
       gap: 2px;
@@ -42,7 +86,8 @@
     }
 
     .barber-pick-card .bpc-avail::before {
-      background: #32cd32; /* verde disponible */
+      background: #32cd32;
+      /* verde disponible */
     }
 
     /* ── Modal Service Card: precio + duración en línea ──────── */
@@ -740,11 +785,16 @@
               <input class="form-input" id="f-name" type="text" placeholder="Ej. Diego González" autocomplete="name" />
             </div>
             <div class="form-group">
-              <label class="form-label" for="f-phone">Teléfono <span
-                  style="font-size:.65rem;color:var(--grey-50);font-weight:400">(+569...)</span></label>
-              <input class="form-input" id="f-phone" type="tel" placeholder="+56 9 XXXX XXXX" autocomplete="tel" />
-              <span id="phone-error" style="font-size:.68rem;color:#eb0029;display:none;margin-top:4px;">Formato
-                requerido: +569XXXXXXXX</span>
+              <label class="form-label" for="f-phone-digits">Teléfono</label>
+              <div class="phone-input-group">
+                <span class="phone-prefix">+56 9</span>
+                <input class="form-input phone-digits-input" id="f-phone-digits" type="tel"
+                  placeholder="XXXX XXXX" maxlength="9" autocomplete="off"
+                  inputmode="numeric" pattern="[0-9 ]*" />
+              </div>
+              <!-- campo oculto que guarda el número completo para el submit -->
+              <input type="hidden" id="f-phone" />
+              <span id="phone-error" style="font-size:.68rem;color:#eb0029;display:none;margin-top:4px;">Ingresa los 8 dígitos de tu número (ej: 9876 5432)</span>
             </div>
           </div>
           <div class="form-row">
@@ -767,11 +817,12 @@
                 <li>💸 <strong>Devoluciones:</strong> No hacemos devolución de dinero, solo reagendamos citas.</li>
                 <li>📢 <strong>Inasistencia:</strong> Si no asistes, perderás el 50% del abono. Con el 50% de saldo a
                   favor, podrás agendar una nueva cita manualmente, pagando el saldo restante en la sucursal al recibir
-                  la atención. <em>(Esta cita reagendada es por única vez, sin otra fecha válida).</em></li>
+                  la atención.</li>
                 <li>🔄 <strong>Suspensión:</strong> Puedes suspender tu asistencia y reagendar tu cita con al menos 1
                   hora de anticipación avisando por teléfono, WhatsApp o Instagram. Así la hora quedará disponible para
                   otro cliente.</li>
-                <li>⏰ <strong>Retrasos:</strong> Sin reembolso de dinero.</li>
+                <li>⏰ <strong>Puntualidad:</strong> Tolerancia máxima de 10 minutos. Pasado este tiempo, la cita se
+                  considerará perdida sin reembolso de dinero.</li>
               </ul>
             </div>
           </div>
@@ -839,7 +890,7 @@
         </div>
 
         <div class="summary-cta-note">
-          <i class="fa-solid fa-shield-halved"></i> La reserva será válida si la pagas. Tienes <strong>10
+          <i class="fa-solid fa-shield-halved"></i> La reserva será válida si la pagas. Tienes <strong>5
             minutos</strong> para pagar, si no lo haces, la hora pasará a estar disponible nuevamente.
         </div>
       </aside>
@@ -924,7 +975,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- MercadoPago SDK V2 -->
   <script src="https://sdk.mercadopago.com/js/v2"></script>
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
   <!-- Modal Términos y Condiciones -->
   <div id="terms-modal"
     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:20px;">
@@ -942,8 +993,7 @@
 
       <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Inasistencia:</strong> Si no asistes, perderás
         el 50% del abono. Con el 50% de saldo a favor, podrás agendar una nueva cita manualmente, pagando el saldo
-        restante en la sucursal al recibir la atención. <em>(Esta cita reagendada es por única vez, sin otra fecha
-          válida).</em></p>
+        restante en la sucursal al recibir la atención.</p>
 
       <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Suspensión y Reagendamiento:</strong> Puedes
         suspender tu asistencia y reagendar tu cita con al menos 1 hora de anticipación avisando por teléfono, WhatsApp
@@ -952,7 +1002,7 @@
       <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Retrasos:</strong> Sin reembolso de dinero.</p>
 
       <p style="margin-bottom:14px;"><strong style="color:var(--gold);">Pago:</strong> La reserva será válida si la
-        pagas. Tienes 10 minutos para pagar, si no lo haces, la hora pasará a estar disponible nuevamente.</p>
+        pagas. Tienes 5 minutos para pagar, si no lo haces, la hora pasará a estar disponible nuevamente.</p>
 
       <p><strong style="color:var(--gold);">Integridad del servicio:</strong> Es importante que quien reciba el servicio
         sea autovalente y que no esté bajo los efectos del alcohol o drogas. Nos reservamos el derecho de atención.</p>
