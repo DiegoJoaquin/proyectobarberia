@@ -2788,20 +2788,23 @@
                      }
                  }
                  
-                 if (cId) {
-                     document.querySelector('button[data-tab="crm"]').click();
-                     setTimeout(() => { if(window.openClientProfile) window.openClientProfile(cId); }, 200);
-                 } else {
-                     // Show informative message including what we tried
-                     const tried = [];
-                     if (!hasPhone && !hasRut && !hasCId) {
-                         tried.push('Esta reserva no tiene RUT ni teléfono registrado');
-                     } else {
-                         if (hasPhone) tried.push(`teléfono ${booking.phone}`);
-                         if (hasRut) tried.push(`RUT ${booking.rut}`);
-                     }
-                     alert(`⚠️ Sin ficha en CRM.\n${tried.join(' · ')}\n\nPara ver el historial, el cliente debe estar registrado con el mismo teléfono o RUT en la tabla de clientes.`);
-                 }
+                  if (cId) {
+                      document.querySelector('button[data-tab="crm"]').click();
+                      setTimeout(() => { if(window.openClientProfile) window.openClientProfile(cId); }, 200);
+                  } else {
+                      // No hay ficha en CRM - abrir perfil igual con datos del booking
+                      if (window.openClientProfile) {
+                          window.openClientProfile(null, {
+                              name: booking.name || 'Sin nombre',
+                              phone: booking.phone || '',
+                              rut: booking.rut || '',
+                              email: booking.email || '',
+                              total_visits: null,
+                              points: null,
+                              _noRecord: true
+                          });
+                      }
+                  }
              });
          }
 
@@ -3429,29 +3432,47 @@
       }
 
       /* ── PERFIL CLIENTE ──────────────────────────────── */
-      window.openClientProfile = async function(clientId) {
-        const client = allClients.find(c => String(c.id) === String(clientId));
-        if (!client) return;
+      window.openClientProfile = async function(clientId, mockClient) {
+        // Permitir abrir perfil con datos de booking aunque no haya ficha en CRM
+        const client = mockClient || allClients.find(c => String(c.id) === String(clientId));
+        if (!client) return;  // nada que mostrar
+        const isNoRecord = !!mockClient?._noRecord;
 
         const modal = document.getElementById('profile-modal');
         document.getElementById('p-name').textContent = client.name;
         document.getElementById('p-phone').textContent = client.phone || 'Sin teléfono';
         document.getElementById('p-email').textContent = client.email || 'Sin correo registrado';
         document.getElementById('p-avatar').textContent = initials(client.name);
-        document.getElementById('p-stat-visits').textContent = client.total_visits || 0;
-        document.getElementById('p-stat-points').textContent = (client.points || 0).toLocaleString('es-CL');
+        document.getElementById('p-stat-visits').textContent = isNoRecord ? '—' : (client.total_visits || 0);
+        document.getElementById('p-stat-points').textContent = isNoRecord ? '—' : (client.points || 0).toLocaleString('es-CL');
         
-        const pct = Math.min(100, Math.round((client.points || 0) / POINTS_GOAL * 100));
-        document.getElementById('p-loyalty-pct').textContent = pct + '%';
+        const pct = isNoRecord ? 0 : Math.min(100, Math.round((client.points || 0) / POINTS_GOAL * 100));
+        document.getElementById('p-loyalty-pct').textContent = isNoRecord ? 'Sin puntos registrados' : pct + '%';
 
         const tbody = document.getElementById('p-history-tbody');
         const empty = document.getElementById('p-history-empty');
+        
+        // Aviso si el cliente no tiene ficha en CRM
+        if (isNoRecord) {
+          const noRecordBanner = document.getElementById('p-norecord-banner');
+          if (!noRecordBanner) {
+            const banner = document.createElement('div');
+            banner.id = 'p-norecord-banner';
+            banner.style.cssText = 'background:rgba(184,151,90,0.12);border:1px solid rgba(184,151,90,0.3);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:0.8rem;color:var(--gold);display:flex;align-items:center;gap:8px;';
+            banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Este cliente aún no tiene ficha en el CRM. El historial se busca por teléfono/RUT de la reserva.';
+            modal.querySelector('#p-history-tbody')?.closest('div')?.parentNode?.insertBefore(banner, modal.querySelector('#p-history-tbody')?.closest('div'));
+          }
+        } else {
+          const noRecordBanner = document.getElementById('p-norecord-banner');
+          if (noRecordBanner) noRecordBanner.remove();
+        }
         
         // Mostrar estado de carga interino
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--grey-40);"><i class="fa-solid fa-circle-notch fa-spin" style="margin-right:8px;"></i> Buscando historial...</td></tr>';
         empty.style.display = 'none';
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+
 
         try {
            const seenIds = new Set();
