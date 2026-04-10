@@ -3434,10 +3434,31 @@
       /* ── PERFIL CLIENTE ──────────────────────────────── */
       window.openClientProfile = async function(clientId, mockClient) {
         // Permitir abrir perfil con datos de booking aunque no haya ficha en CRM
-        const client = mockClient || allClients.find(c => String(c.id) === String(clientId));
-        if (!client) return;  // nada que mostrar
-        const isNoRecord = !!mockClient?._noRecord;
+        let client = mockClient || allClients.find(c => String(c.id) === String(clientId));
 
+        // Si no está en memoria, buscarlo directo en Supabase
+        if (!client && clientId) {
+          try {
+            const { data } = await sb.from('clients').select('id,name,phone,email,rut,points,total_visits,last_barber').eq('id', clientId).maybeSingle();
+            if (data) {
+              client = data;
+              // Agregar al array en memoria para futuras búsquedas
+              if (!allClients.find(c => String(c.id) === String(data.id))) {
+                allClients.push(data);
+                window.allClients = allClients;
+              }
+            }
+          } catch(e) { console.warn('[openClientProfile] Supabase fallback error:', e); }
+        }
+
+        // Si tras todo eso sigue sin encontrar, abrir igual con aviso mínimo
+        if (!client && clientId) {
+          client = { name: '(Sin datos)', phone: '', email: '', rut: '', total_visits: null, points: null, _noRecord: true };
+        }
+        if (!client) return;  // nada que mostrar
+
+        // isNoRecord = sin ficha real en CRM (viene de mockClient o de fallback object)
+        const isNoRecord = !!(client._noRecord);
         const modal = document.getElementById('profile-modal');
         document.getElementById('p-name').textContent = client.name;
         document.getElementById('p-phone').textContent = client.phone || 'Sin teléfono';
