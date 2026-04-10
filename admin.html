@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -3928,7 +3928,7 @@
           const nameEl = document.getElementById('m-name');
           const phoneEl = document.getElementById('m-phone');
           
-          if (searchVal.length < 5) {
+          if (searchVal.length < 7) {
               if(statusEl) statusEl.textContent = '';
               return;
           }
@@ -3957,8 +3957,9 @@
               }
               
               if (client) {
-                  if(nameEl) nameEl.value = client.name || '';
-                  if(phoneEl) phoneEl.value = client.phone || '';
+                  // Solo rellenar si el campo está vacío (no sobrescribir lo que escribió el admin)
+                  if(nameEl && !nameEl.value.trim()) nameEl.value = client.name || '';
+                  if(phoneEl && !phoneEl.value.trim()) phoneEl.value = client.phone || '';
                   if(statusEl) {
                      const lastBarberText = client.last_barber ? ` (Últ. Barbero: ${client.last_barber})` : '';
                      statusEl.textContent = `Cliente recuperado ✅${lastBarberText}`;
@@ -3971,7 +3972,7 @@
                      statusEl.style.color = 'var(--gold)';
                   }
               }
-          }, 350);
+          }, 900);  // 900ms debounce — tiempo suficiente para terminar de escribir el RUT
       });
     }
 
