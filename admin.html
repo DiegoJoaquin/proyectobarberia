@@ -2555,13 +2555,23 @@
 
         // Add blocks as background events
         blocksForDate.forEach(bk => {
-             const rId = BARBER_COLUMNS.find(c => bk.barber_name.toLowerCase().includes(c.toLowerCase()));
-             if (!rId) return;
+             // Buscar columna del barbero de forma robusta (normalizado, sin case-sensitivity)
+             const normBkBarber = (bk.barber_name || '').trim().toLowerCase();
+             const rId = BARBER_COLUMNS.find(c => c.trim().toLowerCase() === normBkBarber)
+                      || BARBER_COLUMNS.find(c => normBkBarber.includes(c.trim().toLowerCase()))
+                      || BARBER_COLUMNS.find(c => c.trim().toLowerCase().includes(normBkBarber));
+             if (!rId) {
+               console.warn('[Agenda] Bloqueo sin columna asignada:', bk.barber_name, '— columnas disponibles:', BARBER_COLUMNS);
+               return;
+             }
              const calResId = rId.split(' ')[0];
              if (bk.block_type === 'full_day') {
                  events.push({ resourceId: calResId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: 'rgba(235,0,41,0.2)' });
              } else if (bk.block_type === 'hours' && bk.start_time && bk.end_time) {
-                 events.push({ resourceId: calResId, start: `${targetIso}T${bk.start_time}:00`, end: `${targetIso}T${bk.end_time}:00`, display: 'background', color: 'rgba(235,0,41,0.2)' });
+                 // Asegurar formato HH:MM:SS para FullCalendar
+                 const st = bk.start_time.length === 5 ? `${bk.start_time}:00` : bk.start_time;
+                 const en = bk.end_time.length === 5 ? `${bk.end_time}:00` : bk.end_time;
+                 events.push({ resourceId: calResId, start: `${targetIso}T${st}`, end: `${targetIso}T${en}`, display: 'background', color: 'rgba(235,0,41,0.2)' });
              }
         });
 

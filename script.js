@@ -179,14 +179,27 @@ if (SUPABASE_ON) {
  * Returns barber blocks for a given JS Date object.
  * Each block: { barber_name, block_type, start_time?, end_time? }
  */
-async function getBarberBlocksForDate(dateObj) {
-  if (!SUPABASE_ON || !dateObj) return [];
-  const iso = dateObj.toLocaleDateString('en-CA'); // "YYYY-MM-DD"
+async function getBarberBlocksForDate(dateObjOrIso) {
+  if (!SUPABASE_ON) return [];
+  // Aceptar Date object o string ISO directamente
+  let iso;
+  if (typeof dateObjOrIso === 'string') {
+    iso = dateObjOrIso;
+  } else if (dateObjOrIso instanceof Date) {
+    // Usar componentes locales para evitar shift de timezone
+    const y = dateObjOrIso.getFullYear();
+    const mo = String(dateObjOrIso.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObjOrIso.getDate()).padStart(2, '0');
+    iso = `${y}-${mo}-${d}`;
+  } else {
+    return [];
+  }
   const { data, error } = await sb
     .from('barber_blocks')
     .select('barber_name, block_type, start_time, end_time')
     .eq('block_date', iso);
   if (error) { console.warn('Blocks fetch error:', error); return []; }
+  console.log(`[Blocks] ${iso}: ${(data||[]).length} bloqueos encontrados`, data);
   return data || [];
 }
 
@@ -277,13 +290,32 @@ async function refreshTimePills() {
                   state.dateObj.getDate() === now.getDate();
   const nowMin = now.getHours() * 60 + now.getMinutes(); // no buffer — slot disabled only after it starts
 
-  // Data fetching
-  const bookedSlots = await getBookedTimesForBarber(state.date, state.barber);
-  const blocks = await getBarberBlocksForDate(state.dateObj);
-  const fullDayBlock = blocks.find(b => b.barber_name === state.barber && b.block_type === 'full_day');
-  if (fullDayBlock) return; // Completely busy this day
+  // Usar state.dateIso si está disponible (evita timezone issues)
+  const blocksInput = state.dateIso || state.dateObj;
+  const blocks = await getBarberBlocksForDate(blocksInput);
+  
+  // Normalizar nombre del barbero para comparación robusta
+  const normBarber = (state.barber || '').trim().toLowerCase();
+  const fullDayBlock = blocks.find(b =>
+    b.barber_name && b.barber_name.trim().toLowerCase() === normBarber &&
+    b.block_type === 'full_day'
+  );
+  if (fullDayBlock) {
+    // Mostrar mensaje de día completo bloqueado en lugar de slots vacíos
+    [gridManana, gridTarde, gridNoche].forEach(g => {
+      if (g) g.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;padding:8px 0;">🚫 Barbero no disponible este día</p>';
+    });
+    return;
+  }
 
-  const hourBlocks = blocks.filter(b => b.barber_name === state.barber && b.block_type === 'hours');
+  const hourBlocks = blocks.filter(b =>
+    b.barber_name && b.barber_name.trim().toLowerCase() === normBarber &&
+    b.block_type === 'hours'
+  );
+  console.log(`[Blocks] Barbero: ${state.barber}, bloques de hora:`, hourBlocks);
+  
+  // Data fetching completada
+  const bookedSlots = await getBookedTimesForBarber(state.date, state.barber);
   
   // Build busy intervals
   let busyIntervals = [];
