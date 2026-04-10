@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -991,12 +991,76 @@
         <div class="flex gap-2 items-center">
           <button class="btn btn-ghost" id="agenda-today-btn"><i class="fa-solid fa-calendar-day"></i> Hoy</button>
           <input type="date" id="agenda-date-picker" class="filter-input" style="padding: 8px 12px; margin: 0; min-width: 140px; cursor: pointer; color-scheme: dark;">
+          <button class="btn btn-danger" id="agenda-block-btn" style="display:flex;align-items:center;gap:6px;white-space:nowrap;"><i class="fa-solid fa-ban"></i> Bloquear Horario</button>
         </div>
       </div>
       
       <!-- Agenda Grid Container -->
       <div id="calendar-container" class="bg-[#161619] border border-[#2b2b30] rounded p-4" style="min-height:800px; padding: 20px;">
          <div id="calendar"></div>
+      </div>
+    </div>
+
+    <!-- ★ MODAL: BLOQUEO RÁPIDO DESDE AGENDA ★ -->
+    <div id="agenda-block-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9999;display:none;align-items:center;justify-content:center;">
+      <div style="background:#111;border:1px solid #333;border-radius:12px;padding:32px 28px;width:90%;max-width:480px;position:relative;">
+        <button onclick="document.getElementById('agenda-block-modal').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--grey-50);font-size:1.2rem;cursor:pointer;">×</button>
+        <h2 style="font-family:var(--font-serif);color:var(--white);margin-bottom:4px;font-size:1.3rem;">Bloquear Horario<span style="color:var(--gold);">.</span></h2>
+        <p style="font-size:.8rem;color:var(--grey-50);margin-bottom:20px;">El horario bloqueado no estará disponible para clientes ni reservas manuales.</p>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
+            <select id="abm-barber" style="width:100%;background:#1a1a1d;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
+              <option value="Matías N.">Matías N.</option>
+              <option value="Ángel">Ángel</option>
+              <option value="Benjamín">Benjamín</option>
+              <option value="Gonzalo">Gonzalo</option>
+              <option value="Matias Muñoz Quevedo">Matias Muñoz Quevedo</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Fecha</label>
+            <input id="abm-date" type="text" style="width:100%;background:#1a1a1d;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;cursor:pointer;" placeholder="Selecciona fecha..." readonly />
+          </div>
+        </div>
+        
+        <div style="margin-bottom:14px;">
+          <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Tipo de Bloqueo</label>
+          <select id="abm-type" style="width:100%;background:#1a1a1d;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" onchange="document.getElementById('abm-hour-fields').style.display = this.value === 'hours' ? 'grid' : 'none';">
+            <option value="full_day">Día completo</option>
+            <option value="hours">Rango de horas</option>
+          </select>
+        </div>
+        
+        <div id="abm-hour-fields" style="display:none;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Desde</label>
+            <select id="abm-from" style="width:100%;background:#1a1a1d;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
+              <option>11:00</option><option>11:45</option><option>12:30</option><option>13:15</option>
+              <option>14:45</option><option>15:30</option><option>16:15</option><option>17:00</option>
+              <option>17:45</option><option>18:30</option><option>19:15</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Hasta</label>
+            <select id="abm-to" style="width:100%;background:#1a1a1d;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
+              <option>11:45</option><option>12:30</option><option>13:15</option><option>14:00</option>
+              <option>14:45</option><option>15:30</option><option>16:15</option><option>17:00</option>
+              <option>17:45</option><option>18:30</option><option>19:15</option><option>20:00</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style="margin-bottom:18px;">
+          <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Motivo (opcional)</label>
+          <input id="abm-reason" type="text" placeholder="ej: Colación, Capacitación..." style="width:100%;background:#1a1a1d;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;" />
+        </div>
+        
+        <p id="abm-error" style="color:#e74c3c;font-size:.78rem;min-height:14px;margin-bottom:10px;"></p>
+        <button id="abm-save-btn" class="btn btn-danger" style="width:100%;justify-content:center;">
+          <i class="fa-solid fa-ban"></i> Aplicar Bloqueo
+        </button>
       </div>
     </div>
 
@@ -1153,13 +1217,13 @@
           <p style="font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--grey-50);margin-bottom:20px;border-bottom:1px solid var(--grey-70);padding-bottom:12px;"><i class="fa-solid fa-user" style="margin-right:6px;"></i>Datos del Cliente</p>
           <div style="display:grid;gap:14px;">
             <div>
-              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Nombre completo *</label>
-              <input type="text" id="m-name" list="client-names" placeholder="Diego González" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
-            </div>
-            <div>
-              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">RUT (Búsqueda automática)</label>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">RUT (Búsqueda automática) *</label>
               <input type="text" id="m-rut" list="client-ruts" placeholder="12.345.678-9" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
               <p id="m-rut-status" style="font-size:0.65rem;color:var(--gold);margin-top:6px;min-height:12px;"></p>
+            </div>
+            <div>
+              <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Nombre completo *</label>
+              <input type="text" id="m-name" list="client-names" placeholder="Diego González" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
             </div>
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Teléfono (WhatsApp) *</label>
@@ -2672,18 +2736,62 @@
 
          const histBtn = document.getElementById('pop-hist-btn');
          if (histBtn) {
-             histBtn.addEventListener('click', () => {
+             histBtn.addEventListener('click', async () => {
                  pop.remove();
-                 let cId = booking.client_id;
-                 if (!cId && booking.phone && window.allClients) {
-                     const match = window.allClients.find(c => c.phone === booking.phone || c.rut === booking.rut);
-                     if (match) cId = match.id;
+                 
+                 // Log what data we have to help debug
+                 console.log('[HistBtn] Booking data:', { id: booking.id, name: booking.name, phone: booking.phone, rut: booking.rut, client_id: booking.client_id });
+                 
+                 // ─── Identifier validation ───────────────────────────────
+                 // Normalize: treat empty string, "null", "undefined" as NO identifier
+                 const hasPhone = booking.phone && booking.phone.trim().length > 4;
+                 const hasRut   = booking.rut   && booking.rut.trim().length > 3;
+                 const hasCId   = booking.client_id && booking.client_id !== 'null';
+                 
+                 let cId = hasCId ? booking.client_id : null;
+                 
+                 // 1. Try in-memory match by phone (exact)
+                 if (!cId && hasPhone && window.allClients) {
+                     const match = window.allClients.find(c => c.phone && c.phone.trim() === booking.phone.trim());
+                     if (match) { cId = match.id; console.log('[HistBtn] Matched by phone in memory'); }
                  }
+                 
+                 // 2. Try in-memory match by normalized RUT (exact)
+                 if (!cId && hasRut && window.allClients) {
+                     const normRut = booking.rut.replace(/[\.\-\s]/g,'').toUpperCase();
+                     const match = window.allClients.find(c => c.rut && c.rut.replace(/[\.\-\s]/g,'').toUpperCase() === normRut);
+                     if (match) { cId = match.id; console.log('[HistBtn] Matched by RUT in memory'); }
+                 }
+                 
+                 // 3. Fallback: query Supabase by phone (exact)
+                 if (!cId && hasPhone) {
+                     const { data: cl } = await sb.from('clients').select('id').eq('phone', booking.phone.trim()).maybeSingle();
+                     if (cl) { cId = cl.id; console.log('[HistBtn] Matched by phone in Supabase'); }
+                 }
+                 
+                 // 4. Fallback: query Supabase by RUT (exact)
+                 if (!cId && hasRut) {
+                     const normRut = booking.rut.replace(/[\.\-\s]/g,'').toUpperCase();
+                     const { data: rows } = await sb.from('clients').select('id,rut');
+                     if (rows) {
+                         const match = rows.find(c => c.rut && c.rut.replace(/[\.\-\s]/g,'').toUpperCase() === normRut);
+                         if (match) { cId = match.id; console.log('[HistBtn] Matched by RUT in Supabase'); }
+                     }
+                 }
+                 
                  if (cId) {
                      document.querySelector('button[data-tab="crm"]').click();
-                     setTimeout(() => { if(window.openClientProfile) window.openClientProfile(cId); }, 150);
+                     setTimeout(() => { if(window.openClientProfile) window.openClientProfile(cId); }, 200);
                  } else {
-                     alert("Cliente sin ficha en CRM o no identificado aún. No se puede ver historial histórico.");
+                     // Show informative message including what we tried
+                     const tried = [];
+                     if (!hasPhone && !hasRut && !hasCId) {
+                         tried.push('Esta reserva no tiene RUT ni teléfono registrado');
+                     } else {
+                         if (hasPhone) tried.push(`teléfono ${booking.phone}`);
+                         if (hasRut) tried.push(`RUT ${booking.rut}`);
+                     }
+                     alert(`⚠️ Sin ficha en CRM.\n${tried.join(' · ')}\n\nPara ver el historial, el cliente debe estar registrado con el mismo teléfono o RUT en la tabla de clientes.`);
                  }
              });
          }
@@ -2798,7 +2906,9 @@
           const finalArr = [document.getElementById('pos-final-total')];
           const entEl = document.getElementById('pos-entered-total');
           
-          dInput.value = 0;
+          // Initialize custom amount input
+          const custAmtInputInit = document.getElementById('pos-custom-amount');
+          if (custAmtInputInit) { custAmtInputInit.value = ''; custAmtInputInit.addEventListener('input', recalcPos); }
           cInput.value = 50.0;
           
           let methodsArr = [{ id: Date.now(), method: 'Efectivo', amount: 0 }];
@@ -2847,12 +2957,21 @@
           let finalToPay = originalP;
           
           function recalcPos() {
-              let discountPct = parseFloat(dInput.value) || 0;
-              let discountAm = Math.round(originalP * (discountPct / 100));
-              finalToPay = Math.max(0, originalP - discountAm);
+              const custInput = document.getElementById('pos-custom-amount');
+              const custAmt = custInput ? parseInt(custInput.value, 10) : NaN;
               
-              subT.textContent = '$' + originalP.toLocaleString('es-CL');
-              dResumen.textContent = '-$' + discountAm.toLocaleString('es-CL');
+              if (!isNaN(custAmt) && custAmt >= 0) {
+                  // Direct amount mode
+                  finalToPay = custAmt;
+                  const discountAm = Math.max(0, originalP - custAmt);
+                  subT.textContent = '$' + originalP.toLocaleString('es-CL');
+                  dResumen.textContent = '-$' + discountAm.toLocaleString('es-CL');
+              } else {
+                  finalToPay = originalP;
+                  subT.textContent = '$' + originalP.toLocaleString('es-CL');
+                  dResumen.textContent = '-$0';
+              }
+              
               finalArr.forEach(el => el.textContent = '$' + finalToPay.toLocaleString('es-CL'));
               
               let entered = 0;
@@ -3196,6 +3315,7 @@
       document.getElementById('wi-save-btn').addEventListener('click', async () => {
         const name = document.getElementById('wi-name').value.trim();
         const phone = document.getElementById('wi-phone').value.trim();
+        const rut = document.getElementById('wi-rut')?.value.trim() || '';
         const serviceVal = document.getElementById('wi-service').value;
         const barber = document.getElementById('wi-barber').value;
         const payment_method = document.getElementById('wi-payment').value;
@@ -3483,8 +3603,82 @@
         });
       });
 
-      // Suscribir en tiempo real
-      sb.channel('admin-blocks-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'barber_blocks' }, () => renderBlocks()).subscribe();
+      // Suscribir en tiempo real — actualiza bloques en agenda Y tabla disponibilidad
+      sb.channel('admin-blocks-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'barber_blocks' }, async () => {
+          renderBlocks();
+          // Reload global blocks and re-render agenda
+          const freshBlocks = await fetchAllBlocks();
+          window.allBlocks = freshBlocks;
+          allBlocks = freshBlocks;
+          if (typeof renderAgenda === 'function') renderAgenda();
+      }).subscribe();
+      
+      // ★ Quick-Block desde Agenda ★
+      document.getElementById('agenda-block-btn')?.addEventListener('click', () => {
+          const modal = document.getElementById('agenda-block-modal');
+          modal.style.display = 'flex';
+          // Pre-fill date from current agenda date
+          const iso = currentAgendaDateObj.toLocaleDateString('en-CA');
+          const abmDateEl = document.getElementById('abm-date');
+          if (abmDateEl && window._abmFp) { window._abmFp.setDate(iso); } else if (abmDateEl) { abmDateEl.value = iso; }
+          document.getElementById('abm-type').value = 'full_day';
+          document.getElementById('abm-hour-fields').style.display = 'none';
+          document.getElementById('abm-reason').value = '';
+          document.getElementById('abm-error').textContent = '';
+      });
+      
+      // Inicializar flatpickr en input de fecha del modal de bloqueo rápido
+      const abmDateInput = document.getElementById('abm-date');
+      if (abmDateInput && window.flatpickr) {
+          window._abmFp = flatpickr(abmDateInput, { theme: 'dark', dateFormat: 'Y-m-d', locale: 'es' });
+      }
+      
+      document.getElementById('abm-save-btn')?.addEventListener('click', async () => {
+          const barber_name = document.getElementById('abm-barber').value;
+          const block_date = document.getElementById('abm-date').value;
+          const block_type = document.getElementById('abm-type').value;
+          const reason = document.getElementById('abm-reason').value.trim();
+          const errEl = document.getElementById('abm-error');
+          
+          if (!block_date) { errEl.textContent = 'Selecciona una fecha.'; return; }
+          errEl.textContent = '';
+          
+          const payload = { barber_name, block_date, block_type, reason };
+          if (block_type === 'hours') {
+              payload.start_time = document.getElementById('abm-from').value;
+              payload.end_time = document.getElementById('abm-to').value;
+              if (payload.start_time >= payload.end_time) {
+                  errEl.textContent = 'La hora de inicio debe ser anterior a la hora de fin.'; return;
+              }
+          }
+          
+          const saveBtn = document.getElementById('abm-save-btn');
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+          
+          const { error } = await sb.from('barber_blocks').insert(payload);
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Aplicar Bloqueo';
+          
+          if (error) { errEl.textContent = 'Error: ' + error.message; return; }
+          
+          // Close modal
+          document.getElementById('agenda-block-modal').style.display = 'none';
+          
+          // Reload blocks globally and re-render agenda IMMEDIATELY (no page refresh)
+          const freshBlocks = await fetchAllBlocks();
+          window.allBlocks = freshBlocks;
+          allBlocks = freshBlocks;
+          renderAgenda();
+          renderBlocks();
+      });
+      
+      // Close modal on backdrop click
+      document.getElementById('agenda-block-modal')?.addEventListener('click', (e) => {
+          if (e.target === document.getElementById('agenda-block-modal')) {
+              document.getElementById('agenda-block-modal').style.display = 'none';
+          }
+      });
     })();
   </script>
   <script>
@@ -3910,8 +4104,8 @@
         document.getElementById('m-slots-status').textContent = '';
 
         // Refrescar inmediatamente la agenda para que la reserva manual aparezca
-        if (typeof window.fetchBookings === 'function') window.fetchBookings();
-        if (typeof loadAvailableSlots === 'function') loadAvailableSlots();
+        await loadAll();
+        if (window.calendar) window.calendar.refetchEvents();
 
       } catch(e) {
         errorText.textContent = e.message || 'Error inesperado.';

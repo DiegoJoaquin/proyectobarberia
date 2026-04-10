@@ -263,7 +263,7 @@ async function refreshTimePills() {
   const isToday = state.dateObj.getFullYear() === now.getFullYear() &&
                   state.dateObj.getMonth() === now.getMonth() &&
                   state.dateObj.getDate() === now.getDate();
-  const nowMin = now.getHours() * 60 + now.getMinutes() + 45; // 45-min buffer
+  const nowMin = now.getHours() * 60 + now.getMinutes(); // no buffer — slot disabled only after it starts
 
   // Data fetching
   const bookedSlots = await getBookedTimesForBarber(state.date, state.barber);
