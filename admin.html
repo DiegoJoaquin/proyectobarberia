@@ -2300,7 +2300,7 @@
       }
 
       /* ── LOAD ALL ────────────────────────────────────── */
-      async function loadAll() {
+      window.loadAll = async function loadAll() {
         document.getElementById('loading-bookings').style.display = 'block';
         document.getElementById('loading-clients').style.display = 'block';
         document.getElementById('table-section').style.display = 'none';
@@ -2490,7 +2490,7 @@
           return 30;
       }
 
-      function renderAgenda() {
+      window.renderAgenda = function renderAgenda() {
         const targetIso = currentAgendaDateObj.toLocaleDateString('en-CA');
         const dayBookings = allBookings.filter(b => b.date === targetIso || b.date === `${DAYS[currentAgendaDateObj.getDay()]} ${currentAgendaDateObj.getDate()} ${MONTHS[currentAgendaDateObj.getMonth()]}`);
         
@@ -3611,6 +3611,8 @@
           window.allBlocks = freshBlocks;
           allBlocks = freshBlocks;
           if (typeof renderAgenda === 'function') renderAgenda();
+          // Actualizar slots de Reserva Manual si hay barbero/fecha seleccionados
+          if (typeof loadAvailableSlots === 'function') loadAvailableSlots();
       }).subscribe();
       
       // ★ Quick-Block desde Agenda ★
@@ -3671,6 +3673,8 @@
           allBlocks = freshBlocks;
           renderAgenda();
           renderBlocks();
+          // También actualizar el dropdown de horarios en Reserva Manual
+          if (typeof loadAvailableSlots === 'function') loadAvailableSlots();
       });
       
       // Close modal on backdrop click
@@ -3888,16 +3892,64 @@
            return true;
         });
 
-        // Aseguramos que el horario no esté ocupado 
-        const available = validSlots.filter(s => !bookedTimes.includes(s));
+        // --- Obtener bloqueos vigentes desde allBlocks (global) ---
+        const blocksForBarberDate = (window.allBlocks || []).filter(bk =>
+            bk.block_date === date && bk.barber_name === barber
+        );
+        const isFullDayBlock = blocksForBarberDate.some(bk => bk.block_type === 'full_day');
 
-        timeSelect.innerHTML = available.length
-          ? '<option value="">— Elige una hora —</option>' + available.map(s => `<option value="${s}">${s}</option>`).join('')
-          : '<option value="">Sin disponibilidad este día</option>';
+        // Construir opciones: deshabilitadas si está reservado o bloqueado
+        timeSelect.innerHTML = '<option value="">— Elige una hora —</option>';
 
-        if (statusEl) statusEl.textContent = available.length
-          ? `${available.length} horarios disponibles con ${barber} el ${date.split('-').reverse().join('/')}`
-          : `${barber} no tiene horas libres ese día.`;
+        if (isFullDayBlock) {
+          // Día completo bloqueado — deshabilitar todo
+          validSlots.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = `${s} — 🚫 Bloqueado (día completo)`;
+            opt.disabled = true;
+            opt.style.color = '#e74c3c';
+            timeSelect.appendChild(opt);
+          });
+          if (statusEl) {
+            statusEl.textContent = `🚫 ${barber} tiene el día completo bloqueado.`;
+            statusEl.style.color = '#e74c3c';
+          }
+          return;
+        }
+
+        let availableCount = 0;
+        validSlots.forEach(s => {
+          const opt = document.createElement('option');
+          const isBooked = bookedTimes.includes(s);
+
+          // Verificar si este slot cae dentro de un bloqueo por horas
+          const isHourBlocked = blocksForBarberDate.some(bk => {
+            if (bk.block_type !== 'hours') return false;
+            return s >= bk.start_time && s < bk.end_time;
+          });
+
+          if (isBooked || isHourBlocked) {
+            opt.value = '';
+            opt.textContent = isHourBlocked
+              ? `${s} — 🚫 Bloqueado`
+              : `${s} — ❌ Ocupado`;
+            opt.disabled = true;
+            opt.style.color = isHourBlocked ? '#e74c3c' : '#888';
+          } else {
+            opt.value = s;
+            opt.textContent = s;
+            availableCount++;
+          }
+          timeSelect.appendChild(opt);
+        });
+
+        if (statusEl) {
+          statusEl.textContent = availableCount > 0
+            ? `${availableCount} horarios disponibles con ${barber} el ${date.split('-').reverse().join('/')}`
+            : `${barber} no tiene horas libres ese día.`;
+          statusEl.style.color = availableCount > 0 ? 'var(--grey-50)' : '#e74c3c';
+        }
       } catch(e) {
         timeSelect.innerHTML = '<option value="">Error al cargar slots</option>';
         if (statusEl) statusEl.textContent = 'No se pudo consultar disponibilidad.';
