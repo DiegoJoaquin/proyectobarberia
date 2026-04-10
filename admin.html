@@ -3357,7 +3357,7 @@
 
           // 2. Registrar la reserva como atendida directamente
           const { data: newBooking } = await sb.from('bookings').insert({
-            name, phone,
+            name, phone, rut: rut || null,
             service: serviceName,
             price: servicePrice,
             barber,
