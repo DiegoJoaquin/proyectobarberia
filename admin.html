@@ -1978,7 +1978,7 @@
           const tr = document.createElement('tr');
           const attendedHtml = b.attended
             ? `<span class="attended-badge"><i class="fa-solid fa-check"></i> Atendido</span>`
-            : `<button class="btn btn-green btn-sm attend-btn" data-id="${esc(b.id)}" data-client="${esc(b.client_id || '')}" data-phone="${esc(b.phone || '')}" data-name="${esc(b.name || '')}" data-service="${esc(b.service || '')}" data-price="${esc(b.price || '')}">
+            : `<button class="btn btn-green btn-sm attend-btn" data-id="${esc(b.id)}" data-client="${esc(b.client_id || '')}" data-phone="${esc(b.phone || '')}" data-name="${esc(b.name || '')}" data-service="${esc(b.service || '')}" data-price="${esc(b.price || '')}" data-barber="${esc(b.barber || '')}">
              <i class="fa-solid fa-scissors"></i> Marcar atendido
            </button>`;
          const payMethodIcons = { 'Efectivo': '💵', 'Débito': '💳', 'Crédito': '🏦', 'Transferencia': '📲' };
@@ -2050,12 +2050,18 @@
               }
 
               if (clientRef) {
-                // Update existing
-                await sb.from('clients').update({ 
-                  points: (clientRef.points || 0) + pts, 
-                  total_visits: (clientRef.total_visits || 0) + 1, 
-                  updated_at: new Date().toISOString() 
+                // Update existing — incluir last_barber del booking
+                const barberVal = btn.dataset.barber || null;
+                await sb.from('clients').update({
+                  points: (clientRef.points || 0) + pts,
+                  total_visits: (clientRef.total_visits || 0) + 1,
+                  last_barber: barberVal || clientRef.last_barber,
+                  updated_at: new Date().toISOString()
                 }).eq('id', clientRef.id);
+                // Linkear booking al cliente si aún no estaba
+                if (!clientId && clientRef.id) {
+                  await sb.from('bookings').update({ client_id: clientRef.id }).eq('id', bookingId);
+                }
               } else if (phone && name) {
                 // Create new
                 await sb.from('clients').insert({
@@ -3448,30 +3454,43 @@
         document.body.style.overflow = 'hidden';
 
         try {
-           // Consulta directa a Supabase para historial completo
-           let query = sb.from('bookings').select('date, service, barber, price, id');
+           const seenIds = new Set();
+           let history = [];
+
+           // Estrategia 1: por client_id (más confiable)
+           const { data: byId } = await sb.from('bookings').select('date, service, barber, price, id, status, attended').eq('client_id', clientId);
+           (byId || []).forEach(h => { if (!seenIds.has(h.id)) { seenIds.add(h.id); history.push(h); } });
+
+           // Estrategia 2: por teléfono (cubre reservas antiguas sin client_id)
            if (client.phone) {
-             query = query.or(`client_id.eq.${clientId},phone.eq.${encodeURIComponent(client.phone)}`);
-           } else {
-             query = query.eq('client_id', clientId);
+             const { data: byPhone } = await sb.from('bookings').select('date, service, barber, price, id, status, attended').eq('phone', client.phone);
+             (byPhone || []).forEach(h => { if (!seenIds.has(h.id)) { seenIds.add(h.id); history.push(h); } });
+           }
+
+           // Estrategia 3: por RUT (cubre bookings manuales con RUT)
+           if (client.rut) {
+             const normRut = client.rut.replace(/[.\-\s]/g,'').toUpperCase();
+             const { data: allBk } = await sb.from('bookings').select('date, service, barber, price, id, rut, status, attended');
+             (allBk || []).forEach(h => {
+               if (!h.rut || seenIds.has(h.id)) return;
+               if (h.rut.replace(/[.\-\s]/g,'').toUpperCase() === normRut) {
+                 seenIds.add(h.id); history.push(h);
+               }
+             });
            }
            
-           const { data: historyData, error } = await query;
-           if (error) throw error;
-           
-           let history = historyData || [];
-           
-           // Filtrar duplicados en caso de tener mismo ID
-           const seenIds = new Set();
-           history = history.filter(h => {
-               if (seenIds.has(h.id)) return false;
-               seenIds.add(h.id); return true;
-           });
+           // Estrategia 4: intentar linkear bookings encontrados si aún no tienen client_id
+           const unlinkIds = history.filter(h => !h.client_id).map(h => h.id);
+           if (unlinkIds.length > 0) {
+             // Silenciosamente linkear en background
+             sb.from('bookings').update({ client_id: clientId }).in('id', unlinkIds).then(() => {
+               console.log(`[Profile] Linkeados ${unlinkIds.length} bookings al cliente ${clientId}`);
+             });
+           }
 
-           // Ordenar por fecha desc, previniendo Invalid Date con registros antiguos
+           // Ordenar por fecha desc
            history.sort((a,b) => {
-              let dA = new Date(a.date);
-              let dB = new Date(b.date);
+              let dA = new Date(a.date), dB = new Date(b.date);
               if (isNaN(dA)) dA = new Date(0);
               if (isNaN(dB)) dB = new Date(0);
               return dB - dA;
@@ -3484,10 +3503,13 @@
               history.forEach(h => {
                  const tr = document.createElement('tr');
                  tr.style.borderBottom = '1px solid #222';
+                 const statusBadge = h.attended
+                   ? `<span style="font-size:0.65rem;background:rgba(0,200,100,0.15);color:#2ecc71;border:1px solid rgba(0,200,100,0.3);border-radius:20px;padding:2px 8px;">Atendido</span>`
+                   : `<span style="font-size:0.65rem;background:rgba(184,151,90,0.12);color:var(--gold);border:1px solid rgba(184,151,90,0.3);border-radius:20px;padding:2px 8px;">${h.status || 'Pendiente'}</span>`;
                  tr.innerHTML = `
                    <td style="padding:10px 14px;color:var(--grey-30);">${h.date}</td>
-                   <td style="padding:10px 14px;color:var(--white);font-weight:500;">${h.service}</td>
-                   <td style="padding:10px 14px;color:var(--grey-40);">${h.barber}</td>
+                   <td style="padding:10px 14px;color:var(--white);font-weight:500;">${h.service}<br><small style="color:var(--grey-50);">${statusBadge}</small></td>
+                   <td style="padding:10px 14px;color:var(--grey-40);">${h.barber || '—'}</td>
                    <td style="padding:10px 14px;color:var(--gold);font-weight:600;">${h.price}</td>
                  `;
                  tbody.appendChild(tr);
