@@ -3132,7 +3132,7 @@
              
              // Para el resumen diario (siempre hoy)
              const bDate = (b.date || '').slice(0, 10);
-             if (bDate === todayIso && b.attended) {
+             if (bDate === targetIso && b.attended) {
                 const px2 = parsePrice(b.price);
                 const method = b.payment_method || 'Efectivo';
                 todayByMethod[method] = (todayByMethod[method] || 0) + px2;
@@ -4117,18 +4117,37 @@
 
         // 4. Upsert en tabla clients (puntos + registro + historial barbero)
         try {
-          const { data: ext } = await sb.from('clients').select('id, points, total_visits').eq('phone', phone).maybeSingle();
-          if (ext) {
+          let extClient = null;
+
+          // Buscar por teléfono primero
+          if (phone) {
+            const { data } = await sb.from('clients').select('id, points, total_visits, rut, phone').eq('phone', phone).maybeSingle();
+            extClient = data;
+          }
+
+          // Si no encontró por teléfono, buscar por RUT
+          if (!extClient && rut) {
+            const normRut = rut.replace(/[.\-\s]/g, '').toUpperCase();
+            const { data: allCl } = await sb.from('clients').select('id, points, total_visits, rut, phone');
+            extClient = (allCl || []).find(c =>
+              c.rut && c.rut.replace(/[.\-\s]/g, '').toUpperCase() === normRut
+            ) || null;
+          }
+
+          if (extClient) {
             await sb.from('clients').update({
-              points: (ext.points || 0) + (isCanje ? 0 : window.ptsForService(service, price)),
-              total_visits: (ext.total_visits || 0) + 1,
+              points: (extClient.points || 0) + (isCanje ? 0 : window.ptsForService(service, price)),
+              total_visits: (extClient.total_visits || 0) + 1,
               last_barber: barber,
+              // Completar datos faltantes sin borrar los existentes
+              rut: rut || extClient.rut || null,
+              phone: phone || extClient.phone || null,
               updated_at: new Date().toISOString()
-            }).eq('id', ext.id);
+            }).eq('id', extClient.id);
           } else {
             await sb.from('clients').insert({
-              name, phone, email: email || null,
-              rut: rut || '',
+              name, phone: phone || null, email: email || null,
+              rut: rut || null,
               points: isCanje ? 0 : window.ptsForService(service, price),
               total_visits: 1,
               last_barber: barber,

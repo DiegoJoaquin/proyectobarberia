@@ -86,27 +86,39 @@ async function persistBooking(booking) {
 async function upsertClient(booking, bookingId) {
   if (!SUPABASE_ON) return;
   try {
-    // Check if client already exists
-    const { data: existing } = await sb
-      .from('clients')
-      .select('id, name, email')
-      .eq('phone', booking.phone)
-      .maybeSingle();
+    let existing = null;
+
+    // 1. Buscar por teléfono (más confiable)
+    if (booking.phone) {
+      const { data } = await sb.from('clients').select('id, name, email, rut, phone, points, total_visits').eq('phone', booking.phone).maybeSingle();
+      existing = data;
+    }
+
+    // 2. Si no encontró por teléfono, buscar por RUT
+    if (!existing && booking.rut) {
+      const normRut = booking.rut.replace(/[.\-\s]/g, '').toUpperCase();
+      const { data: allClients } = await sb.from('clients').select('id, name, email, rut, phone, points, total_visits');
+      existing = (allClients || []).find(c =>
+        c.rut && c.rut.replace(/[.\-\s]/g, '').toUpperCase() === normRut
+      ) || null;
+    }
 
     let clientId;
     if (existing) {
       clientId = existing.id;
-      // Update name/email if improved
+      // Actualizar datos si mejoran (nunca borrar datos existentes)
       await sb.from('clients').update({
         name: booking.name || existing.name,
         email: booking.email || existing.email,
-        rut: booking.rut || existing.rut,
+        rut: booking.rut || existing.rut || null,
+        phone: booking.phone || existing.phone || null,
         updated_at: new Date().toISOString(),
       }).eq('id', clientId);
     } else {
+      // Cliente nuevo
       const { data: newClient } = await sb.from('clients').insert({
         name: booking.name,
-        phone: booking.phone,
+        phone: booking.phone || null,
         email: booking.email || null,
         rut: booking.rut || null,
         points: 0,
@@ -815,7 +827,34 @@ updateSummary();
     // Recuperar datos guardados
     const savedState = localStorage.getItem('booking_state');
     if (savedState) {
-      try { localStorage.removeItem('booking_state'); } catch(e) {}
+      try {
+        const bkState = JSON.parse(savedState);
+        localStorage.removeItem('booking_state');
+        
+        // Buscar el booking recién insertado por la Edge Function para obtener su ID
+        if (SUPABASE_ON && bkState.phone) {
+          setTimeout(async () => {
+            try {
+              const { data: recentBooking } = await sb
+                .from('bookings')
+                .select('id')
+                .eq('phone', bkState.phone)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              
+              const bookingObj = {
+                name: bkState.name || '',
+                phone: bkState.phone || '',
+                rut: bkState.rut || '',
+                email: bkState.email || ''
+              };
+              await upsertClient(bookingObj, recentBooking?.id || null);
+              console.log('[upsertClient] Cliente registrado/actualizado tras pago exitoso.');
+            } catch (e) { console.warn('[upsertClient] Error en registro post-pago:', e); }
+          }, 1500);
+        }
+      } catch(e) { console.warn('Error parsing booking_state:', e); }
     }
 
     // Toast de confirmación
