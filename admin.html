@@ -1404,8 +1404,8 @@
                                     <tr style="color:var(--grey-50);font-size:0.75rem;text-transform:uppercase;border-bottom:1px solid #333;">
                                         <th style="padding-bottom:10px;">Ítem</th>
                                         <th style="padding-bottom:10px;text-align:center;">Cant.</th>
-                                        <th style="padding-bottom:10px;">Total</th>
-                                        <th style="padding-bottom:10px;">Descuento (%)</th>
+                                        <th style="padding-bottom:10px;">Precio Lista</th>
+                                        <th style="padding-bottom:10px;">Monto a Cobrar ($)</th>
                                         <th style="padding-bottom:10px;">Comisión (%)</th>
                                         <th style="padding-bottom:10px;">Profesional</th>
                                     </tr>
@@ -1415,7 +1415,10 @@
                                         <td style="padding-top:14px;color:var(--white);font-size:0.9rem;" id="pos-service-name">—</td>
                                         <td style="padding-top:14px;text-align:center;"><input type="number" value="1" disabled style="width:40px;background:#222;border:1px solid #333;color:#fff;text-align:center;padding:4px;border-radius:4px;"></td>
                                         <td style="padding-top:14px;"><input type="text" id="pos-original-price" disabled style="width:80px;background:#222;border:1px solid #333;color:var(--gold);padding:4px 8px;border-radius:4px;font-weight:600;" value="0"></td>
-                                        <td style="padding-top:14px;"><input type="number" id="pos-discount-input" value="0" min="0" max="100" style="width:70px;background:var(--grey-90);border:1px solid var(--grey-70);color:#fff;padding:4px 8px;border-radius:4px;"></td>
+                                        <td style="padding-top:14px;">
+                                          <input type="number" id="pos-custom-amount" placeholder="ej: 14000" min="0" style="width:110px;background:var(--grey-90);border:2px solid var(--gold);color:var(--gold);padding:6px 8px;border-radius:4px;font-weight:700;font-size:0.95rem;" title="Ingresa el monto exacto que paga el cliente. Deja vacío para cobrar el precio de lista.">
+                                          <div style="font-size:0.6rem;color:var(--grey-50);margin-top:3px;">Vacío = precio lista</div>
+                                        </td>
                                         <td style="padding-top:14px;"><input type="number" id="pos-comision-input" value="50.0" step="0.5" min="0" max="100" style="width:70px;background:var(--grey-90);border:1px solid var(--grey-70);color:#fff;padding:4px 8px;border-radius:4px;"></td>
                                         <td style="padding-top:14px;">
                                             <input type="text" id="pos-barber-name" disabled style="width:100%;background:#222;border:1px solid #333;color:var(--white);padding:4px 8px;border-radius:4px;">
@@ -2899,7 +2902,7 @@
           const today = new Date();
           document.getElementById('pos-fecha-venta').textContent = `${today.getDate().toString().padStart(2,'0')}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getFullYear()}`;
           
-          const dInput = document.getElementById('pos-discount-input');
+          // pos-discount-input was replaced by pos-custom-amount (direct amount field)
           const cInput = document.getElementById('pos-comision-input');
           const subT = document.getElementById('pos-resumen-subtotal');
           const dResumen = document.getElementById('pos-resumen-descuento');
@@ -2992,7 +2995,6 @@
               return { finalToPay, entered };
           }
           
-          dInput.oninput = recalcPos;
           cInput.oninput = recalcPos;
           
           renderPosMethods();
@@ -3013,9 +3015,10 @@
               const internalComment = document.getElementById('pos-notes-input').value.trim();
               if(internalComment) finalNotes += `\n[NOTA CAJA]: ${internalComment}`;
               
-              const pct = dInput.value;
+              const custAmtVal = document.getElementById('pos-custom-amount')?.value;
               const coms = cInput.value;
-              const dText = parseFloat(pct) > 0 ? ` | Dsc: ${pct}%` : '';
+              const custAmt = custAmtVal ? parseInt(custAmtVal, 10) : null;
+              const dText = (custAmt && custAmt < originalP) ? ` | Cobrado: $${custAmt.toLocaleString('es-CL')} (Dsc: $${(originalP - custAmt).toLocaleString('es-CL')})` : '';
               const mText = methodsArr.map(m => `${m.method}: $${m.amount}`).join(' + ');
               finalNotes += `\n[POS] Pago: ${mText}${dText} (Com: ${coms}%)`;
               
