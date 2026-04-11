@@ -2586,7 +2586,11 @@
              };
         }).filter(e => e !== null);
 
-        // Add blocks as background events
+        // Add blocks as background events — uno por slot de 15 min para ver la grilla
+        const _phm = s => { const [h,m] = (s||'').substring(0,5).split(':').map(Number); return (h||0)*60+(m||0); };
+        const _thm = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+        const SLOT_MIN = 15; // slotDuration del calendario
+
         blocksForDate.forEach(bk => {
              // Buscar columna del barbero de forma robusta (normalizado, sin case-sensitivity)
              const normBkBarber = (bk.barber_name || '').trim().toLowerCase();
@@ -2598,14 +2602,29 @@
                return;
              }
              const calResId = rId.split(' ')[0];
-             if (bk.block_type === 'full_day') {
-                 events.push({ resourceId: calResId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: '#8b1a1a' });
-             } else if (bk.block_type === 'hours' && bk.start_time && bk.end_time) {
-                 const st = bk.start_time.length === 5 ? `${bk.start_time}:00` : bk.start_time;
-                 const en = bk.end_time.length === 5 ? `${bk.end_time}:00` : bk.end_time;
-                 events.push({ resourceId: calResId, start: `${targetIso}T${st}`, end: `${targetIso}T${en}`, display: 'background', color: '#8b1a1a' });
+
+             // Determinar rango en minutos
+             let fromMin = _phm('09:00');
+             let toMin   = _phm('21:00');
+             if (bk.block_type === 'hours' && bk.start_time && bk.end_time) {
+               fromMin = _phm(bk.start_time);
+               toMin   = _phm(bk.end_time);
+             } else if (bk.block_type !== 'full_day') {
+               return; // tipo desconocido
+             }
+
+             // Generar un evento de fondo por cada celda de 15 min
+             for (let m = fromMin; m < toMin; m += SLOT_MIN) {
+               events.push({
+                 resourceId: calResId,
+                 start: `${targetIso}T${_thm(m)}:00`,
+                 end:   `${targetIso}T${_thm(m + SLOT_MIN)}:00`,
+                 display: 'background',
+                 color: '#8b1a1a'
+               });
              }
         });
+
 
         window.calendar = new FullCalendar.Calendar(calendarEl, {
             schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
