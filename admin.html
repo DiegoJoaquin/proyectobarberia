@@ -814,12 +814,7 @@
       border-radius: 10px;
     }
     /* ── FullCalendar: forzar opacidad de bloques a color sólido ── */
-    .fc-bg-event {
-      opacity: 1 !important;
-    }
-    /* Asegurar que el color del bloque se vea vibrante */
     .fc .fc-bg-event {
-      background-color: inherit !important;
       opacity: 1 !important;
     }
   </style>
@@ -2604,11 +2599,11 @@
              }
              const calResId = rId.split(' ')[0];
              if (bk.block_type === 'full_day') {
-                 events.push({ resourceId: calResId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: 'rgba(220,30,30,0.55)' });
+                 events.push({ resourceId: calResId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: '#8b1a1a' });
              } else if (bk.block_type === 'hours' && bk.start_time && bk.end_time) {
                  const st = bk.start_time.length === 5 ? `${bk.start_time}:00` : bk.start_time;
                  const en = bk.end_time.length === 5 ? `${bk.end_time}:00` : bk.end_time;
-                 events.push({ resourceId: calResId, start: `${targetIso}T${st}`, end: `${targetIso}T${en}`, display: 'background', color: 'rgba(220,30,30,0.55)' });
+                 events.push({ resourceId: calResId, start: `${targetIso}T${st}`, end: `${targetIso}T${en}`, display: 'background', color: '#8b1a1a' });
              }
         });
 
