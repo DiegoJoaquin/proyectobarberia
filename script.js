@@ -239,11 +239,11 @@ const state = {
   barber: null,
 };
 const BARBERS = [
-  'Matías N.',
-  'Ángel',
-  'Benjamín',
-  'Gonzalo',
-  'Matias Muñoz Quevedo'
+  'Matías N.',           // index 0 — debe coincidir con barber_name en barber_blocks
+  'Ángel',              // index 1
+  'Benjamín',           // index 2
+  'Gonzalo',            // index 3
+  'Matias Muñoz Quevedo' // index 4
 ];
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -491,8 +491,14 @@ document.querySelectorAll('.service-book-btn').forEach(btn => {
   });
 });
 
-document.querySelectorAll('.barber-item').forEach((item, i) => {
-  item.addEventListener('click', () => { state.barber = BARBERS[i]; openModal(null); goToStep(3); });
+document.querySelectorAll('.barber-item').forEach((item) => {
+  // Usar data-barber como índice explícito (no el índice del forEach que puede desplazarse)
+  const barberIdx = parseInt(item.dataset.barber, 10);
+  const barberName = BARBERS[barberIdx];
+  item.addEventListener('click', () => {
+    if (barberName) state.barber = barberName;
+    openModal(null); goToStep(3);
+  });
   item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); } });
 });
 
@@ -513,11 +519,14 @@ document.querySelectorAll('.modal-service-card').forEach(card => {
 /* ──────────────────────────────────────────────────────────────
    BARBER PICKER
    ────────────────────────────────────────────────────────────── */
-document.querySelectorAll('#barber-picker .barber-pick-card').forEach((card, i) => {
+document.querySelectorAll('#barber-picker .barber-pick-card').forEach((card) => {
   card.addEventListener('click', () => {
     document.querySelectorAll('#barber-picker .barber-pick-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
-    state.barber = BARBERS[i]; updateSummary();
+    const barberIdx = parseInt(card.dataset.barber || card.dataset.barberIdx || 0, 10);
+    const barberName = BARBERS[barberIdx];
+    if (barberName) state.barber = barberName;
+    updateSummary();
   });
 });
 
