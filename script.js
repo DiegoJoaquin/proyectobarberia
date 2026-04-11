@@ -181,12 +181,10 @@ if (SUPABASE_ON) {
  */
 async function getBarberBlocksForDate(dateObjOrIso) {
   if (!SUPABASE_ON) return [];
-  // Aceptar Date object o string ISO directamente
   let iso;
   if (typeof dateObjOrIso === 'string') {
     iso = dateObjOrIso;
   } else if (dateObjOrIso instanceof Date) {
-    // Usar componentes locales para evitar shift de timezone
     const y = dateObjOrIso.getFullYear();
     const mo = String(dateObjOrIso.getMonth() + 1).padStart(2, '0');
     const d = String(dateObjOrIso.getDate()).padStart(2, '0');
@@ -194,13 +192,20 @@ async function getBarberBlocksForDate(dateObjOrIso) {
   } else {
     return [];
   }
-  const { data, error } = await sb
-    .from('barber_blocks')
-    .select('barber_name, block_type, start_time, end_time')
-    .eq('block_date', iso);
-  if (error) { console.warn('Blocks fetch error:', error); return []; }
-  console.log(`[Blocks] ${iso}: ${(data||[]).length} bloqueos encontrados`, data);
-  return data || [];
+  try {
+    // Fetch directo con anon key para garantizar acceso público a barber_blocks
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/barber_blocks?select=barber_name,block_type,start_time,end_time&block_date=eq.${iso}`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (!res.ok) { console.warn('[Blocks] HTTP error:', res.status); return []; }
+    const data = await res.json();
+    console.log(`[Blocks] ${iso}: ${(data||[]).length} bloqueos →`, data);
+    return data || [];
+  } catch(e) {
+    console.warn('[Blocks] error:', e);
+    return [];
+  }
 }
 
 /* ──────────────────────────────────────────────────────────────
