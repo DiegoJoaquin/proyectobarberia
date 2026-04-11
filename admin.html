@@ -813,6 +813,15 @@
       background: var(--grey-60);
       border-radius: 10px;
     }
+    /* ── FullCalendar: forzar opacidad de bloques a color sólido ── */
+    .fc-bg-event {
+      opacity: 1 !important;
+    }
+    /* Asegurar que el color del bloque se vea vibrante */
+    .fc .fc-bg-event {
+      background-color: inherit !important;
+      opacity: 1 !important;
+    }
   </style>
 </head>
 
