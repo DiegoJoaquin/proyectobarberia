@@ -1227,7 +1227,15 @@
             </div>
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Teléfono (WhatsApp) *</label>
-              <input type="tel" id="m-phone" list="client-phones" placeholder="+56 9 XXXX XXXX" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;" autocomplete="off" />
+              <div style="display:flex;align-items:stretch;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;overflow:hidden;">
+                <span style="display:flex;align-items:center;padding:0 12px;background:rgba(255,255,255,0.06);border-right:1px solid var(--grey-70);color:var(--grey-40);font-family:var(--font-sans);font-size:.85rem;white-space:nowrap;user-select:none;">
+                  +56 9
+                </span>
+                <input type="tel" id="m-phone-digits" list="client-phones" placeholder="XXXX XXXX"
+                  style="flex:1;background:transparent;border:none;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;"
+                  maxlength="9" inputmode="numeric" pattern="[0-9 ]*" autocomplete="off" />
+              </div>
+              <input type="hidden" id="m-phone" />
             </div>
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Correo (opcional)</label>
@@ -2268,6 +2276,12 @@
             setTimeout(() => {
                 const nEl = document.getElementById('m-name'); if(nEl) nEl.value = client.name || '';
                 const pEl = document.getElementById('m-phone'); if(pEl) pEl.value = client.phone || '';
+                // Actualizar también el campo visible de dígitos
+                const pDigits = document.getElementById('m-phone-digits');
+                if (pDigits && client.phone) {
+                  const rawDigits = client.phone.replace(/^\+569/, '').replace(/\D/g,'').substring(0,8);
+                  pDigits.value = rawDigits.replace(/(\d{4})(\d{1,4})/, '$1 $2');
+                }
                 const rEl = document.getElementById('m-rut'); if(rEl) rEl.value = client.rut || '';
                 
                 // Marcar "Pago con Puntos" en los radio buttons si existen
@@ -2542,13 +2556,17 @@
              let bdColor = '#333';
              
              if (status === 'Confirmado') {
-                 bgColor = 'rgba(0, 255, 0, 0.25)'; bdColor = '#32cd32';
-             } else if (status === 'Atendido') {
-                 bgColor = 'rgba(184, 151, 90, 0.35)'; bdColor = 'var(--gold)';
+                 bgColor = '#1a5c2a'; bdColor = '#2ecc71';  // Verde fuerte
+             } else if (status === 'Atendido' || isAttended) {
+                 bgColor = '#5a3e10'; bdColor = '#f0b429';  // Dorado/oro fuerte
              } else if (status === 'No llegó') {
-                 bgColor = 'rgba(231, 76, 60, 0.35)'; bdColor = '#f44336';
+                 bgColor = '#5c1a1a'; bdColor = '#e74c3c';  // Rojo fuerte
              } else if (status === 'Llegó') {
-                 bgColor = 'rgba(0, 200, 245, 0.35)'; bdColor = '#00c8f5';
+                 bgColor = '#0a3d52'; bdColor = '#00c8f5';  // Cyan fuerte
+             } else if (status === 'confirmed') {
+                 bgColor = '#1a5c2a'; bdColor = '#2ecc71';  // Verde fuerte (Webpay)
+             } else {
+                 bgColor = '#2a2a30'; bdColor = '#aaaaaa';  // Gris claro visible
              }
 
              return {
@@ -2577,12 +2595,11 @@
              }
              const calResId = rId.split(' ')[0];
              if (bk.block_type === 'full_day') {
-                 events.push({ resourceId: calResId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: 'rgba(235,0,41,0.2)' });
+                 events.push({ resourceId: calResId, start: `${targetIso}T09:00:00`, end: `${targetIso}T21:00:00`, display: 'background', color: 'rgba(220,30,30,0.55)' });
              } else if (bk.block_type === 'hours' && bk.start_time && bk.end_time) {
-                 // Asegurar formato HH:MM:SS para FullCalendar
                  const st = bk.start_time.length === 5 ? `${bk.start_time}:00` : bk.start_time;
                  const en = bk.end_time.length === 5 ? `${bk.end_time}:00` : bk.end_time;
-                 events.push({ resourceId: calResId, start: `${targetIso}T${st}`, end: `${targetIso}T${en}`, display: 'background', color: 'rgba(235,0,41,0.2)' });
+                 events.push({ resourceId: calResId, start: `${targetIso}T${st}`, end: `${targetIso}T${en}`, display: 'background', color: 'rgba(220,30,30,0.55)' });
              }
         });
 
@@ -4059,6 +4076,20 @@
       dateInput.value = today;
     }
 
+    // Sincronizar m-phone-digits → m-phone (campo oculto con número completo)
+    const mPhoneDigits = document.getElementById('m-phone-digits');
+    const mPhoneHidden = document.getElementById('m-phone');
+    if (mPhoneDigits && mPhoneHidden) {
+      // Solo dígitos y espacios
+      mPhoneDigits.addEventListener('input', () => {
+        const digits = mPhoneDigits.value.replace(/\D/g, '').substring(0, 8);
+        // Formatear XXXX XXXX
+        const formatted = digits.replace(/(\d{4})(\d{1,4})/, '$1 $2');
+        mPhoneDigits.value = formatted;
+        mPhoneHidden.value = digits.length > 0 ? `+569${digits}` : '';
+      });
+    }
+
     // Autocompletado RUT para Reserva Manual (Admin)
     const mRutEl = document.getElementById('m-rut');
     if (mRutEl) {
@@ -4261,6 +4292,8 @@
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
+        const phDig = document.getElementById('m-phone-digits');
+        if (phDig) phDig.value = '';
         document.getElementById('m-service').value = '';
         document.getElementById('m-barber').value = '';
         document.getElementById('m-time').innerHTML = '<option value="">— Elige barbero y fecha primero —</option>';
