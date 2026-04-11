@@ -813,9 +813,15 @@
       background: var(--grey-60);
       border-radius: 10px;
     }
-    /* ── FullCalendar: forzar opacidad de bloques a color sólido ── */
+    /* ── FullCalendar: bloques de horario con celdas visibles ── */
     .fc .fc-bg-event {
       opacity: 1 !important;
+      /* Línea separadora entre celdas de 15 min */
+      border-bottom: 1px solid rgba(0, 0, 0, 0.35) !important;
+    }
+    /* Línea más marcada en los slots de :00 y :30 (borde de hora/media hora) */
+    .fc .fc-timegrid-slot-minor .fc-bg-event {
+      border-bottom-color: rgba(0, 0, 0, 0.55) !important;
     }
   </style>
 </head>
