@@ -823,6 +823,22 @@
     .fc .fc-timegrid-slot-minor .fc-bg-event {
       border-bottom-color: rgba(0, 0, 0, 0.55) !important;
     }
+
+    /* ── Fondo ocre suave en toda la agenda (siempre, no solo hoy) ── */
+    .fc .fc-timegrid-col {
+      background-color: rgba(184, 140, 40, 0.07) !important;
+    }
+    /* Hoy ligeramente más cálido para distinguirlo */
+    .fc .fc-day-today.fc-timegrid-col {
+      background-color: rgba(184, 140, 40, 0.16) !important;
+    }
+    /* Quitar el fondo azul/amarillo brillante que FullCalendar pone por defecto en "hoy" */
+    .fc .fc-day-today {
+      background-color: transparent !important;
+    }
+    .fc .fc-day-today.fc-timegrid-col {
+      background-color: rgba(184, 140, 40, 0.16) !important;
+    }
   </style>
 </head>
 
