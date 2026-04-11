@@ -2475,15 +2475,26 @@
          setTimeout(() => {
             const tInput = document.getElementById('m-time');
             if (tInput) {
-               // Add it if not exists just to prefill
-               let exists = false;
-               Array.from(tInput.options).forEach(o => { if (o.value === timeStr) exists = true; });
-               if (!exists) {
+               // Verificar si el slot ya existe (incluso como deshabilitado)
+               let existsEnabled = false;
+               let existsAny = false;
+               Array.from(tInput.options).forEach(o => {
+                  if (o.value === timeStr) existsEnabled = true;
+                  if (o.textContent.startsWith(timeStr)) existsAny = true;
+               });
+               // Solo añadir si no existe de ninguna forma (ni bloqueado)
+               if (!existsAny) {
                    const opt = document.createElement('option');
                    opt.value = timeStr; opt.textContent = timeStr + ' (Desde la agenda)';
                    tInput.appendChild(opt);
                }
-               tInput.value = timeStr;
+               // Solo seleccionar si el slot está disponible (value no vacío)
+               if (existsEnabled) {
+                  tInput.value = timeStr;
+               } else if (!existsAny) {
+                  tInput.value = timeStr; // lo acabamos de agregar
+               }
+               // Si estaba bloqueado, no lo seleccionamos y dejamos el select sin valor extra
             }
          }, 400); // Give time for generateManualSlots
       };
