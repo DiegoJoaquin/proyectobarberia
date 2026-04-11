@@ -464,32 +464,55 @@
           <p class="card-section-label"><i class="fa-solid fa-scissors"
               style="color:var(--gold);margin-right:6px;"></i>Nuestros Barberos</p>
           <div class="barbers-row">
+            <!-- ══════════════════════════════════════════════
+                 FOTOS BARBEROS — SECCIÓN INICIO
+                 Cambia el src de cada <img> por la foto correcta.
+                 Las imágenes deben estar en la carpeta assets/
+                 ============================================== -->
             <div class="barber-item" data-barber="0" role="button" tabindex="0">
-              <div class="barber-avatar barber-avatar--photo"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="barber-avatar barber-avatar--photo">
+                <!-- FOTO Matías Nuñez → cambia assets/barber1.png por la foto que corresponda -->
+                <img src="image/matias nuñez.jpeg" alt="Matías Nuñez" loading="lazy">
+              </div>
               <div class="barber-info">
                 <p class="barber-name">Matías Nuñez</p>
               </div>
             </div>
             <div class="barber-item" data-barber="1" role="button" tabindex="0">
-              <div class="barber-avatar barber-avatar--photo"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="barber-avatar barber-avatar--photo">
+                <!-- FOTO Ángel → cambia assets/barber2.png por la foto que corresponda -->
+                <img src="image/angel.jpeg" alt="Ángel" loading="lazy">
+              </div>
               <div class="barber-info">
                 <p class="barber-name">Ángel</p>
               </div>
             </div>
             <div class="barber-item" data-barber="2" role="button" tabindex="0">
-              <div class="barber-avatar barber-avatar--photo"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="barber-avatar barber-avatar--photo">
+                <!-- FOTO Benjamín → cambia assets/barber3.png por la foto que corresponda -->
+                <img src="image/benjamin.jpeg" alt="Benjamín" loading="lazy">
+              </div>
               <div class="barber-info">
                 <p class="barber-name">Benjamín</p>
               </div>
             </div>
             <div class="barber-item" data-barber="3" role="button" tabindex="0">
-              <div class="barber-avatar barber-avatar--photo"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="barber-avatar barber-avatar--photo">
+                <!-- FOTO Gonzalo → cambia assets/barber4.png por la foto que corresponda -->
+                <img src="image/gonzalo.jpeg" alt="Gonzalo" loading="lazy">
+              </div>
               <div class="barber-info">
                 <p class="barber-name">Gonzalo</p>
               </div>
             </div>
             <div class="barber-item" data-barber="4" role="button" tabindex="0">
-              <div class="barber-avatar barber-avatar--photo"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="barber-avatar barber-avatar--photo">
+                <!-- FOTO Matias Muñoz Quevedo → agrega su foto acá: assets/barber5.png (o la que tengas) -->
+                <!-- Si no tiene foto, deja el icono comentado abajo: -->
+                <!-- <i class="fa-solid fa-user-tie"></i> -->
+                <img src="image/matias muñoz quevedo.jpeg" alt="Matias Muñoz Quevedo" loading="lazy"
+                  onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fa-solid fa-user-tie\'></i>';">
+              </div>
               <div class="barber-info">
                 <p class="barber-name">Matias Muñoz Quevedo</p>
               </div>
@@ -685,37 +708,58 @@
           <h2 class="step-title">Tu barbero</h2>
           <p class="step-legend">Elige al profesional que realizará tu sesión.</p>
 
+          <!-- ══════════════════════════════════════════════
+               FOTOS BARBEROS — MODAL DE RESERVA (Paso 2)
+               Cambia el src de cada <img> por la foto correcta.
+               Deben ser las mismas fotos que arriba.
+               ============================================== -->
           <div class="barber-grid" id="barber-picker">
             <div class="barber-pick-card" data-barber-idx="0">
-              <div class="modal-barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="modal-barber-avatar">
+                <!-- FOTO Matías Nuñez → cambia assets/barber1.png -->
+                <img src="assets/barber1.png" alt="Matías Nuñez" loading="lazy">
+              </div>
               <div>
                 <p class="bpc-name">Matías Nuñez</p>
                 <p class="bpc-avail">Disponible hoy</p>
               </div>
             </div>
             <div class="barber-pick-card" data-barber-idx="1">
-              <div class="modal-barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="modal-barber-avatar">
+                <!-- FOTO Ángel → cambia assets/barber2.png -->
+                <img src="assets/barber2.png" alt="Ángel" loading="lazy">
+              </div>
               <div>
                 <p class="bpc-name">Ángel</p>
                 <p class="bpc-avail">Disponible hoy</p>
               </div>
             </div>
             <div class="barber-pick-card" data-barber-idx="2">
-              <div class="modal-barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="modal-barber-avatar">
+                <!-- FOTO Benjamín → cambia assets/barber3.png -->
+                <img src="assets/barber3.png" alt="Benjamín" loading="lazy">
+              </div>
               <div>
                 <p class="bpc-name">Benjamín</p>
                 <p class="bpc-avail">Disponible hoy</p>
               </div>
             </div>
             <div class="barber-pick-card" data-barber-idx="3">
-              <div class="modal-barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="modal-barber-avatar">
+                <!-- FOTO Gonzalo → cambia assets/barber4.png -->
+                <img src="assets/barber4.png" alt="Gonzalo" loading="lazy">
+              </div>
               <div>
                 <p class="bpc-name">Gonzalo</p>
                 <p class="bpc-avail">Disponible hoy</p>
               </div>
             </div>
             <div class="barber-pick-card" data-barber-idx="4">
-              <div class="modal-barber-avatar"><i class="fa-solid fa-user-tie"></i></div>
+              <div class="modal-barber-avatar">
+                <!-- FOTO Matias Muñoz Quevedo → agrega assets/barber5.png cuando tengas la foto -->
+                <img src="assets/barber5.png" alt="Matias Muñoz Quevedo" loading="lazy"
+                  onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fa-solid fa-user-tie\'></i>';">
+              </div>
               <div>
                 <p class="bpc-name">Matias Muñoz Quevedo</p>
                 <p class="bpc-avail">Disponible hoy</p>

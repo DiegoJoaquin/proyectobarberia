@@ -427,8 +427,8 @@ button {
 }
 
 .barber-avatar {
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   flex-shrink: 0;
   border-radius: 50%;
   display: flex;
@@ -438,18 +438,28 @@ button {
   color: var(--grey-40);
   font-size: 1.3rem;
   border: 2px solid var(--grey-70);
-  transition: border-color var(--transition), transform var(--transition), color var(--transition), background var(--transition);
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
   overflow: hidden;
+}
+
+.barber-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 50%;
+  display: block;
 }
 
 .barber-avatar--photo {
   background: var(--grey-70);
+  border-color: rgba(184,151,90,0.25);
 }
 
 .barber-item:hover .barber-avatar {
   border-color: var(--gold);
-  color: var(--gold);
   transform: scale(1.08);
+  box-shadow: 0 0 0 3px rgba(184,151,90,0.18);
 }
 
 .barber-info {
@@ -1006,8 +1016,9 @@ button {
 }
 
 .modal-barber-avatar {
-  width: 44px;
-  height: 44px;
+  width: 56px;
+  height: 56px;
+  /* IMPORTANTE: DEBE SER CUADRADO + border-radius:50% para círculo perfecto */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1015,14 +1026,25 @@ button {
   background: var(--grey-80);
   color: var(--grey-40);
   font-size: 1.15rem;
-  border: 1.5px solid var(--grey-60);
-  transition: border-color var(--transition), color var(--transition);
+  border: 2px solid var(--grey-60);
+  transition: border-color var(--transition), color var(--transition), box-shadow var(--transition);
   flex-shrink: 0;
+  overflow: hidden;  /* clave para que la foto quede circular */
+}
+
+.modal-barber-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 50%;
+  display: block;
 }
 
 .barber-pick-card.selected .modal-barber-avatar {
   border-color: var(--gold);
   color: var(--white);
+  box-shadow: 0 0 0 3px rgba(184,151,90,0.2);
 }
 
 .bpc-name {
