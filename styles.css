@@ -7,8 +7,10 @@
 
 /* ── Variables ─────────────────────────────────────────────── */
 :root {
-  --black: #030712; /* bg-gray-950 */
-  --grey-90: #111827; /* bg-gray-900 */
+  --black: #030712;
+  /* bg-gray-950 */
+  --grey-90: #111827;
+  /* bg-gray-900 */
   --grey-80: #1f2937;
   --grey-70: #374151;
   --grey-60: #4b5563;
@@ -17,14 +19,16 @@
   --grey-30: #d1d5db;
   --grey-20: #e5e7eb;
   --grey-10: #f3f4f6;
-  --white: #e7e5e4; /* text-stone-200 */
-  
+  --white: #e7e5e4;
+  /* text-stone-200 */
+
   /* Secundario: Blanco Puro (Originalmente Bronce Envejecido) */
-  --gold: #ffffff; 
+  --gold: #ffffff;
   --gold-dim: #d1d5db;
-  
+
   /* Fuerza: Rojo Lacedemonio (Sangre de Toro) */
-  --red: #450a0a; /* bg-red-950 */
+  --red: #450a0a;
+  /* bg-red-950 */
   --red-hover: #7f1d1d;
 
   --font-serif: 'Cinzel', Georgia, serif;
@@ -43,7 +47,8 @@
   padding: 0;
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
 }
 
@@ -453,13 +458,13 @@ button {
 
 .barber-avatar--photo {
   background: var(--grey-70);
-  border-color: rgba(184,151,90,0.25);
+  border-color: rgba(184, 151, 90, 0.25);
 }
 
 .barber-item:hover .barber-avatar {
   border-color: var(--gold);
   transform: scale(1.08);
-  box-shadow: 0 0 0 3px rgba(184,151,90,0.18);
+  box-shadow: 0 0 0 3px rgba(184, 151, 90, 0.18);
 }
 
 .barber-info {
@@ -619,7 +624,7 @@ button {
 
 .service-card {
   background: var(--grey-90);
-  background-image: radial-gradient(circle at top right, rgba(255,255,255,0.02) 0%, transparent 60%), linear-gradient(135deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+  background-image: radial-gradient(circle at top right, rgba(255, 255, 255, 0.02) 0%, transparent 60%), linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
   border: 1px solid var(--grey-70);
   border-radius: var(--radius);
   padding: 28px;
@@ -1016,8 +1021,9 @@ button {
 }
 
 .modal-barber-avatar {
-  width: 48px;
-  aspect-ratio: 1 / 1;  /* fuerza cuadrado perfecto — evita óvalo en flex/grid */
+  width: 30px;
+  aspect-ratio: 1 / 1;
+  /* fuerza cuadrado perfecto — evita óvalo en flex/grid */
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
@@ -1042,7 +1048,7 @@ button {
 .barber-pick-card.selected .modal-barber-avatar {
   border-color: var(--gold);
   color: var(--white);
-  box-shadow: 0 0 0 3px rgba(184,151,90,0.2);
+  box-shadow: 0 0 0 3px rgba(184, 151, 90, 0.2);
 }
 
 .bpc-name {
