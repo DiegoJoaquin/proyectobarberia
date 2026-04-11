@@ -404,7 +404,8 @@ function buildDayPicker() {
     const sun = d.getDay() === 0;
     const lbl = `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
 
-    const isoDate = d.toISOString().split('T')[0]; // YYYY-MM-DD
+    // Usar componentes locales para evitar shift de timezone (Chile = UTC-4)
+    const isoDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
     const pill = document.createElement('button');
     pill.className = 'day-pill' + (i === 0 ? ' selected' : '') + (sun ? ' disabled' : '');
@@ -497,7 +498,14 @@ document.querySelectorAll('.barber-item').forEach((item) => {
   const barberName = BARBERS[barberIdx];
   item.addEventListener('click', () => {
     if (barberName) state.barber = barberName;
-    openModal(null); goToStep(3);
+    // Si ya hay servicio elegido ir directo al paso 3, sino al paso 1
+    if (state.service && state.duration) {
+      openModal(null);
+      goToStep(3);
+      setTimeout(() => { if (state.date && state.barber && state.duration) refreshTimePills(); }, 100);
+    } else {
+      openModal(null); // va a paso 1 para elegir servicio
+    }
   });
   item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); } });
 });
@@ -559,8 +567,10 @@ document.getElementById('s1-next').addEventListener('click', () => {
 // Paso 2 ahora es Profesionales
 document.getElementById('s2-back').addEventListener('click', () => goToStep(1));
 document.getElementById('s2-next').addEventListener('click', () => {
-  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; } 
+  if (!state.barber) { showToast('Por favor selecciona un barbero.'); return; }
   goToStep(3);
+  // Refrescar slots con el barbero recén seleccionado
+  if (state.date && state.duration) refreshTimePills();
 });
 
 // Paso 3 ahora es Fecha & Hora

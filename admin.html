@@ -2508,7 +2508,7 @@
         
         if (window.calendar) window.calendar.destroy();
         window.calendar = null;
-        const BARBER_COLUMNS = ['Matías N.', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Quevedo'];
+        const BARBER_COLUMNS = ['Matías N.', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Muñoz Quevedo'];
         const blocksForDate = allBlocks.filter(b => b.block_date === targetIso);
 
         const events = dayBookings.map(b => {
@@ -4003,7 +4003,10 @@
           // Verificar si este slot cae dentro de un bloqueo por horas
           const isHourBlocked = blocksForBarberDate.some(bk => {
             if (bk.block_type !== 'hours') return false;
-            return s >= bk.start_time && s < bk.end_time;
+            // Normalizar a HH:MM (Supabase puede devolver "HH:MM:SS")
+            const blkStart = (bk.start_time || '').substring(0, 5);
+            const blkEnd   = (bk.end_time   || '').substring(0, 5);
+            return s >= blkStart && s < blkEnd;
           });
 
           if (isBooked || isHourBlocked) {
