@@ -1804,6 +1804,36 @@
     window.sb = window.supabase.createClient(window.SUPABASE_URL, SUPABASE_KEY);
     window.WEEKDAY_SLOTS = ['11:00', '11:45', '12:30', '13:15', '14:45', '15:30', '16:15', '17:00', '17:45', '18:30', '19:15'];
     window.SATURDAY_SLOTS = ['10:00', '10:45', '11:30', '12:15', '13:00', '14:30', '15:15', '16:00', '16:45', '17:30'];
+    
+    window.parseDurationMins = function(dStr) {
+      if (!dStr) return 45;
+      const s = dStr.toLowerCase();
+      if (s.includes('1 hr 15') || s.includes('1h 15')) return 75;
+      if (s.includes('1 hr 30') || s.includes('1h 30')) return 90;
+      if (s.includes('1 hr') || s.includes('1h')) return 60;
+      const match = s.match(/(\d+)/);
+      if (match) return parseInt(match[1], 10);
+      return 45;
+    };
+
+    window.getDynamicSlots = function(dateObj, durationMins) {
+        const isWeekend = dateObj.getDay() === 6;
+        if (durationMins > 60) {
+            if (isWeekend) {
+                return ['10:00', '10:45', '11:15', '12:15', '12:30', '14:30', '15:15', '15:45', '16:45', '17:00'];
+            } else {
+                return ['11:00', '11:30', '12:15', '12:30', '12:45', '15:00', '15:30', '16:15', '17:00', '17:30', '18:30', '18:45'];
+            }
+        } else if (durationMins > 45) {
+            if (isWeekend) {
+                return ['10:00', '11:00', '12:00', '14:30', '15:30', '16:30', '17:15'];
+            } else {
+                return ['11:00', '12:00', '13:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+            }
+        } else {
+            return isWeekend ? window.SATURDAY_SLOTS : window.WEEKDAY_SLOTS;
+        }
+    };
   </script>
 
   <script>
@@ -2667,10 +2697,10 @@
                 let m = info.date.getMinutes();
                 let h = info.date.getHours();
                 
-                // Autocompletado inteligente: Redondear a intervalos de 45 mins
+                // Autocompletado inteligente
                 const hm = h * 60 + m;
                 let closestSlot = info.date.getDay() === 6 ? '10:00' : '11:00';
-                let daySlots = info.date.getDay() === 6 ? window.SATURDAY_SLOTS : window.WEEKDAY_SLOTS;
+                let daySlots = window.getDynamicSlots(info.date, 45); // asume 45m por defecto
                 if (typeof daySlots !== 'undefined') {
                     let minDiff = Infinity;
                     daySlots.forEach(slot => {
@@ -2928,7 +2958,8 @@
           
           const selTime = document.getElementById('reag-time');
           const bDateObj = new Date(currentDateIso + 'T12:00:00');
-          const daySlots = bDateObj.getDay() === 6 ? window.SATURDAY_SLOTS : window.WEEKDAY_SLOTS;
+          const durMins = window.parseDurationMins(booking.duration);
+          const daySlots = window.getDynamicSlots(bDateObj, durMins);
           selTime.innerHTML = daySlots.map(s => `<option value="${s}" ${s === booking.time ? 'selected' : ''}>${s}</option>`).join('');
           
           btnObj.onclick = async () => {
@@ -4025,6 +4056,8 @@
     async function loadAvailableSlots() {
       const barber = document.getElementById('m-barber')?.value;
       const date = document.getElementById('m-date')?.value;
+      const serviceVal = document.getElementById('m-service')?.value || '';
+      const durMins = window.parseDurationMins(serviceVal.split('|')[2] || '45 min');
       const timeSelect = document.getElementById('m-time');
       const statusEl = document.getElementById('m-slots-status');
 
@@ -4042,7 +4075,7 @@
         const bookedTimes = (booked || []).map(b => b.time?.substring(0,5));
         const timeObj = new Date(date + 'T12:00:00');
 
-        const daySlots = timeObj.getDay() === 6 ? SATURDAY_SLOTS : WEEKDAY_SLOTS;
+        const daySlots = window.getDynamicSlots(timeObj, durMins);
         let validSlots = daySlots.filter(s => {
            if (timeObj.getDay() === 0) return false; 
            return true;
@@ -4115,9 +4148,10 @@
       }
     }
 
-    // Cargar slots cuando cambia barbero o fecha
+    // Cargar slots cuando cambia barbero, fecha o servicio
     document.getElementById('m-barber')?.addEventListener('change', loadAvailableSlots);
     document.getElementById('m-date')?.addEventListener('change', loadAvailableSlots);
+    document.getElementById('m-service')?.addEventListener('change', loadAvailableSlots);
 
     // Poner fecha mínima en el datepicker (hoy)
     const dateInput = document.getElementById('m-date');
