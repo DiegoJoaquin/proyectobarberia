@@ -342,7 +342,12 @@ async function refreshTimePills() {
 
   // Generate Fixed Interval Slots (45 mins stricto)
   const serviceMins = parseDurationMins(state.duration);
-  const fixedSlots = ['11:00', '11:45', '12:30', '13:15', '14:45', '15:30', '16:15', '17:00', '17:45', '18:30', '19:15'];
+  let fixedSlots;
+  if (isWeekend) {
+      fixedSlots = ['10:00', '10:45', '11:30', '12:15', '13:00', '14:30', '15:15', '16:00', '16:45', '17:30'];
+  } else {
+      fixedSlots = ['11:00', '11:45', '12:30', '13:15', '14:45', '15:30', '16:15', '17:00', '17:45', '18:30', '19:15'];
+  }
   
   const candidateSlots = fixedSlots.map(s => parseHM(s));
 
