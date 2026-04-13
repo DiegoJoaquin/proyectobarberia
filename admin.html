@@ -2764,7 +2764,8 @@
                 }
                 
                 if (confirm(`¿Mover reserva de ${info.event.extendedProps.name} a ${newBarber} a las ${newTime}?`)) {
-                    await sb.from('bookings').update({ barber: newBarber, time: newTime }).eq('id', info.event.id);
+                    // ? Bug Fix: Incluir la fecha (date: targetIso) para que el cambio persista al recargar
+                    await sb.from('bookings').update({ barber: newBarber, time: newTime, date: targetIso }).eq('id', Number(info.event.id));
                     loadAll();
                 } else {
                     info.revert();
@@ -2974,11 +2975,16 @@
           const btnObj = document.getElementById('reagendar-confirm-btn');
           
           document.getElementById('reag-barber').value = booking.barber || 'Gonzalo';
-          const currentDateIso = booking.date.split(' ')[0]; // o un parse if needed
-          document.getElementById('reag-date').value = currentDateIso;
+          
+          // ? Bug Fix: Asegurar que la fecha sea YYYY-MM-DD para el input[type="date"]
+          let dateVal = booking.date;
+          if (!dateVal || (dateVal.includes(' ') && !dateVal.includes('-'))) {
+             dateVal = currentAgendaDateObj.toLocaleDateString('en-CA');
+          }
+          document.getElementById('reag-date').value = dateVal;
           
           const selTime = document.getElementById('reag-time');
-          const bDateObj = new Date(currentDateIso + 'T12:00:00');
+          const bDateObj = new Date(dateVal + 'T12:00:00');
           const durMins = window.parseDurationMins(booking.duration);
           const daySlots = window.getDynamicSlots(bDateObj, durMins);
           selTime.innerHTML = daySlots.map(s => `<option value="${s}" ${s === booking.time ? 'selected' : ''}>${s}</option>`).join('');
@@ -2992,8 +2998,8 @@
               btnObj.disabled = true;
               
               try {
-                  // 1. Actualizar la reserva en Supabase
-                  await sb.from('bookings').update({ barber: nB, date: nD, time: nT }).eq('id', booking.id);
+                  // 1. Actualizar la reserva en Supabase (Usar Number(id) para evitar fallos de tipo)
+                  await sb.from('bookings').update({ barber: nB, date: nD, time: nT }).eq('id', Number(booking.id));
                   
                   // 2. Enviar WhatsApp de confirmación al cliente
                   // El webhook de DB solo dispara en INSERT, no en UPDATE → hay que llamarlo manualmente
