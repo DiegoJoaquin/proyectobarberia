@@ -797,7 +797,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     time: state.time || '—',
     barber: state.barber || '—',
     created_at: new Date().toISOString(),
-    payment_method: paymentText,
+    payment_method: 'Webpay Plus (Online)',
     status: 'waiting_payment',
     points_earned: getPointsForService(state.price)
   };
