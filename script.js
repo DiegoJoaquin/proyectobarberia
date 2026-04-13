@@ -786,8 +786,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   
   const cleanRut = formatRUT(rut);
 
-  const paymentText = 'Webpay Plus (Online)';
-  const finalNotes = notes ? `${notes} | Pago: ${paymentText}` : `Pago: ${paymentText}`;
+  const finalNotes = notes || '';
 
   const booking = {
     id: Date.now(), name, rut: cleanRut, phone, email, notes: finalNotes,

@@ -2032,8 +2032,9 @@
           try { return (JSON.parse(localStorage.getItem(LS) || '[]')).reverse(); } catch { return []; }
         }
         
-        // ? Mapeo Universal: Incluimos todas las reservas (incluyendo las activas waiting_payment)
-        return data.map(r => ({
+        // ? Mapeo Universal: Ocultar visualmente los "fantasmas" (waiting_payment) como pide el usuario
+        // ? Pero el cleanup mantendrá la DB sana.
+        return data.filter(r => r.status !== 'waiting_payment').map(r => ({
           id: r.id, name: r.name, phone: r.phone, email: r.email,
           service: r.service, price: r.price, duration: r.duration,
           date: r.date, time: r.time, barber: r.barber, notes: r.notes,
@@ -2612,7 +2613,7 @@
 
       window.renderAgenda = function renderAgenda() {
         const targetIso = currentAgendaDateObj.toLocaleDateString('en-CA');
-        const dayBookings = allBookings.filter(b => b.date === targetIso || b.date === `${DAYS[currentAgendaDateObj.getDay()]} ${currentAgendaDateObj.getDate()} ${MONTHS[currentAgendaDateObj.getMonth()]}`);
+        const dayBookings = allBookings.filter(b => (b.date === targetIso || b.date === `${DAYS[currentAgendaDateObj.getDay()]} ${currentAgendaDateObj.getDate()} ${MONTHS[currentAgendaDateObj.getMonth()]}`) && b.status !== 'waiting_payment');
         
         const calendarEl = document.getElementById('calendar');
         if (!calendarEl) return;
@@ -2750,7 +2751,7 @@
                 if (info.event.display === 'background') return;
                 openAgendaActionMenu(info.jsEvent, info.event.extendedProps);
             },
-            eventDrop: async function(info) {
+            async eventDrop(info) {
                 const newBarber = (info.newResource?.title || info.oldResource?.title || info.event.extendedProps.barber);
                 const newTime = info.event.start.toTimeString().slice(0,5);
                 const targetIso = info.event.start.toLocaleDateString('en-CA');
@@ -2776,11 +2777,13 @@
                 
                 if (confirm(`¿Mover reserva de ${info.event.extendedProps.name} a ${newBarber} a las ${newTime}?`)) {
                     try {
+                        // ? Lógica de Prioridad: Borrar cualquier "fantasma" que esté estorbando en el destino
+                        await sb.from('bookings').delete().eq('status', 'waiting_payment').eq('barber', newBarber.trim()).eq('date', targetIso).eq('time', newTime);
+
                         // ? Bug Fix: Detección más robusta y reporte de errores explícito
                         const { error } = await sb.from('bookings')
                             .update({ barber: newBarber.trim(), time: newTime, date: targetIso })
                             .eq('id', info.event.id);
-                        
                         if (error) throw error;
                         loadAll();
                     } catch (err) {
@@ -3019,6 +3022,9 @@
               btnObj.disabled = true;
               
               try {
+                  // ? Lógica de Prioridad: Borrar cualquier "fantasma" que esté estorbando en el nuevo horario
+                  await sb.from('bookings').delete().eq('status', 'waiting_payment').eq('barber', nB.trim()).eq('date', nD).eq('time', nT);
+
                   // 1. Actualizar la reserva en Supabase (Reporte de errores explícito)
                   const { error: updErr } = await sb.from('bookings')
                     .update({ barber: nB.trim(), date: nD, time: nT })
@@ -4345,16 +4351,19 @@
             }
         }
 
-        // 1. Anti-colisión: verificar que el slot sigue libre
-        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&time=eq.${time}&status=in.(confirmed,waiting_payment,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
+        // 1. Anti-colisión: verificar que el slot sigue libre (IGNORAMOS waiting_payment porque el admin tiene prioridad)
+        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&time=eq.${time}&status=in.(confirmed,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
           headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
         });
         const existing = await checkRes.json();
         if (existing?.length > 0) {
-          throw new Error(`¡Ese horario (${time}) acaba de ser tomado! Elige otro.`);
+          throw new Error(`¡Ese horario (${time}) ya está ocupado por una reserva real confirmada!`);
         }
 
-        // 2. Insertar en Supabase usando el cliente oficial
+        // 2. Lógica de Prioridad: Limpiar cualquier "fantasma" que haya quedado en ese slot
+        await sb.from('bookings').delete().eq('status', 'waiting_payment').eq('barber', barber).eq('date', date).eq('time', time);
+
+        // 3. Insertar en Supabase usando el cliente oficial
         const payload = {
           name, phone, email: email || null, rut: rut || null,
           service, price: finalPrice, duration, date, time, barber,
