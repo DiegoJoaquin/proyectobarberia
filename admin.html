@@ -45,6 +45,15 @@
         display: none !important;
     }
 
+    /* Ocultar etiquetas de minutos :15 y :45 para limpieza, EXCEPTO la de las 14:45 que pidió el usuario */
+    .fc-timegrid-slot-label[data-time$="15:00"]:not([data-time^="14:45"]), 
+    .fc-timegrid-slot-label[data-time$="45:00"]:not([data-time^="14:45"]) {
+        display: none !important;
+    }
+    .fc-timegrid-slot-label[data-time^="14:45"] {
+        display: table-cell !important;
+    }
+
     :root {
       --black: #0f0f12;
       --grey-90: #161619;
@@ -2696,6 +2705,7 @@
             slotMinTime: currentAgendaDateObj.getDay() === 6 ? '10:00:00' : '11:00:00',
             slotMaxTime: currentAgendaDateObj.getDay() === 6 ? '18:15:00' : '20:00:00',
             slotDuration: '00:15:00',
+            slotLabelInterval: '00:15:00',
             height: '100%',
             expandRows: true,
             allDaySlot: false,
