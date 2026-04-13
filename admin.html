@@ -35,14 +35,16 @@
         border-radius: 4px !important;
         box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
     }
+    /* Ocultar celdas de colación (14:00 - 14:30) para ahorrar espacio, 14:45 queda visible */
+    .fc-timegrid-slot[data-time^="14:00"], 
+    .fc-timegrid-slot[data-time^="14:15"], 
+    .fc-timegrid-slot[data-time^="14:30"],
+    .fc-timegrid-slot-label[data-time^="14:00"],
+    .fc-timegrid-slot-label[data-time^="14:15"],
+    .fc-timegrid-slot-label[data-time^="14:30"] {
+        display: none !important;
+    }
 
-    /* Bloque de colación habilitado para visibilidad de reservas (14:00 - 14:45) */
-    
-
-    /* El sábado la colación es distinta (13:45 - 14:30), pero para simplificar y que salga todo en pantalla,
-       podemos ocultar el tramo de las 14:00 parejo para todos los días si así se requiere. 
-       Ajustamos a ocultar 14:00-14:45 que es el bloque más común. */
-    
     :root {
       --black: #0f0f12;
       --grey-90: #161619;
