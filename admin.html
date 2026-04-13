@@ -2017,12 +2017,23 @@
 
       /* ── BOOKINGS ──────────────────────────────────── */
       async function fetchBookings() {
+        // ? Auto-Limpieza: Borrar "Fantasmas" (waiting_payment) de más de 20 min de antigüedad
+        try {
+            const twentyMinsAgo = new Date(Date.now() - 20 * 60000).toISOString();
+            const { error: delErr } = await sb.from('bookings')
+                .delete()
+                .eq('status', 'waiting_payment')
+                .lt('created_at', twentyMinsAgo);
+            if (delErr) console.warn('[Cleanup] Error limpieza fantasmas:', delErr);
+        } catch(e) { console.error('[Cleanup] Error crítico:', e); }
+
         const data = await fetchPaginated('bookings', 'created_at', false);
         if (!data || data.length === 0) {
           try { return (JSON.parse(localStorage.getItem(LS) || '[]')).reverse(); } catch { return []; }
         }
-        // Excluir reservas "fantasma" que están en proceso de pago o abandonadas
-        return data.filter(r => r.status !== 'waiting_payment').map(r => ({
+        
+        // ? Mapeo Universal: Incluimos todas las reservas (incluyendo las activas waiting_payment)
+        return data.map(r => ({
           id: r.id, name: r.name, phone: r.phone, email: r.email,
           service: r.service, price: r.price, duration: r.duration,
           date: r.date, time: r.time, barber: r.barber, notes: r.notes,
