@@ -2837,13 +2837,7 @@
          html += `<button id="pop-status-btn" class="btn btn-ghost btn-sm" style="color:var(--green);border:1px solid rgba(0,255,0,0.2);"><i class="fa-solid fa-check"></i> Confirmado</button>`;
          html += `<button id="pop-status-btn-lleg" class="btn btn-ghost btn-sm" style="color:#00c8f5;border:1px solid rgba(0,200,245,0.2);"><i class="fa-solid fa-location-dot"></i> Llegó</button>`;
          if (!isAttended) {
-            const isWebpay = booking.status === 'confirmed' || (booking.payment_method || '').toLowerCase().includes('webpay') || (booking.notes || '').includes('[TBK_AUTH');
-            
-            if (!isWebpay) {
-                // Si no está pagado por Webpay, mostrar el cajero
-                html += `<button id="pop-pay-btn" class="btn btn-gold btn-sm"><i class="fa-solid fa-cash-register"></i> Cobrar / Cajero</button>`;
-            }
-            // Botón separado para marcar como atendido directamente
+            html += `<button id="pop-pay-btn" class="btn btn-gold btn-sm" style="margin-bottom:2px;"><i class="fa-solid fa-cash-register"></i> Abrir Cajero Virtual (Pagos)</button>`;
             html += `<button id="pop-attended-only-btn" class="btn btn-ghost btn-sm" style="color:var(--gold); border:1px solid rgba(184,151,90,0.5);"><i class="fa-solid fa-check-double"></i> Solo Marcar Atendido</button>`;
          }
          
