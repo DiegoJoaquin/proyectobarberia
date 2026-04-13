@@ -2740,7 +2740,7 @@
                 openAgendaActionMenu(info.jsEvent, info.event.extendedProps);
             },
             eventDrop: async function(info) {
-                const newBarber = info.newResource ? info.newResource.title : info.oldResource.title;
+                const newBarber = (info.newResource?.title || info.oldResource?.title || info.event.extendedProps.barber);
                 const newTime = info.event.start.toTimeString().slice(0,5);
                 const targetIso = info.event.start.toLocaleDateString('en-CA');
                 
@@ -2764,9 +2764,19 @@
                 }
                 
                 if (confirm(`¿Mover reserva de ${info.event.extendedProps.name} a ${newBarber} a las ${newTime}?`)) {
-                    // ? Bug Fix: Incluir la fecha (date: targetIso) para que el cambio persista al recargar
-                    await sb.from('bookings').update({ barber: newBarber, time: newTime, date: targetIso }).eq('id', Number(info.event.id));
-                    loadAll();
+                    try {
+                        // ? Bug Fix: Detección más robusta y reporte de errores explícito
+                        const { error } = await sb.from('bookings')
+                            .update({ barber: newBarber.trim(), time: newTime, date: targetIso })
+                            .eq('id', info.event.id);
+                        
+                        if (error) throw error;
+                        loadAll();
+                    } catch (err) {
+                        console.error("Error al mover en agenda:", err);
+                        alert("ERROR AL GUARDAR: " + (err.message || "No se pudo actualizar la base de datos."));
+                        info.revert();
+                    }
                 } else {
                     info.revert();
                 }
@@ -2998,8 +3008,12 @@
               btnObj.disabled = true;
               
               try {
-                  // 1. Actualizar la reserva en Supabase (Usar Number(id) para evitar fallos de tipo)
-                  await sb.from('bookings').update({ barber: nB, date: nD, time: nT }).eq('id', Number(booking.id));
+                  // 1. Actualizar la reserva en Supabase (Reporte de errores explícito)
+                  const { error: updErr } = await sb.from('bookings')
+                    .update({ barber: nB.trim(), date: nD, time: nT })
+                    .eq('id', booking.id);
+                  
+                  if (updErr) throw updErr;
                   
                   // 2. Enviar WhatsApp de confirmación al cliente
                   // El webhook de DB solo dispara en INSERT, no en UPDATE → hay que llamarlo manualmente
