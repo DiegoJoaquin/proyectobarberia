@@ -2837,7 +2837,14 @@
          html += `<button id="pop-status-btn" class="btn btn-ghost btn-sm" style="color:var(--green);border:1px solid rgba(0,255,0,0.2);"><i class="fa-solid fa-check"></i> Confirmado</button>`;
          html += `<button id="pop-status-btn-lleg" class="btn btn-ghost btn-sm" style="color:#00c8f5;border:1px solid rgba(0,200,245,0.2);"><i class="fa-solid fa-location-dot"></i> Llegó</button>`;
          if (!isAttended) {
-            html += `<button id="pop-pay-btn" class="btn btn-gold btn-sm"><i class="fa-solid fa-cash-register"></i> Pagar / Atendido</button>`;
+            const isWebpay = booking.status === 'confirmed' || (booking.payment_method || '').toLowerCase().includes('webpay') || (booking.notes || '').includes('[TBK_AUTH');
+            
+            if (!isWebpay) {
+                // Si no está pagado por Webpay, mostrar el cajero
+                html += `<button id="pop-pay-btn" class="btn btn-gold btn-sm"><i class="fa-solid fa-cash-register"></i> Cobrar / Cajero</button>`;
+            }
+            // Botón separado para marcar como atendido directamente
+            html += `<button id="pop-attended-only-btn" class="btn btn-ghost btn-sm" style="color:var(--gold); border:1px solid rgba(184,151,90,0.5);"><i class="fa-solid fa-check-double"></i> Solo Marcar Atendido</button>`;
          }
          
          const btnNoLleg = `<button id="pop-nolleg-btn" class="btn btn-ghost btn-sm" style="font-size:0.65rem;color:var(--gold);"><i class="fa-solid fa-user-slash"></i> No llegó</button>`;
@@ -2889,6 +2896,20 @@
                  }
              }
          };
+
+         const attendedOnlyBtn = document.getElementById('pop-attended-only-btn');
+         if (attendedOnlyBtn) attendedOnlyBtn.addEventListener('click', async () => {
+             pop.remove();
+             if (!confirm('¿Marcar al cliente como Atendido?')) return;
+             
+             const btnTarget = e.target;
+             const prevContent = btnTarget.innerHTML;
+             btnTarget.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+             
+             await syncToCRM(booking);
+             await sb.from('bookings').update({ status: 'Atendido', attended: true }).eq('id', booking.id);
+             await loadAll();
+         });
 
          const reagBtn = document.getElementById('pop-reagendar-btn');
          if (reagBtn) reagBtn.addEventListener('click', () => {
