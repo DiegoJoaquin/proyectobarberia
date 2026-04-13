@@ -275,38 +275,43 @@ function parseDurationMins(dStr) {
   return 30; // fallback
 }
 
+let lastRenderId = 0;
+
 async function refreshTimePills() {
+  const currentRenderId = ++lastRenderId;
   const isWeekend = state.dateObj && state.dateObj.getDay() === 6;
   const isSunday = state.dateObj && state.dateObj.getDay() === 0;
 
-  // Clear existing grids
+  // Clear existing grids - moving this to AFTER some basic checks or at least ensuring we don't duplicate
   const gridManana = document.querySelector('.time-section:nth-of-type(2) .time-grid');
   const gridTarde = document.querySelector('.time-section:nth-of-type(3) .time-grid');
   const gridNoche = document.querySelector('.time-section:nth-of-type(4) .time-grid');
-  if(gridManana) gridManana.innerHTML = '';
-  if(gridTarde) gridTarde.innerHTML = '';
-  if(gridNoche) gridNoche.innerHTML = '';
 
-  if (!state.date || !state.barber || !state.duration || isSunday) return;
+  if (!state.date || !state.barber || !state.duration || isSunday) {
+    if(gridManana) gridManana.innerHTML = '';
+    if(gridTarde) gridTarde.innerHTML = '';
+    if(gridNoche) gridNoche.innerHTML = '';
+    return;
+  }
 
   const now = new Date();
   const isToday = state.dateObj.getFullYear() === now.getFullYear() &&
                   state.dateObj.getMonth() === now.getMonth() &&
                   state.dateObj.getDate() === now.getDate();
-  const nowMin = now.getHours() * 60 + now.getMinutes(); // no buffer — slot disabled only after it starts
+  const nowMin = now.getHours() * 60 + now.getMinutes(); 
 
-  // Usar state.dateIso si está disponible (evita timezone issues)
   const blocksInput = state.dateIso || state.dateObj;
   const blocks = await getBarberBlocksForDate(blocksInput);
   
-  // Normalizar nombre del barbero para comparación robusta
+  // Race condition check: If a newer call has started, abort this one
+  if (currentRenderId !== lastRenderId) return;
+
   const normBarber = (state.barber || '').trim().toLowerCase();
   const fullDayBlock = blocks.find(b =>
     b.barber_name && b.barber_name.trim().toLowerCase() === normBarber &&
     b.block_type === 'full_day'
   );
   if (fullDayBlock) {
-    // Mostrar mensaje de día completo bloqueado en lugar de slots vacíos
     [gridManana, gridTarde, gridNoche].forEach(g => {
       if (g) g.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;padding:8px 0;">🚫 Barbero no disponible este día</p>';
     });
@@ -317,12 +322,17 @@ async function refreshTimePills() {
     b.barber_name && b.barber_name.trim().toLowerCase() === normBarber &&
     b.block_type === 'hours'
   );
-  console.log(`[Blocks] Barbero: ${state.barber}, bloques de hora:`, hourBlocks);
   
-  // Data fetching completada
   const bookedSlots = await getBookedTimesForBarber(state.date, state.barber);
   
-  // Build busy intervals
+  // Race condition check again after second await
+  if (currentRenderId !== lastRenderId) return;
+
+  // CLEAR GRIDS NOW, right before we start appending
+  if(gridManana) gridManana.innerHTML = '';
+  if(gridTarde) gridTarde.innerHTML = '';
+  if(gridNoche) gridNoche.innerHTML = '';
+
   let busyIntervals = [];
   bookedSlots.forEach(b => {
       const st = parseHM(b.time);
@@ -333,14 +343,12 @@ async function refreshTimePills() {
       if(b.start_time && b.end_time) busyIntervals.push({ start: parseHM(b.start_time), end: parseHM(b.end_time) });
   });
 
-  // Add Lunch break to busy intervals
   if (isWeekend) {
       busyIntervals.push({ start: parseHM('13:45'), end: parseHM('14:30') });
   } else {
       busyIntervals.push({ start: parseHM('14:00'), end: parseHM('14:45') });
   }
 
-  // Generate Fixed Interval Slots dynamically based on service duration
   const serviceMins = parseDurationMins(state.duration);
   let fixedSlots;
   
@@ -366,15 +374,13 @@ async function refreshTimePills() {
   
   const candidateSlots = fixedSlots.map(s => parseHM(s));
 
-  // Filter overlapping
   const slots = [];
   candidateSlots.forEach(slotStart => {
-      const slotEnd = slotStart + Math.max(serviceMins, 15); // Minimun block checking
+      const slotEnd = slotStart + Math.max(serviceMins, 15);
       const overlap = busyIntervals.some(b => slotStart < b.end && slotEnd > b.start);
       if (!overlap) slots.push(slotStart);
   });
 
-  // Render slots 
   slots.forEach(tMin => {
       const timeStr = toHM(tMin);
       const isPast = isToday && tMin <= nowMin;
@@ -396,13 +402,11 @@ async function refreshTimePills() {
           };
       }
 
-      // Append to correct section
       if (tMin < parseHM('14:00') && gridManana) gridManana.appendChild(btn);
       else if (tMin >= parseHM('14:00') && tMin < parseHM('18:00') && gridTarde) gridTarde.appendChild(btn);
       else if (gridNoche) gridNoche.appendChild(btn);
   });
 
-  // Deselect if current choice became unavailable
   if (state.time) {
     const sel = document.querySelector(`.time-pill[data-time="${state.time}"]`);
     if (!sel || sel.classList.contains('busy')) { state.time = null; updateSummary(); }
