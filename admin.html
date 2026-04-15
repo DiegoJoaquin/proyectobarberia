@@ -1464,7 +1464,11 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td style="padding-top:14px;color:var(--white);font-size:0.9rem;" id="pos-service-name">—</td>
+                                        <td style="padding-top:14px;min-width:180px;">
+                                            <select id="pos-service-name" style="width:100%;max-width:220px;background:#222;border:1px solid #333;color:var(--white);padding:4px 8px;border-radius:4px;font-size:0.85rem;outline:none;cursor:pointer;">
+                                                <option value="">— Cargar Servicio —</option>
+                                            </select>
+                                        </td>
                                         <td style="padding-top:14px;text-align:center;"><input type="number" value="1" disabled style="width:40px;background:#222;border:1px solid #333;color:#fff;text-align:center;padding:4px;border-radius:4px;"></td>
                                         <td style="padding-top:14px;"><input type="text" id="pos-original-price" disabled style="width:80px;background:#222;border:1px solid #333;color:var(--gold);padding:4px 8px;border-radius:4px;font-weight:600;" value="0"></td>
                                         <td style="padding-top:14px;">
@@ -3096,7 +3100,40 @@
           }
           if (originalP === 0) originalP = 15000; // Fallback
           
-          document.getElementById('pos-service-name').textContent = booking.service || 'Servicio de Salon';
+          const serviceSelect = document.getElementById('pos-service-name');
+          const mService = document.getElementById('m-service');
+          if (mService && serviceSelect) {
+              serviceSelect.innerHTML = mService.innerHTML;
+              let matchedVal = '';
+              Array.from(serviceSelect.options).forEach(opt => {
+                  if (opt.value && opt.value.toLowerCase().includes((booking.service || '').toLowerCase())) {
+                      matchedVal = opt.value;
+                  }
+              });
+              serviceSelect.value = matchedVal;
+              
+              serviceSelect.onchange = (e) => {
+                  const val = e.target.value;
+                  if (val) {
+                      const [_name, priceStr, _dur] = val.split('|');
+                      let p = 0;
+                      if (priceStr) {
+                         const m = priceStr.match(/(\d+)/g);
+                         if (m) p = parseInt(m.join(''), 10);
+                      }
+                      if (p > 0) {
+                         originalP = p;
+                         document.getElementById('pos-original-price').value = originalP;
+                         
+                         // Clear custom amount when changing service to reset the price flow
+                         const custInput = document.getElementById('pos-custom-amount');
+                         if (custInput) custInput.value = '';
+                         recalcPos();
+                      }
+                  }
+              };
+          }
+          
           document.getElementById('pos-original-price').value = originalP;
           
           const today = new Date();
@@ -3226,13 +3263,20 @@
               newConfirmBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> PROCESANDO VENTA...';
               
               try {
-                  const pts = window.ptsForService ? window.ptsForService(booking.service, finalToPay) : 0;
+                  let finalServiceName = booking.service;
+                  const serviceSelect = document.getElementById('pos-service-name');
+                  if (serviceSelect && serviceSelect.value) {
+                     finalServiceName = serviceSelect.value.split('|')[0]; // Extract name from value="Name|$...|dur"
+                  }
+                  
+                  const pts = window.ptsForService ? window.ptsForService(finalServiceName, finalToPay) : 0;
                   
                   await sb.from('bookings').update({ 
                       attended: true,
                       status: 'Atendido',
                       payment_method: primaryMethod,
                       price: `$${finalToPay.toLocaleString('es-CL')}`,
+                      service: finalServiceName,
                       notes: finalNotes.trim(),
                       points_earned: pts
                   }).eq('id', booking.id);
@@ -4140,12 +4184,23 @@
       if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
 
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status,created_at&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
           headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
         });
-        const booked = await res.json();
+        let booked = await res.json();
         
-        const bookedTimes = (booked || []).map(b => b.time?.substring(0,5));
+        // Excluir reservas "fantasma" que llevan más de 15 minutos en waiting_payment
+        const nowMs = Date.now();
+        const EXPIRY_MS = 15 * 60000;
+        booked = (booked || []).filter(b => {
+           if (b.status === 'waiting_payment' && b.created_at) {
+              const diff = nowMs - new Date(b.created_at).getTime();
+              if (diff > EXPIRY_MS) return false;
+           }
+           return true;
+        });
+        
+        const bookedTimes = booked.map(b => b.time?.substring(0,5));
         const timeObj = new Date(date + 'T12:00:00');
 
         const daySlots = window.getDynamicSlots(timeObj, durMins);

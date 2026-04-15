@@ -923,6 +923,28 @@ updateSummary();
         const bkState = JSON.parse(savedState);
         localStorage.removeItem('booking_state');
         
+        // [NUEVO] - Enviar correo automático de comprobante al DUEÑO
+        if (typeof emailjs !== 'undefined') {
+          const emailParams = {
+            to_name: "Administrador de Spartan Barber",
+            from_name: "Webpay Sistema Automático",
+            reply_to: bkState.email || "noreply@spartanbarber.cl",
+            cliente_nombre: bkState.name || 'No indicado',
+            cliente_rut: bkState.rut || 'No indicado',
+            cliente_telefono: bkState.phone || 'No indicado',
+            servicio: bkState.service || 'No indicado',
+            fecha: bkState.date || 'No indicado',
+            hora: bkState.time || 'No indicado',
+            precio: bkState.price || '$0',
+            token_webpay: tokenWs || 'Sin Token',
+            // Mantenemos el message como fallback por si no usan HTML
+            message: `¡PAGO WEBPAY CONFIRMADO!\n\nCliente: ${bkState.name}\nTeléfono: ${bkState.phone}\nServicio: ${bkState.service}\nMonto: ${bkState.price}\nToken: ${tokenWs}`
+          };
+          emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, emailParams)
+            .then(() => console.log('✅ Correo de comprobante enviado al dueño con éxito.'))
+            .catch(err => console.error('❌ Error enviando mail al dueño (EmailJS):', err));
+        }
+        
         // Buscar el booking recién insertado por la Edge Function para obtener su ID
         if (SUPABASE_ON && bkState.phone) {
           setTimeout(async () => {
