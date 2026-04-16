@@ -811,6 +811,13 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   try {
     const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
     
+    // Inyectar datos del cliente al state para recuperarlos a la vuelta del pago
+    state.name = name;
+    state.rut = cleanRut;
+    state.phone = phone;
+    state.email = email;
+    state.notes = finalNotes;
+    
     // Guardamos el estado para no perder el resumen al volver
     localStorage.setItem('booking_state', JSON.stringify(state));
     
@@ -852,78 +859,24 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
 // Listener de retorno de Pasarelas (Webpay Plus Redirecciona de Vuelta)
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
+  const paymentStatus = params.get('payment');
+  const tokenWs = params.get('token_ws');
   
-  if (params.get('payment') === 'success') {
+  if (paymentStatus === 'success') {
     // Al volver pago Pagado existosamente a través de las funciones Deno
     openModal(null);
     goToStep(4);
     stepContents.forEach(sc => sc.classList.remove('active'));
-    // RECUPERAR ESTADO PARA EL RESUMEN
-    const savedState = localStorage.getItem('booking_state');
-    if (savedState) {
-      Object.assign(state, JSON.parse(savedState));
-      updateSummary();
-      localStorage.removeItem('booking_state');
-    }
-
-    document.querySelector('.steps-indicator').style.visibility = 'hidden';
-    document.getElementById('success-screen').classList.add('visible');
-    document.getElementById('success-msg').innerHTML =
-      `¡Pago Exitoso por Webpay Plus! Tu reserva online ya está registrada y en sistema. ¡Gracias por confiar en nosotros!`;
-    window.history.replaceState({}, document.title, window.location.pathname);
     
-  } else if (params.get('payment') === 'failed' || params.get('payment') === 'rejected') {
-     alert('Tu pago en Webpay rebotó o fue cancelado. La reserva no se procesó. Puedes reintentar o pagar en el local.');
-     window.history.replaceState({}, document.title, window.location.pathname);
-  }
-});
-
-/* ──────────────────────────────────────────────────────────────
-   TOAST
-   ────────────────────────────────────────────────────────────── */
-function showToast(msg) {
-  let t = document.getElementById('nb-toast');
-  if (!t) {
-    t = document.createElement('div'); t.id = 'nb-toast';
-    Object.assign(t.style, {
-      position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%) translateY(20px)',
-      background: 'var(--white)', color: 'var(--black)', padding: '14px 28px', borderRadius: '4px',
-      fontFamily: 'var(--font-sans)', fontSize: '0.83rem', fontWeight: '500',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.5)', zIndex: '9999', opacity: '0',
-      transition: 'opacity 0.25s ease, transform 0.25s ease', whiteSpace: 'nowrap',
-    });
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 3500);
-}
-
-/* ──────────────────────────────────────────────────────────────
-   INIT
-   ────────────────────────────────────────────────────────────── */
-updateSummary();
-
-/* ──────────────────────────────────────────────────────────────
-   WEBPAY RETURN — Detectar resultado del pago al cargar la página
-   ────────────────────────────────────────────────────────────── */
-(function checkPaymentReturn() {
-  const params = new URLSearchParams(window.location.search);
-  const paymentStatus = params.get('payment');
-  const tokenWs = params.get('token_ws');
-
-  if (paymentStatus === 'success') {
-    // NO borramos la URL: el token_ws debe quedar visible para certificación Transbank
-
-    // Recuperar datos guardados
+    // RECUPERAR ESTADO PARA EL RESUMEN
     const savedState = localStorage.getItem('booking_state');
     if (savedState) {
       try {
         const bkState = JSON.parse(savedState);
-        localStorage.removeItem('booking_state');
+        Object.assign(state, bkState);
+        updateSummary();
         
-        // [NUEVO] - Enviar correo automático de comprobante al DUEÑO
+        // --- Enviar correo automático de comprobante al DUEÑO ---
         if (typeof emailjs !== 'undefined') {
           const emailParams = {
             to_name: "Administrador de Spartan Barber",
@@ -937,14 +890,13 @@ updateSummary();
             hora: bkState.time || 'No indicado',
             precio: bkState.price || '$0',
             token_webpay: tokenWs || 'Sin Token',
-            // Mantenemos el message como fallback por si no usan HTML
             message: `¡PAGO WEBPAY CONFIRMADO!\n\nCliente: ${bkState.name}\nTeléfono: ${bkState.phone}\nServicio: ${bkState.service}\nMonto: ${bkState.price}\nToken: ${tokenWs}`
           };
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, emailParams)
             .then(() => console.log('✅ Correo de comprobante enviado al dueño con éxito.'))
             .catch(err => console.error('❌ Error enviando mail al dueño (EmailJS):', err));
         }
-        
+
         // Buscar el booking recién insertado por la Edge Function para obtener su ID
         if (SUPABASE_ON && bkState.phone) {
           setTimeout(async () => {
@@ -968,40 +920,38 @@ updateSummary();
             } catch (e) { console.warn('[upsertClient] Error en registro post-pago:', e); }
           }, 1500);
         }
+        
       } catch(e) { console.warn('Error parsing booking_state:', e); }
+      
+      // Limpiar datos
+      localStorage.removeItem('booking_state');
     }
 
+    document.querySelector('.steps-indicator').style.visibility = 'hidden';
+    document.getElementById('success-screen').classList.add('visible');
+    document.getElementById('success-msg').innerHTML =
+      `¡Pago Exitoso por Webpay Plus! Tu reserva online ya está registrada y en sistema. ¡Gracias por confiar en nosotros!`;
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
     // Toast de confirmación
     setTimeout(() => {
-      showToast('✅ ¡Pago confirmado! Tu hora ha sido agendada. Recibirás confirmación por WhatsApp.');
+      showToast('✅ ¡Pago confirmado! Tu hora ha sido agendada.');
     }, 500);
-
-    // Token visible en consola también
+    
     if (tokenWs) {
       console.log('%c✅ Pago Webpay confirmado', 'color:green;font-weight:bold');
       console.log('%ctoken_ws para certificación:', 'color:orange', tokenWs);
     }
-
-  } else if (paymentStatus === 'rejected') {
-    // NO borramos la URL para permitir ver el token_ws en certificaciones
-    setTimeout(() => {
-      showToast('❌ El pago fue rechazado o cancelado. Por favor intenta nuevamente.');
-    }, 500);
-
-    if (tokenWs) {
-      console.log('%c❌ Pago Webpay rechazado', 'color:red;font-weight:bold');
-      console.log('%ctoken_ws para certificación:', 'color:orange', tokenWs);
-    }
+    
+  } else if (paymentStatus === 'failed' || paymentStatus === 'rejected') {
+     alert('Tu pago en Webpay rebotó o fue cancelado. La reserva no se procesó. Puedes reintentar o pagar en el local.');
+     window.history.replaceState({}, document.title, window.location.pathname);
   } else if (paymentStatus === 'timeout') {
     window.history.replaceState({}, document.title, window.location.pathname);
-    setTimeout(() => {
-      showToast('⏳ La sesión de pago ha expirado por inactividad. Por favor, intenta agendar nuevamente.');
-    }, 500);
+    setTimeout(() => showToast('⏳ La sesión de pago ha expirado por inactividad. Por favor, intenta agendar nuevamente.'), 500);
   } else if (paymentStatus === 'error') {
     window.history.replaceState({}, document.title, window.location.pathname);
-    setTimeout(() => {
-      showToast('⚠️ Ocurrió un error al procesar el pago. Contáctanos si el problema persiste.');
-    }, 500);
+    setTimeout(() => showToast('⚠️ Ocurrió un error al procesar el pago. Contáctanos si el problema persiste.'), 500);
   }
-})();
+});
 
