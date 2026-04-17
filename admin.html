@@ -1838,23 +1838,64 @@
       return 45;
     };
 
-    window.getDynamicSlots = function(dateObj, durationMins) {
-        const isWeekend = dateObj.getDay() === 6;
-        if (durationMins > 60) {
-            if (isWeekend) {
-                return ['10:00', '10:45', '11:15', '12:15', '12:30', '14:30', '15:15', '15:45', '16:45', '17:00'];
-            } else {
-                return ['11:00', '11:30', '12:15', '12:30', '12:45', '15:00', '15:30', '16:15', '17:00', '17:30', '18:30', '18:45'];
+    /* ── LÓGICA DE ATENCIÓN UNIFICADA (Idempotente) ─────────────────── */
+    window.finalizarAtencion = async function({ bookingId, clientId, service, price, duration, paymentMethod, notes, phone, name, barber }) {
+        const pts = window.ptsForService ? window.ptsForService(service, price) : 0;
+        
+        // 1. Obtener estado actual de la reserva para evitar duplicación
+        const { data: currentB } = await sb.from('bookings').select('attended, status').eq('id', bookingId).single();
+        const alreadyAttended = currentB && currentB.attended;
+
+        // 2. Actualizar Reserva
+        const updateData = { 
+            attended: true, 
+            status: 'Atendido',
+            points_earned: pts,
+            service: service,
+            price: price
+        };
+        if (duration) updateData.duration = duration;
+        if (paymentMethod) updateData.payment_method = paymentMethod;
+        if (notes !== undefined) updateData.notes = notes;
+
+        const { error: errB } = await sb.from('bookings').update(updateData).eq('id', bookingId);
+        if (errB) throw errB;
+
+        // 3. Actualizar Cliente (SOLO si no estaba marcada como atendida previamente)
+        if (!alreadyAttended) {
+            try {
+                let clientRef = null;
+                if (clientId) {
+                    const { data } = await sb.from('clients').select('id, points, total_visits').eq('id', clientId).maybeSingle();
+                    clientRef = data;
+                } else if (phone) {
+                    const { data } = await sb.from('clients').select('id, points, total_visits').eq('phone', phone).maybeSingle();
+                    clientRef = data;
+                }
+
+                if (clientRef) {
+                    await sb.from('clients').update({
+                        points: (clientRef.points || 0) + pts,
+                        total_visits: (clientRef.total_visits || 0) + 1,
+                        last_barber: barber || null,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', clientRef.id);
+                    
+                    if (!clientId) {
+                        await sb.from('bookings').update({ client_id: clientRef.id }).eq('id', bookingId);
+                    }
+                } else if (phone && name) {
+                    await sb.from('clients').insert({
+                        name, phone, points: pts, total_visits: 1,
+                        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+                    });
+                }
+            } catch (err) {
+                console.error('CRM sync error:', err);
             }
-        } else if (durationMins > 45) {
-            if (isWeekend) {
-                return ['10:00', '11:00', '12:00', '14:30', '15:30', '16:30', '17:15'];
-            } else {
-                return ['11:00', '12:00', '13:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
-            }
-        } else {
-            return isWeekend ? window.SATURDAY_SLOTS : window.WEEKDAY_SLOTS;
         }
+        
+        if (typeof loadAll === 'function') await loadAll();
     };
   </script>
 
@@ -2077,7 +2118,7 @@
           const tr = document.createElement('tr');
           const attendedHtml = b.attended
             ? `<span class="attended-badge"><i class="fa-solid fa-check"></i> Atendido</span>`
-            : `<button class="btn btn-green btn-sm attend-btn" data-id="${esc(b.id)}" data-client="${esc(b.client_id || '')}" data-phone="${esc(b.phone || '')}" data-name="${esc(b.name || '')}" data-service="${esc(b.service || '')}" data-price="${esc(b.price || '')}" data-barber="${esc(b.barber || '')}">
+            : `<button class="btn btn-green btn-sm attend-btn" data-id="${esc(b.id)}" data-client="${esc(b.client_id || '')}" data-phone="${esc(b.phone || '')}" data-name="${esc(b.name || '')}" data-service="${esc(b.service || '')}" data-price="${esc(b.price || '')}" data-barber="${esc(b.barber || '')}" data-duration="${esc(b.duration || '')}">
              <i class="fa-solid fa-scissors"></i> Marcar atendido
            </button>`;
          const payMethodIcons = { 'Efectivo': '💵', 'Débito': '💳', 'Crédito': '🏦', 'Transferencia': '📲' };
@@ -2122,60 +2163,26 @@
         // Attend buttons
         tbody.querySelectorAll('.attend-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
-            const bookingId = btn.dataset.id;
-            const clientId = btn.dataset.client;
-            const service = btn.dataset.service;
-            const price = btn.dataset.price;
-            const pts = window.ptsForService ? window.ptsForService(service, price) : 0;
-
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
-
-            // Mark booking as attended
-            await sb.from('bookings').update({ attended: true, points_earned: pts }).eq('id', bookingId);
-
-            // Add points + increment visits to client (Robust Upsert)
-            const phone = btn.dataset.phone;
-            const name = btn.dataset.name;
             
             try {
-              let clientRef = null;
-              if (clientId) {
-                const { data } = await sb.from('clients').select('id, points, total_visits').eq('id', clientId).maybeSingle();
-                clientRef = data;
-              } else if (phone) {
-                const { data } = await sb.from('clients').select('id, points, total_visits').eq('phone', phone).maybeSingle();
-                clientRef = data;
-              }
-
-              if (clientRef) {
-                // Update existing — incluir last_barber del booking
-                const barberVal = btn.dataset.barber || null;
-                await sb.from('clients').update({
-                  points: (clientRef.points || 0) + pts,
-                  total_visits: (clientRef.total_visits || 0) + 1,
-                  last_barber: barberVal || clientRef.last_barber,
-                  updated_at: new Date().toISOString()
-                }).eq('id', clientRef.id);
-                // Linkear booking al cliente si aún no estaba
-                if (!clientId && clientRef.id) {
-                  await sb.from('bookings').update({ client_id: clientRef.id }).eq('id', bookingId);
-                }
-              } else if (phone && name) {
-                // Create new
-                await sb.from('clients').insert({
-                  name, phone, 
-                  points: pts, 
-                  total_visits: 1, 
-                  created_at: new Date().toISOString(), 
-                  updated_at: new Date().toISOString()
+                await window.finalizarAtencion({
+                    bookingId: btn.dataset.id,
+                    clientId: btn.dataset.client,
+                    service: btn.dataset.service,
+                    price: btn.dataset.price,
+                    duration: btn.dataset.duration,
+                    phone: btn.dataset.phone,
+                    name: btn.dataset.name,
+                    barber: btn.dataset.barber
                 });
-              }
             } catch (err) {
-              console.error('CRM sync error:', err);
+                console.error('Error al marcar atendido:', err);
+                alert('Error al marcar como atendido.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-scissors"></i> Marcar atendido';
             }
-
-            await loadAll();
           });
         });
 
@@ -2603,17 +2610,6 @@
             }
          }, 400); // Give time for generateManualSlots
       };
-
-      function parseDurationMins(dStr) {
-          if (!dStr) return 30;
-          const s = dStr.toLowerCase();
-          if (s.includes('1 hr 15')) return 75;
-          if (s.includes('1 hr 30')) return 90;
-          if (s.includes('1 hr') || s.includes('1h')) return 60;
-          const match = s.match(/(\d+)/);
-          if (match) return parseInt(match[1], 10);
-          return 30;
-      }
 
       window.renderAgenda = function renderAgenda() {
         const targetIso = currentAgendaDateObj.toLocaleDateString('en-CA');
@@ -3105,12 +3101,17 @@
           if (mService && serviceSelect) {
               serviceSelect.innerHTML = mService.innerHTML;
               let matchedVal = '';
-              Array.from(serviceSelect.options).forEach(opt => {
-                  if (opt.value && opt.value.toLowerCase().includes((booking.service || '').toLowerCase())) {
-                      matchedVal = opt.value;
-                  }
-              });
-              serviceSelect.value = matchedVal;
+              const options = Array.from(serviceSelect.options);
+              // Priority 1: Exact Match
+              const exactMatch = options.find(opt => opt.value && opt.value.split('|')[0].toLowerCase() === (booking.service || '').toLowerCase());
+              if (exactMatch) {
+                  matchedVal = exactMatch.value;
+              } else {
+                  // Priority 2: Partial Match
+                  const partialMatch = options.find(opt => opt.value && opt.value.toLowerCase().includes((booking.service || '').toLowerCase()));
+                  if (partialMatch) matchedVal = partialMatch.value;
+              }
+              if (matchedVal) serviceSelect.value = matchedVal;
               
               serviceSelect.onchange = (e) => {
                   const val = e.target.value;
@@ -3245,7 +3246,6 @@
               const { finalToPay, entered } = recalcPos();
               if (entered !== finalToPay) return;
               
-              const isMulti = methodsArr.length > 1;
               const primaryMethod = methodsArr.length === 1 ? methodsArr[0].method : (methodsArr.length > 0 ? 'Mixto' : 'Efectivo');
               let finalNotes = booking.notes || '';
               
@@ -3271,48 +3271,17 @@
                   
                   const pts = window.ptsForService ? window.ptsForService(finalServiceName, finalToPay) : 0;
                   
-                  await sb.from('bookings').update({ 
-                      attended: true,
-                      status: 'Atendido',
-                      payment_method: primaryMethod,
-                      price: `$${finalToPay.toLocaleString('es-CL')}`,
+                  await window.finalizarAtencion({
+                      bookingId: booking.id,
+                      clientId: booking.client_id,
                       service: finalServiceName,
+                      price: `$${finalToPay.toLocaleString('es-CL')}`,
+                      paymentMethod: primaryMethod,
                       notes: finalNotes.trim(),
-                      points_earned: pts
-                  }).eq('id', booking.id);
-                  
-                  // CRM Loyalty Sync Integrado Directo Abajo
-                  if (booking.client_id) {
-                     const { data: cl } = await sb.from('clients').select('points, total_visits').eq('id', booking.client_id).single();
-                     if (cl) {
-                         await sb.from('clients').update({
-                             points: (cl.points || 0) + pts,
-                             total_visits: (cl.total_visits || 0) + 1,
-                             updated_at: new Date().toISOString()
-                         }).eq('id', booking.client_id);
-                     }
-                  } else if (booking.phone || booking.name) {
-                     // Usa Phone o Nombre para empatar en caso de Walk-ins puros
-                     let qry = sb.from('clients').select('id, points, total_visits');
-                     if(booking.phone) qry = qry.eq('phone', booking.phone);
-                     else qry = qry.eq('name', booking.name);
-                     
-                     const { data: clList } = await qry.limit(1);
-                     if (clList && clList.length > 0) {
-                         const cl = clList[0];
-                         await sb.from('clients').update({
-                             points: (cl.points || 0) + pts,
-                             total_visits: (cl.total_visits || 0) + 1,
-                             updated_at: new Date().toISOString()
-                         }).eq('id', cl.id);
-                     } else {
-                         await sb.from('clients').insert({
-                             name: booking.name, phone: booking.phone || '',
-                             points: pts, total_visits: 1,
-                             created_at: new Date().toISOString(), updated_at: new Date().toISOString()
-                         });
-                     }
-                  }
+                      phone: booking.phone,
+                      name: booking.name,
+                      barber: booking.barber
+                  });
                   
                   modal.style.display = 'none';
                   await loadAll();
@@ -3571,7 +3540,7 @@
         if (!name) { errEl.textContent = 'El nombre es obligatorio.'; return; }
         if (!serviceVal) { errEl.textContent = 'Selecciona un servicio.'; return; }
 
-        const [serviceName, servicePrice] = serviceVal.split('|');
+        const [serviceName, servicePrice, serviceDuration] = serviceVal.split('|');
         const saveBtn = document.getElementById('wi-save-btn');
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
@@ -3579,6 +3548,23 @@
         const now = new Date();
         const dayStr = now.toISOString().split('T')[0];
         const timeStr = now.toTimeString().slice(0, 5);
+
+        // 0. Anti-colisión: Verificación de citas duplicadas
+        const checkRes = await sb.from('bookings').select('id, name').match({
+             barber: barber,
+             date: dayStr,
+             time: timeStr
+        }).in('status', ['confirmed', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente']);
+        
+        if (checkRes.data?.length > 0) {
+           const ex = checkRes.data[0];
+           if (!confirm(`¡Ese horario ya está ocupado por ${ex.name}!\n\n¿Estás SEGURO de que quieres crear una cita DUPLICADA?\nIMPORTANTE: Si el cliente ya tenía una cita agendada, lo correcto es buscarla en la TABLA o AGENDA y pagarla desde ahí para no duplicar servicios.`)) {
+              saveBtn.disabled = false;
+              saveBtn.innerHTML = '<i class="fa-solid fa-scissors"></i> Iniciar Atención';
+              return;
+           }
+        }
+
         const pts = ptsForService(serviceName);
 
         try {
@@ -3607,6 +3593,7 @@
             name, phone, rut: rut || null,
             service: serviceName,
             price: servicePrice,
+            duration: serviceDuration || '45 min',
             barber,
             date: dayStr,
             time: timeStr,
@@ -4422,12 +4409,20 @@
         }
 
         // 1. Anti-colisión: verificar que el slot sigue libre (IGNORAMOS waiting_payment porque el admin tiene prioridad)
-        const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=id&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&time=eq.${time}&status=in.(confirmed,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
-          headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
-        });
-        const existing = await checkRes.json();
+        const checkRes = await sb.from('bookings').select('id, name, service').match({
+             barber: barber,
+             date: date,
+             time: time
+        }).in('status', ['confirmed', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente']);
+        
+        const existing = checkRes.data;
         if (existing?.length > 0) {
-          throw new Error(`¡Ese horario (${time}) ya está ocupado por una reserva real confirmada!`);
+          const ex = existing[0];
+          if (!confirm(`¡Ese horario (${time}) ya está ocupado por ${ex.name} (${ex.service})!\n\n¿Estás SEGURO de que quieres crear una cita DUPLICADA?\nOJO: Si el cliente quiere AGREGAR un servicio, lo correcto es ir a la cita actual y usar el Cajero Virtual para cambiar el servicio.`)) {
+             btn.disabled = false;
+             btn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Confirmar Reserva Manual';
+             return;
+          }
         }
 
         // 2. Lógica de Prioridad: Limpiar cualquier "fantasma" que haya quedado en ese slot
