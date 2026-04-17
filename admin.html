@@ -1838,6 +1838,20 @@
       return 45;
     };
 
+    window.ptsForService = function(serviceName, price) {
+      if (!price) return 1;
+      const numericPrice = typeof price === 'string' ? parseInt(price.replace(/\D/g, ''), 10) : price;
+      // Regla: 1 punto por cada $1.000 (redondeado hacia abajo)
+      return Math.floor(numericPrice / 1000);
+    };
+
+    window.getDynamicSlots = function(dateObj, durationMins = 45) {
+      const isSaturday = dateObj.getDay() === 6;
+      const baseSlots = isSaturday ? window.SATURDAY_SLOTS : window.WEEKDAY_SLOTS;
+      // Por ahora devolvemos los base slots. En implementaciones avanzadas se filtran por duración.
+      return baseSlots;
+    };
+
     /* ── LÓGICA DE ATENCIÓN UNIFICADA (Idempotente) ─────────────────── */
     window.finalizarAtencion = async function({ bookingId, clientId, service, price, duration, paymentMethod, notes, phone, name, barber }) {
         const pts = window.ptsForService ? window.ptsForService(service, price) : 0;
