@@ -3136,7 +3136,35 @@
           const serviceSelect = document.getElementById('pos-service-name');
           const mService = document.getElementById('m-service');
           if (mService && serviceSelect) {
-              serviceSelect.innerHTML = mService.innerHTML;
+              serviceSelect.innerHTML = '';
+              // Copiamos las opciones iterando para quitar el precio del texto visible (solo el nombre)
+              Array.from(mService.querySelectorAll('optgroup, option')).forEach(el => {
+                  if (el.tagName.toLowerCase() === 'optgroup') {
+                      const grp = document.createElement('optgroup');
+                      grp.label = el.label;
+                      serviceSelect.appendChild(grp);
+                  } else if (el.tagName.toLowerCase() === 'option') {
+                      const newOpt = document.createElement('option');
+                      newOpt.value = el.value;
+                      if (el.value) {
+                          newOpt.textContent = el.value.split('|')[0]; // Solo el nombre
+                      } else {
+                          newOpt.textContent = el.textContent;
+                      }
+                      
+                      if (el.parentElement.tagName.toLowerCase() === 'optgroup') {
+                          const lastGrp = serviceSelect.querySelectorAll('optgroup');
+                          if (lastGrp.length > 0) {
+                              lastGrp[lastGrp.length - 1].appendChild(newOpt);
+                          } else {
+                              serviceSelect.appendChild(newOpt);
+                          }
+                      } else {
+                          serviceSelect.appendChild(newOpt);
+                      }
+                  }
+              });
+
               let matchedVal = '';
               const options = Array.from(serviceSelect.options);
               // Priority 1: Exact Match
