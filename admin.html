@@ -1316,7 +1316,7 @@
           <div style="display:grid;gap:14px;">
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Servicio *</label>
-              <select id="m-service" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
+              <select id="m-service" onwheel="this.blur()" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
                 <option value="">— Selecciona un servicio —</option>
                 <optgroup label="✂️ Corte">
                   <option value="Corte de Cabello|$16.690|45 min">Corte de Cabello — $16.690</option>
@@ -1483,7 +1483,7 @@
                                 <tbody>
                                     <tr>
                                         <td style="padding-top:14px;min-width:180px;">
-                                            <select id="pos-service-name" style="width:100%;max-width:220px;background:#222;border:1px solid #333;color:var(--white);padding:4px 8px;border-radius:4px;font-size:0.85rem;outline:none;cursor:pointer;">
+                                            <select id="pos-service-name" onwheel="this.blur()" style="width:100%;max-width:220px;background:#222;border:1px solid #333;color:var(--white);padding:4px 8px;border-radius:4px;font-size:0.85rem;outline:none;cursor:pointer;">
                                                 <option value="">— Cargar Servicio —</option>
                                             </select>
                                         </td>
