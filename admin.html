@@ -34,24 +34,42 @@
     .fc-v-event {
         border-radius: 4px !important;
         box-shadow: 0 4px 10px rgba(0,0,0,0.4) !important;
+        border: none !important;
     }
-    /* Ocultar celdas de colación (14:00 - 14:30) para ahorrar espacio, 14:45 queda visible */
-    .fc-timegrid-slot[data-time^="14:00"], 
-    .fc-timegrid-slot[data-time^="14:15"], 
-    .fc-timegrid-slot[data-time^="14:30"],
-    .fc-timegrid-slot-label[data-time^="14:00"],
-    .fc-timegrid-slot-label[data-time^="14:15"],
-    .fc-timegrid-slot-label[data-time^="14:30"] {
-        display: none !important;
+    .fc-v-event .fc-event-main {
+        padding: 4px 6px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        overflow: hidden !important;
     }
-
-    /* Ocultar etiquetas de minutos :15 y :45 para limpieza, EXCEPTO la de las 14:45 que pidió el usuario */
-    .fc-timegrid-slot-label[data-time$="15:00"]:not([data-time^="14:45"]), 
-    .fc-timegrid-slot-label[data-time$="45:00"]:not([data-time^="14:45"]) {
-        display: none !important;
+    .fc-event-title-container {
+        flex-grow: 1;
     }
-    .fc-timegrid-slot-label[data-time^="14:45"] {
-        display: table-cell !important;
+    .fc-event-title {
+        font-size: 0.72rem !important;
+        font-weight: 500 !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 3 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+    .fc-event-time {
+        font-size: 0.65rem !important;
+        font-weight: 700 !important;
+        opacity: 0.9;
+        margin-bottom: 2px;
+    }
+    /* 
+       Ya no ocultamos celdas por CSS para evitar que las citas en esos horarios 
+       se vean cortadas o desplazadas. Se recomienda usar la función de 'Bloqueos' 
+       desde el panel de administración para marcar horas de colación.
+    */
+    .fc-timegrid-slot-label {
+        font-size: 0.75rem !important;
+        color: var(--grey-40) !important;
     }
 
     :root {
@@ -2732,6 +2750,11 @@
             slotMaxTime: currentAgendaDateObj.getDay() === 6 ? '18:15:00' : '20:00:00',
             slotDuration: '00:15:00',
             slotLabelInterval: '00:15:00',
+            slotLabelFormat: {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            },
             height: '100%',
             expandRows: true,
             allDaySlot: false,
