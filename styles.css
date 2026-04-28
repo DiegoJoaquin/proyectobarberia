@@ -772,7 +772,7 @@ button {
 
 /* Main panel */
 .modal-main {
-  padding: 48px 44px;
+  padding: 48px 44px 0 44px;
   overflow-y: auto;
   min-height: 0;
   max-height: 90vh;
@@ -1148,6 +1148,14 @@ button {
   justify-content: space-between;
   align-items: center;
   margin-top: 36px;
+  position: sticky;
+  bottom: 0;
+  background: var(--grey-90);
+  z-index: 10;
+  margin-left: -44px;
+  margin-right: -44px;
+  padding: 24px 44px 48px 44px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .btn-back {
@@ -1280,7 +1288,7 @@ button {
 #success-screen {
   display: none;
   text-align: center;
-  padding: 60px 40px;
+  padding: 60px 40px 108px 40px;
 }
 
 #success-screen.visible {
@@ -1469,7 +1477,14 @@ button {
   }
 
   .modal-main {
-    padding: 36px 24px;
+    padding: 36px 24px 0 24px;
+  }
+
+  .step-nav {
+    margin-left: -24px;
+    margin-right: -24px;
+    padding: 20px 24px 36px 24px;
+    margin-top: 24px;
   }
 
   .footer-grid {
