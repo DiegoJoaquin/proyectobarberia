@@ -243,7 +243,8 @@ const BARBERS = [
   'Ángel',              // index 1
   'Benjamín',           // index 2
   'Gonzalo',            // index 3
-  'Matias Muñoz Quevedo' // index 4
+  'Matias Muñoz Quevedo', // index 4
+  'Victor Lillo'        // index 5
 ];
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
