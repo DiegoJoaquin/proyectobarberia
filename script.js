@@ -808,6 +808,9 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   confirmBtn.textContent = 'Procesando...';
 
   if (!SUPABASE_ON) { showToast('El pago online requiere conexión a Supabase.'); confirmBtn.disabled = false; return; }
+
+  // Helper: resetear el botón al estado original
+  const resetBtn = () => { confirmBtn.disabled = false; confirmBtn.textContent = 'Confirmar reserva'; };
   
   try {
     const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
@@ -821,8 +824,14 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     
     // Guardamos el estado para no perder el resumen al volver
     localStorage.setItem('booking_state', JSON.stringify(state));
-    
-    const { data, error } = await sb.functions.invoke('create-webpay-tx', {
+
+    // Timeout de 20 segundos: si la Edge Function no responde, mostramos error
+    // (Ad blockers, redes lentas o firewall pueden colgar la llamada indefinidamente)
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('TIMEOUT')), 20000)
+    );
+
+    const invokePromise = sb.functions.invoke('create-webpay-tx', {
       body: {
         title: state.service,
         price: numericPrice,
@@ -831,8 +840,12 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
         frontendUrl: window.location.origin + window.location.pathname
       }
     });
+
+    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
     
-    if (error || !data?.token || !data?.url) throw new Error(error?.message || 'Error al conectar con Transbank');
+    if (error || !data?.token || !data?.url) {
+      throw new Error(error?.message || 'Error al conectar con Transbank');
+    }
 
     // Formulario oculto para redirigir al banco de forma segura (POST)
     const form = document.createElement('form');
@@ -848,11 +861,15 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     confirmBtn.textContent = 'Redirigiendo al Banco...';
     form.submit();
     return;
+
   } catch (err) {
     console.error('Error TBK:', err);
-    showToast('Error al iniciar Webpay. Escríbenos al WhatsApp para agendar.');
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = 'Confirmar reserva';
+    if (err.message === 'TIMEOUT') {
+      showToast('⏳ La conexión tardó demasiado. Verifica tu internet y vuelve a intentarlo, o escríbenos al WhatsApp.');
+    } else {
+      showToast('⚠️ No se pudo conectar con Webpay. Intenta de nuevo o escríbenos al WhatsApp para agendar.');
+    }
+    resetBtn();
     return;
   }
 });
