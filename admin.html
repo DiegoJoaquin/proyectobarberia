@@ -1362,6 +1362,10 @@
                 <option value="">— Elige barbero y fecha primero —</option>
               </select>
               <p id="m-slots-status" style="font-size:.7rem;color:var(--grey-50);margin-top:5px;"></p>
+              <!-- Botón para liberar horas bloqueadas por pagos abandonados -->
+              <button id="m-cleanup-btn" title="Elimina horas bloqueadas por clientes que iniciaron el pago pero no lo completaron" style="margin-top:8px;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:4px;padding:5px 12px;color:#e74c3c;font-size:.7rem;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-broom"></i> Limpiar horas bloqueadas por pagos abandonados
+              </button>
             </div>
           </div>
         </div>
@@ -2099,13 +2103,14 @@
 
       /* ── BOOKINGS ──────────────────────────────────── */
       async function fetchBookings() {
-        // ? Auto-Limpieza: Borrar "Fantasmas" (waiting_payment) de más de 20 min de antigüedad
+        // ✨ Auto-Limpieza: Borrar "Fantasmas" (waiting_payment) de más de 10 min de antigüedad
+        // 10 min = tiempo máximo razonable para que alguien complete Webpay
         try {
-            const twentyMinsAgo = new Date(Date.now() - 20 * 60000).toISOString();
+            const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
             const { error: delErr } = await sb.from('bookings')
                 .delete()
                 .eq('status', 'waiting_payment')
-                .lt('created_at', twentyMinsAgo);
+                .lt('created_at', tenMinsAgo);
             if (delErr) console.warn('[Cleanup] Error limpieza fantasmas:', delErr);
         } catch(e) { console.error('[Cleanup] Error crítico:', e); }
 
@@ -4240,22 +4245,48 @@
       timeSelect.innerHTML = '<option value="">Cargando slots...</option>';
       if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
 
+      // ✨ Limpieza preventiva: borrar fantasmas de más de 10 min antes de consultar
+      // Así no importa si el admin estuvo cerrado horas: la consulta siempre parté limpia.
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/bookings?select=time,status,created_at&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(confirmed,waiting_payment,Confirmado,Llegó,Atendido,"Reserva Normal",Pendiente)`, {
-          headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
-        });
-        let booked = await res.json();
-        
-        // Excluir reservas "fantasma" que llevan más de 15 minutos en waiting_payment
-        const nowMs = Date.now();
-        const EXPIRY_MS = 15 * 60000;
-        booked = (booked || []).filter(b => {
-           if (b.status === 'waiting_payment' && b.created_at) {
-              const diff = nowMs - new Date(b.created_at).getTime();
-              if (diff > EXPIRY_MS) return false;
-           }
-           return true;
-        });
+        const tenMinsAgoIso = new Date(Date.now() - 10 * 60000).toISOString();
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/bookings?status=eq.waiting_payment&created_at=lt.${encodeURIComponent(tenMinsAgoIso)}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_ANON,
+              'Authorization': `Bearer ${SUPABASE_ANON}`,
+              'Prefer': 'return=minimal'
+            }
+          }
+        );
+      } catch(cleanErr) { console.warn('[Cleanup preventivo]', cleanErr); }
+
+      try {
+        // Calcular el límite de tiempo: solo contar waiting_payment recientes (últimos 10 min)
+        // Las reservas abandonadas más antiguas NO bloquean el slot
+        const tenMinsAgoIso = new Date(Date.now() - 10 * 60000).toISOString();
+
+        // Para waiting_payment: solo incluir los creados en los últimos 10 minutos (evita fantasmas)
+        // Para el resto de estados confirmados: incluir todos
+        const confirmedStatuses = ['confirmed','Confirmado','Llegó','Atendido','Reserva Normal','Pendiente'];
+        const confirmedQuery = confirmedStatuses.map(s => encodeURIComponent(`"${s}"`)).join(',');
+
+        // Traer reservas confirmadas (siempre bloquean)
+        const resConfirmed = await fetch(
+          `${SUPABASE_URL}/rest/v1/bookings?select=time,status,created_at&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=in.(${confirmedStatuses.map(s=>encodeURIComponent(s)).join(',')})`,
+          { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+        );
+        const bookedConfirmed = await resConfirmed.json();
+
+        // Traer waiting_payment RECIENTES (creadas en los últimos 10 min) — temporalmente bloquean
+        const resWaiting = await fetch(
+          `${SUPABASE_URL}/rest/v1/bookings?select=time,status,created_at&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=eq.waiting_payment&created_at=gt.${encodeURIComponent(tenMinsAgoIso)}`,
+          { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+        );
+        const bookedWaiting = await resWaiting.json();
+
+        let booked = [...(bookedConfirmed || []), ...(bookedWaiting || [])];
         
         const bookedTimes = booked.map(b => b.time?.substring(0,5));
         const timeObj = new Date(date + 'T12:00:00');
@@ -4337,6 +4368,59 @@
     document.getElementById('m-barber')?.addEventListener('change', loadAvailableSlots);
     document.getElementById('m-date')?.addEventListener('change', loadAvailableSlots);
     document.getElementById('m-service')?.addEventListener('change', loadAvailableSlots);
+
+    // Botón: Limpiar horas bloqueadas por pagos abandonados (waiting_payment expirados)
+    document.getElementById('m-cleanup-btn')?.addEventListener('click', async function() {
+      const btn = this;
+      const statusEl = document.getElementById('m-slots-status');
+      const originalHTML = btn.innerHTML;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Limpiando...';
+
+      try {
+        // Borrar TODOS los waiting_payment de más de 10 minutos (sin importar barbero/fecha)
+        const tenMinsAgoIso = new Date(Date.now() - 10 * 60000).toISOString();
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/bookings?status=eq.waiting_payment&created_at=lt.${encodeURIComponent(tenMinsAgoIso)}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_ANON,
+              'Authorization': `Bearer ${SUPABASE_ANON}`,
+              'Prefer': 'return=representation',
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        const deleted = await res.json().catch(() => []);
+        const count = Array.isArray(deleted) ? deleted.length : 0;
+
+        btn.style.background = 'rgba(62,207,142,.1)';
+        btn.style.borderColor = 'rgba(62,207,142,.3)';
+        btn.style.color = 'var(--green)';
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> ${count > 0 ? `${count} hora(s) liberada(s)` : 'No había horas bloqueadas'}`;
+
+        // Refrescar disponibilidad si hay barbero/fecha seleccionados
+        const barber = document.getElementById('m-barber')?.value;
+        const date = document.getElementById('m-date')?.value;
+        if (barber && date) await loadAvailableSlots();
+
+      } catch(e) {
+        btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Error al limpiar';
+        btn.style.color = '#e74c3c';
+        console.error('[Cleanup manual]', e);
+      } finally {
+        btn.disabled = false;
+        // Restaurar apariencia original después de 3 segundos
+        setTimeout(() => {
+          btn.innerHTML = originalHTML;
+          btn.style.background = 'rgba(231,76,60,.1)';
+          btn.style.borderColor = 'rgba(231,76,60,.3)';
+          btn.style.color = '#e74c3c';
+        }, 3000);
+      }
+    });
 
     // Poner fecha mínima en el datepicker (hoy)
     const dateInput = document.getElementById('m-date');
