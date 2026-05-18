@@ -1808,6 +1808,43 @@
             <div id="p-loyalty-status" style="margin-top:20px;font-size:.7rem;padding:10px;border-radius:6px;background:rgba(184,151,90,.08);color:var(--gold);border:1px dashed rgba(184,151,90,.3);">
               Progreso: <strong id="p-loyalty-pct">0%</strong> para el próximo corte gratis.
             </div>
+
+            <!-- Botón Editar Perfil -->
+            <button id="p-edit-btn" style="margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid #3e3e44;border-radius:6px;padding:9px 14px;color:#a3a3ab;font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:var(--font-sans);transition:all .2s;">
+              <i class="fa-solid fa-pen-to-square"></i> Editar Perfil
+            </button>
+
+            <!-- Panel de edición inline (oculto por defecto) -->
+            <div id="p-edit-panel" style="display:none;margin-top:14px;background:#111;border:1px solid #2b2b30;border-radius:8px;padding:16px;">
+              <p style="font-size:.62rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5f5f66;margin-bottom:12px;">Editar datos del cliente</p>
+              <div style="display:grid;gap:10px;">
+                <div>
+                  <label style="display:block;font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5f5f66;margin-bottom:4px;">Nombre</label>
+                  <input id="p-edit-name" type="text" style="width:100%;background:#1d1d21;border:1px solid #2b2b30;color:#f4f2ee;padding:8px 11px;border-radius:4px;font-size:.84rem;font-family:var(--font-sans);outline:none;" />
+                </div>
+                <div>
+                  <label style="display:block;font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5f5f66;margin-bottom:4px;">Teléfono</label>
+                  <input id="p-edit-phone" type="tel" placeholder="+56 9 xxxx xxxx" style="width:100%;background:#1d1d21;border:1px solid #2b2b30;color:#f4f2ee;padding:8px 11px;border-radius:4px;font-size:.84rem;font-family:var(--font-sans);outline:none;" />
+                </div>
+                <div>
+                  <label style="display:block;font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5f5f66;margin-bottom:4px;">Correo electrónico</label>
+                  <input id="p-edit-email" type="email" placeholder="correo@ejemplo.com" style="width:100%;background:#1d1d21;border:1px solid #2b2b30;color:#f4f2ee;padding:8px 11px;border-radius:4px;font-size:.84rem;font-family:var(--font-sans);outline:none;" />
+                </div>
+                <div>
+                  <label style="display:block;font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5f5f66;margin-bottom:4px;">RUT</label>
+                  <input id="p-edit-rut" type="text" placeholder="12.345.678-9" style="width:100%;background:#1d1d21;border:1px solid #2b2b30;color:#f4f2ee;padding:8px 11px;border-radius:4px;font-size:.84rem;font-family:var(--font-sans);outline:none;" />
+                </div>
+              </div>
+              <p id="p-edit-status" style="font-size:.72rem;min-height:18px;margin-top:10px;color:#3ECF8E;"></p>
+              <div style="display:flex;gap:8px;margin-top:4px;">
+                <button id="p-edit-save-btn" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#ffffff;border:none;border-radius:4px;padding:9px;color:#0f0f12;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:var(--font-sans);transition:opacity .2s;">
+                  <i class="fa-solid fa-floppy-disk"></i> Guardar
+                </button>
+                <button id="p-edit-cancel-btn" style="background:none;border:1px solid #3e3e44;border-radius:4px;padding:9px 14px;color:#81818a;font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:var(--font-sans);">
+                  Cancelar
+                </button>
+              </div>
+            </div>
           </div>
           
           <!-- Columna Principal: Historial -->
@@ -3780,6 +3817,14 @@
 
         // isNoRecord = sin ficha real en CRM (viene de mockClient o de fallback object)
         const isNoRecord = !!(client._noRecord);
+
+        // Guardar clientId activo para el editor de perfil
+        window._activeProfileClientId = isNoRecord ? null : (client.id || clientId);
+
+        // Resetear panel de edición al abrir un perfil nuevo
+        document.getElementById('p-edit-panel').style.display = 'none';
+        document.getElementById('p-edit-btn').style.display   = isNoRecord ? 'none' : 'flex';
+
         const modal = document.getElementById('profile-modal');
         document.getElementById('p-name').textContent = client.name;
         document.getElementById('p-phone').textContent = client.phone || 'Sin teléfono';
@@ -3884,9 +3929,112 @@
         }
       }
 
+      /* ── EDITAR PERFIL CLIENTE ───────────────────────── */
+      // Variable para guardar el clientId activo en el modal
+      window._activeProfileClientId = null;
+
+      // El botón editar se conecta cada vez que se abre el perfil (ver openClientProfile al final)
+      // pero también inicializamos los listeners estáticos aquí:
+      document.getElementById('p-edit-btn').addEventListener('click', () => {
+        // Rellenar campos con los datos actuales mostrados en pantalla
+        const currentClient = window.allClients?.find(c => String(c.id) === String(window._activeProfileClientId));
+        document.getElementById('p-edit-name').value  = document.getElementById('p-name').textContent || '';
+        document.getElementById('p-edit-phone').value = (currentClient?.phone || document.getElementById('p-phone').textContent.replace('Sin teléfono','').trim()) || '';
+        document.getElementById('p-edit-email').value = (currentClient?.email || document.getElementById('p-email').textContent.replace('Sin correo registrado','').trim()) || '';
+        document.getElementById('p-edit-rut').value   = currentClient?.rut || '';
+        document.getElementById('p-edit-status').textContent = '';
+        // Alternar visibilidad
+        document.getElementById('p-edit-panel').style.display = 'block';
+        document.getElementById('p-edit-btn').style.display   = 'none';
+        document.getElementById('p-edit-name').focus();
+      });
+
+      document.getElementById('p-edit-cancel-btn').addEventListener('click', () => {
+        document.getElementById('p-edit-panel').style.display = 'none';
+        document.getElementById('p-edit-btn').style.display   = 'flex';
+      });
+
+      document.getElementById('p-edit-save-btn').addEventListener('click', async () => {
+        const cId = window._activeProfileClientId;
+        if (!cId) {
+          document.getElementById('p-edit-status').style.color = '#e74c3c';
+          document.getElementById('p-edit-status').textContent = 'No se puede guardar: cliente sin ID en el sistema.';
+          return;
+        }
+
+        const newName  = document.getElementById('p-edit-name').value.trim();
+        const newPhone = document.getElementById('p-edit-phone').value.trim();
+        const newEmail = document.getElementById('p-edit-email').value.trim();
+        const newRut   = document.getElementById('p-edit-rut').value.trim();
+
+        if (!newName) {
+          document.getElementById('p-edit-status').style.color = '#e74c3c';
+          document.getElementById('p-edit-status').textContent = 'El nombre no puede estar vacío.';
+          return;
+        }
+
+        const saveBtn = document.getElementById('p-edit-save-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Guardando...';
+        const statusEl = document.getElementById('p-edit-status');
+        statusEl.style.color = '#81818a';
+        statusEl.textContent = 'Actualizando en la base de datos...';
+
+        try {
+          // 1. Actualizar en tabla clients
+          const { error } = await sb.from('clients').update({
+            name:       newName,
+            phone:      newPhone || null,
+            email:      newEmail || null,
+            rut:        newRut   || null,
+            updated_at: new Date().toISOString()
+          }).eq('id', cId);
+
+          if (error) throw error;
+
+          // 2. Actualizar en memoria (allClients)
+          const idx = (window.allClients || []).findIndex(c => String(c.id) === String(cId));
+          if (idx !== -1) {
+            window.allClients[idx].name  = newName;
+            window.allClients[idx].phone = newPhone || null;
+            window.allClients[idx].email = newEmail || null;
+            window.allClients[idx].rut   = newRut   || null;
+          }
+
+          // 3. Reflejar cambios en el modal sin cerrarlo
+          document.getElementById('p-name').textContent    = newName;
+          document.getElementById('p-phone').textContent   = newPhone || 'Sin teléfono';
+          document.getElementById('p-email').textContent   = newEmail || 'Sin correo registrado';
+          document.getElementById('p-avatar').textContent  = initials(newName);
+
+          // 4. Feedback de éxito y cierre del panel
+          statusEl.style.color = '#3ECF8E';
+          statusEl.textContent = '✓ Datos actualizados correctamente.';
+          setTimeout(() => {
+            document.getElementById('p-edit-panel').style.display = 'none';
+            document.getElementById('p-edit-btn').style.display   = 'flex';
+            statusEl.textContent = '';
+          }, 1800);
+
+          // 5. Recargar lista de clientes en background para mantener coherencia
+          loadAll();
+
+        } catch (err) {
+          console.error('[EditProfile] Error:', err);
+          statusEl.style.color = '#e74c3c';
+          statusEl.textContent = 'Error al guardar: ' + (err.message || 'Intenta de nuevo.');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
+        }
+      });
+
       document.getElementById('p-close-btn').addEventListener('click', () => {
         document.getElementById('profile-modal').style.display = 'none';
         document.body.style.overflow = '';
+        // Cerrar el panel de edición si estaba abierto
+        document.getElementById('p-edit-panel').style.display = 'none';
+        document.getElementById('p-edit-btn').style.display = 'flex';
       });
 
       /* ── INIT + REAL-TIME ────────────────────────────── */
