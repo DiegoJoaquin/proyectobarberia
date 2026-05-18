@@ -1989,31 +1989,55 @@
       });
 
       // 3. Login
-      loginBtn.addEventListener('click', async () => {
+      async function doLogin() {
         const email = emailInput.value.trim();
-        const pwd = input.value.trim();
+        // No usar .trim() en contraseña — puede tener espacios válidos al inicio/fin
+        // pero sí eliminar espacios no visibles que el autocompletado móvil inserta
+        const pwd = input.value.replace(/^[\u200B\u200C\u200D\uFEFF]+|[\u200B\u200C\u200D\uFEFF]+$/g, '');
         if (!email || !pwd) {
           errEl.textContent = 'Ingresa correo y contraseña.';
-          setTimeout(() => { errEl.textContent = ''; }, 3000);
+          setTimeout(() => { errEl.textContent = ''; }, 4000);
           return;
         }
 
+        loginBtn.disabled = true;
         loginBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Iniciando...';
+        errEl.textContent = '';
 
-        const { data, error } = await sb.auth.signInWithPassword({
-          email: email,
-          password: pwd
-        });
+        try {
+          const { data, error } = await sb.auth.signInWithPassword({
+            email: email,
+            password: pwd
+          });
 
-        if (error) {
-          errEl.textContent = 'Credenciales incorrectas.';
+          if (error) {
+            // Mostrar mensaje de error específico para diagnóstico
+            const msg = error.message || 'Error desconocido';
+            if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials')) {
+              errEl.textContent = 'Correo o contraseña incorrectos.';
+            } else if (msg.toLowerCase().includes('email not confirmed')) {
+              errEl.textContent = 'Email no confirmado. Revisa tu bandeja de entrada.';
+            } else if (msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')) {
+              errEl.textContent = 'Sin conexión a internet. Intenta de nuevo.';
+            } else {
+              errEl.textContent = 'Error: ' + msg;
+            }
+            input.value = '';
+            setTimeout(() => { errEl.textContent = ''; }, 5000);
+          }
+        } catch (ex) {
+          errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+          setTimeout(() => { errEl.textContent = ''; }, 5000);
+        } finally {
+          loginBtn.disabled = false;
           loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión';
-          input.value = ''; input.focus();
-          setTimeout(() => { errEl.textContent = ''; }, 3000);
         }
-      });
+      }
 
-      input.addEventListener('keydown', e => { if (e.key === 'Enter') loginBtn.click(); });
+      loginBtn.addEventListener('click', doLogin);
+      // Enter funciona tanto en email como en contraseña
+      emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') { input.focus(); } });
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
       // 4. Logout
       logoutBtn.addEventListener('click', async () => {
