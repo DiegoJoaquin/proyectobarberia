@@ -974,7 +974,9 @@ window.addEventListener('DOMContentLoaded', () => {
         `💵 *Monto pagado:* ${precio}\n\n` +
         `¡Gracias por reservar con nosotros!`;
 
-      const waNumber = '56982679620'; // Número WhatsApp de la barbería (sin +)
+      // Enviar el mensaje al propio número del cliente (se guarda como recordatorio en su WhatsApp)
+      const rawClientPhone = (bkState.phone || '').replace(/[^0-9]/g, ''); // quita +, espacios, etc.
+      const waNumber = rawClientPhone || '56982679620'; // fallback al número de la barbería si no hay teléfono
       const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
 
       const waContainer = document.getElementById('success-wa-container');
@@ -984,10 +986,10 @@ window.addEventListener('DOMContentLoaded', () => {
             id="wa-confirm-btn"
             style="display:inline-flex;align-items:center;gap:10px;padding:14px 28px;background:#25D366;color:#fff;border-radius:4px;font-family:var(--font-body);font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,.35);transition:transform .15s,box-shadow .15s;">
             <i class="fa-brands fa-whatsapp" style="font-size:1.1rem;"></i>
-            Enviar confirmación por WhatsApp
+            Guardar confirmación en WhatsApp
           </a>
           <p style="font-size:.7rem;color:var(--grey-50);margin-top:10px;">
-            Se abrirá WhatsApp con el mensaje ya preparado. Solo presiona <strong>Enviar</strong>.
+            Se abrirá WhatsApp con los detalles de tu reserva. Solo presiona <strong>Enviar</strong> para guardarlo en tu propio chat.
           </p>`;
         // Hover effect vía JS
         const btn = document.getElementById('wa-confirm-btn');
