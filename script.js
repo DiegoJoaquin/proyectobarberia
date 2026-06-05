@@ -948,12 +948,61 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.steps-indicator').style.visibility = 'hidden';
     document.getElementById('success-screen').classList.add('visible');
     document.getElementById('success-msg').innerHTML =
-      `¡Pago Exitoso por Webpay Plus! Tu reserva online ya está registrada y en sistema. ¡Gracias por confiar en nosotros!`;
+      `¡Pago confirmado! Tu reserva está registrada. <strong>Presiona el botón verde</strong> para enviarnos los detalles de tu cita por WhatsApp.`;
     window.history.replaceState({}, document.title, window.location.pathname);
     
+    // ── Construir botón WhatsApp con mensaje predeterminado ──
+    try {
+      const bkState = (() => { try { return JSON.parse(localStorage.getItem('booking_state') || 'null'); } catch(e){ return null; } })()
+                   || state;
+
+      const nombre   = bkState.name    || 'Cliente';
+      const servicio = bkState.service || '—';
+      const fecha    = bkState.date    || '—';
+      const hora     = bkState.time    || '—';
+      const barbero  = bkState.barber  || '—';
+      const precio   = bkState.price   || '—';
+      const rut      = bkState.rut     || '—';
+
+      const msg = `✅ *CONFIRMACIÓN DE RESERVA — SPARTAN BARBER*\n\n` +
+        `👤 *Cliente:* ${nombre}\n` +
+        `🪪 *RUT:* ${rut}\n` +
+        `✂️ *Servicio:* ${servicio}\n` +
+        `📅 *Fecha:* ${fecha}\n` +
+        `🕐 *Hora:* ${hora}\n` +
+        `💈 *Barbero:* ${barbero}\n` +
+        `💵 *Monto pagado:* ${precio}\n\n` +
+        `¡Gracias por reservar con nosotros!`;
+
+      const waNumber = '56982679620'; // Número WhatsApp de la barbería (sin +)
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+
+      const waContainer = document.getElementById('success-wa-container');
+      if (waContainer) {
+        waContainer.innerHTML = `
+          <a href="${waUrl}" target="_blank" rel="noopener"
+            id="wa-confirm-btn"
+            style="display:inline-flex;align-items:center;gap:10px;padding:14px 28px;background:#25D366;color:#fff;border-radius:4px;font-family:var(--font-body);font-size:.85rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,.35);transition:transform .15s,box-shadow .15s;">
+            <i class="fa-brands fa-whatsapp" style="font-size:1.1rem;"></i>
+            Enviar confirmación por WhatsApp
+          </a>
+          <p style="font-size:.7rem;color:var(--grey-50);margin-top:10px;">
+            Se abrirá WhatsApp con el mensaje ya preparado. Solo presiona <strong>Enviar</strong>.
+          </p>`;
+        // Hover effect vía JS
+        const btn = document.getElementById('wa-confirm-btn');
+        if (btn) {
+          btn.addEventListener('mouseenter', () => { btn.style.transform = 'translateY(-2px)'; btn.style.boxShadow = '0 8px 28px rgba(37,211,102,.45)'; });
+          btn.addEventListener('mouseleave', () => { btn.style.transform = ''; btn.style.boxShadow = '0 4px 20px rgba(37,211,102,.35)'; });
+        }
+      }
+    } catch(waErr) {
+      console.warn('[WA Button] No se pudo generar el botón:', waErr);
+    }
+
     // Toast de confirmación
     setTimeout(() => {
-      showToast('✅ ¡Pago confirmado! Tu hora ha sido agendada.');
+      showToast('✅ ¡Pago confirmado! Envía tu confirmación por WhatsApp.');
     }, 500);
     
     if (tokenWs) {

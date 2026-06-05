@@ -910,15 +910,12 @@
           </div>
           <h2 class="success-title">¡Reserva Confirmada!</h2>
           <p class="success-msg" id="success-msg">
-            Tu hora está reservada. En breve recibirás todos los detalles por <strong>WhatsApp</strong> al número que
-            ingresaste.
+            Tu hora está reservada. Presiona el botón para enviarnos tu confirmación por <strong>WhatsApp</strong>.
           </p>
-          <p style="font-size:.75rem;color:var(--grey-60);margin-top:8px;">
-            <i class="fa-brands fa-whatsapp" style="color:#25D366;margin-right:4px;"></i>
-            El mensaje llega automáticamente en unos segundos.
-          </p>
+          <!-- Botón WhatsApp inyectado por JS con los datos de la reserva -->
+          <div id="success-wa-container" style="margin-top:18px;margin-bottom:6px;"></div>
           <button id="success-close"
-            style="display:inline-flex;align-items:center;gap:8px;margin-top:28px;padding:13px 28px;background:var(--gold);color:#0a0a0a;border:none;border-radius:4px;font-family:var(--font-body);font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;">
+            style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:13px 28px;background:transparent;color:var(--grey-40);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-family:var(--font-body);font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;">
             <i class="fa-solid fa-arrow-left"></i> Volver al sitio
           </button>
         </div>

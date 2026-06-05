@@ -101,24 +101,8 @@ serve(async (req) => {
             console.error("Error al guardar cliente global:", cErr);
           }
 
-          // --- ENVÍO DE WHATSAPP (TWILIO) ---
-          try {
-            const rawPhone = (booking.phone || '').replace(/\s/g, '').replace(/^0/, '')
-            const toPhone = rawPhone.startsWith('+') ? `whatsapp:${rawPhone}` : `whatsapp:+56${rawPhone}`
-            const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID')
-            const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')
-            const TWILIO_FROM = Deno.env.get('TWILIO_FROM_NUMBER') || 'whatsapp:+14155238886'
-
-            if (TWILIO_SID && TWILIO_TOKEN) {
-              const vars = { "1": String(booking.name || 'Cliente'), "2": String(booking.service || '—'), "3": String(booking.date || '—'), "4": String(booking.time || '—'), "5": String(booking.barber || '—'), "6": String(booking.price || '—') }
-              const auth = btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`)
-              await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
-                method: 'POST',
-                headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ To: toPhone, From: TWILIO_FROM, ContentSid: 'HX8c4c8a841ed6345ccc60814977cbb058', ContentVariables: JSON.stringify(vars) })
-              })
-            }
-          } catch(e: any) { console.error("Error WhatsApp:", e.message) }
+          // NOTA: El envío automático de WhatsApp fue desactivado por costo.
+          // El cliente ahora envía el mensaje de confirmación manualmente desde la página de éxito.
         }
         return Response.redirect(`https://www.spartanbarber.cl/?payment=success&token_ws=${token}`, 303)
       }
