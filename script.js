@@ -963,15 +963,17 @@ window.addEventListener('DOMContentLoaded', () => {
       const precio   = state.price   || '—';
       const rut      = state.rut     || '—';
 
-      const msg = `✅ *CONFIRMACIÓN DE RESERVA — SPARTAN BARBER*\n\n` +
-        `👤 *Cliente:* ${nombre}\n` +
-        `🪪 *RUT:* ${rut}\n` +
-        `✂️ *Servicio:* ${servicio}\n` +
-        `📅 *Fecha:* ${fecha}\n` +
-        `🕐 *Hora:* ${hora}\n` +
-        `💈 *Barbero:* ${barbero}\n` +
-        `💵 *Monto pagado:* ${precio}\n\n` +
-        `¡Gracias por reservar con nosotros!`;
+      const msg =
+        `*\u2702 RESERVA CONFIRMADA \u2014 SPARTAN BARBER*\n\n` +
+        `*Nombre:* ${nombre}\n` +
+        `*RUT:* ${rut}\n` +
+        `*Servicio:* ${servicio}\n` +
+        `*Fecha:* ${fecha}\n` +
+        `*Hora:* ${hora}\n` +
+        `*Barbero:* ${barbero}\n` +
+        `*Monto pagado:* ${precio}\n\n` +
+        `\u2705 Pago procesado v\u00eda Webpay Plus.\n` +
+        `_Guarda este mensaje como comprobante de tu cita._`;
 
       // Enviar el mensaje al propio número del cliente (se guarda como recordatorio en su WhatsApp)
       const rawClientPhone = (state.phone || '').replace(/[^0-9]/g, ''); // quita +, espacios → ej: 56982679620
