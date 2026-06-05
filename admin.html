@@ -4816,11 +4816,33 @@
           }
         } catch (cErr) { console.warn('Client upsert error:', cErr); }
 
-        // 5. Mostrar éxito y limpiar formulario
+        // Construir botón WhatsApp para que el admin se lo mande al cliente
+        const waPhone = (phone || '').replace(/[^0-9]/g, '');
+        const fechaDisplay = date ? date.split('-').reverse().join('/') : '—';
+        const waMsg =
+          `*\u2702 RESERVA CONFIRMADA \u2014 SPARTAN BARBER*\n\n` +
+          `*Nombre:* ${name}\n` +
+          `*Servicio:* ${service}\n` +
+          `*Fecha:* ${fechaDisplay}\n` +
+          `*Hora:* ${time}\n` +
+          `*Barbero:* ${barber}\n` +
+          `*Monto:* ${finalPrice}\n\n` +
+          `\u2705 Tu hora est\u00e1 confirmada.\n` +
+          `_Recuerda llegar puntual. \u00a1Te esperamos!_`;
+
+        const waBtnHtml = waPhone
+          ? `<a href="https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}"
+               target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:10px 20px;background:#25D366;color:#fff;border-radius:4px;font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;">
+               <i class="fa-brands fa-whatsapp"></i> Enviar confirmación al cliente
+             </a>
+             <p style="font-size:.68rem;color:#81818a;margin-top:6px;">Se abrirá WhatsApp con el mensaje listo. Solo presiona Enviar.</p>`
+          : `<p style="font-size:.72rem;color:#81818a;margin-top:8px;">Sin teléfono registrado — no se puede generar enlace WA.</p>`;
+
         resultText.innerHTML = `
-          <strong>${name}</strong> · ${service} · ${price}<br>
-          Barbero: <strong>${barber}</strong> · ${date.split('-').reverse().join('/')} a las <strong>${time}</strong><br>
-          ${phone ? `📲 WhatsApp de confirmación enviado a <strong>${phone}</strong>` : ''}
+          <strong>${name}</strong> · ${service} · ${finalPrice}<br>
+          Barbero: <strong>${barber}</strong> · ${fechaDisplay} a las <strong>${time}</strong><br>
+          ${waBtnHtml}
         `;
         resultDiv.style.display = 'block';
 
