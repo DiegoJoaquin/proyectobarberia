@@ -953,16 +953,15 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // ── Construir botón WhatsApp con mensaje predeterminado ──
     try {
-      const bkState = (() => { try { return JSON.parse(localStorage.getItem('booking_state') || 'null'); } catch(e){ return null; } })()
-                   || state;
-
-      const nombre   = bkState.name    || 'Cliente';
-      const servicio = bkState.service || '—';
-      const fecha    = bkState.date    || '—';
-      const hora     = bkState.time    || '—';
-      const barbero  = bkState.barber  || '—';
-      const precio   = bkState.price   || '—';
-      const rut      = bkState.rut     || '—';
+      // state ya tiene todos los datos gracias al Object.assign() de línea 894
+      const nombre   = state.name    || 'Cliente';
+      const servicio = state.service || '—';
+      // Usar state.date (texto legible "Vie 6 jun") en vez de dateIso
+      const fecha    = state.date    || state.dateIso || '—';
+      const hora     = state.time    || '—';
+      const barbero  = state.barber  || '—';
+      const precio   = state.price   || '—';
+      const rut      = state.rut     || '—';
 
       const msg = `✅ *CONFIRMACIÓN DE RESERVA — SPARTAN BARBER*\n\n` +
         `👤 *Cliente:* ${nombre}\n` +
@@ -975,7 +974,7 @@ window.addEventListener('DOMContentLoaded', () => {
         `¡Gracias por reservar con nosotros!`;
 
       // Enviar el mensaje al propio número del cliente (se guarda como recordatorio en su WhatsApp)
-      const rawClientPhone = (bkState.phone || '').replace(/[^0-9]/g, ''); // quita +, espacios, etc.
+      const rawClientPhone = (state.phone || '').replace(/[^0-9]/g, ''); // quita +, espacios → ej: 56982679620
       const waNumber = rawClientPhone || '56982679620'; // fallback al número de la barbería si no hay teléfono
       const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
 
