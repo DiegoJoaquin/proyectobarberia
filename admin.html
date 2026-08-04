@@ -2167,7 +2167,7 @@
         // ✨ Auto-Limpieza: Borrar "Fantasmas" (waiting_payment) de más de 10 min de antigüedad
         // 10 min = tiempo máximo razonable para que alguien complete Webpay
         try {
-            const tenMinsAgo = new Date(Date.now() - 10 * 60000).toISOString();
+            const tenMinsAgo = new Date(Date.now() - 30 * 60000).toISOString(); // 30 min — margen suficiente para Webpay
             const { error: delErr } = await sb.from('bookings')
                 .delete()
                 .eq('status', 'waiting_payment')
@@ -2196,6 +2196,7 @@
         const lo = filter.toLowerCase();
         const filtered = filter ? allBookings.filter(b =>
           (b.name || '').toLowerCase().includes(lo) ||
+          (b.phone || '').toLowerCase().includes(lo) ||
           (b.service || '').toLowerCase().includes(lo) ||
           (b.barber || '').toLowerCase().includes(lo) ||
           (b.date || '').toLowerCase().includes(lo)) : allBookings;
@@ -2441,6 +2442,9 @@
               : `<button class="btn btn-ghost btn-sm add-pts-btn" data-id="${c.id}" data-name="${esc(c.name)}">
                  <i class="fa-solid fa-plus"></i> Puntos
                </button>`}
+          <button class="btn btn-sm sub-pts-btn" data-id="${c.id}" data-name="${esc(c.name)}" data-pts="${c.points || 0}" title="Descontar puntos manualmente" style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c;">
+            <i class="fa-solid fa-minus"></i> Pts
+          </button>
           <button class="btn btn-danger btn-sm del-client-btn" data-id="${c.id}" data-name="${esc(c.name)}">
             <i class="fa-solid fa-trash"></i>
           </button>
@@ -2509,6 +2513,21 @@
             const { data: cl } = await sb.from('clients').select('points').eq('id', btn.dataset.id).single();
             if (!cl) return;
             await sb.from('clients').update({ points: (cl.points || 0) + extra, updated_at: new Date().toISOString() }).eq('id', btn.dataset.id);
+            await loadAll();
+          });
+        });
+
+        // Subtract points manually
+        grid.querySelectorAll('.sub-pts-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const currentPts = parseInt(btn.dataset.pts) || 0;
+            const toSubtract = parseInt(prompt(`${btn.dataset.name} tiene ${currentPts} puntos.\n¿Cuántos puntos descontar?`, currentPts >= 16690 ? 16690 : currentPts));
+            if (!toSubtract || isNaN(toSubtract) || toSubtract <= 0) return;
+            if (!confirm(`¿Descontar ${toSubtract} puntos a ${btn.dataset.name}?\nQuedarán ${Math.max(0, currentPts - toSubtract)} puntos.`)) return;
+            const { data: cl } = await sb.from('clients').select('points').eq('id', btn.dataset.id).single();
+            if (!cl) return;
+            const newPts = Math.max(0, (cl.points || 0) - toSubtract);
+            await sb.from('clients').update({ points: newPts, updated_at: new Date().toISOString() }).eq('id', btn.dataset.id);
             await loadAll();
           });
         });
@@ -2618,6 +2637,45 @@
                            stat.style.color = 'var(--gold)';
                        }
                    }
+                };
+            }
+
+            // Fix 1: Autocompletado de nombre → teléfono/email/RUT en Reserva Manual
+            const mName = document.getElementById('m-name');
+            if (mName) {
+                mName.oninput = () => {
+                    const query = mName.value.trim().toLowerCase();
+                    if (query.length < 3) return;
+
+                    // Buscar match exacto primero, luego parcial
+                    const match = allClients.find(c =>
+                        c.name && c.name.toLowerCase() === query
+                    ) || allClients.find(c =>
+                        c.name && c.name.toLowerCase().startsWith(query)
+                    );
+
+                    if (!match) return;
+
+                    // Autocompletar solo si los campos están vacíos
+                    const phoneDigitsEl = document.getElementById('m-phone-digits');
+                    const phoneHiddenEl = document.getElementById('m-phone');
+                    const emailEl = document.getElementById('m-email');
+                    const rutEl = document.getElementById('m-rut');
+                    const statEl = document.getElementById('m-rut-status');
+
+                    if (phoneHiddenEl && !phoneHiddenEl.value && match.phone) {
+                        phoneHiddenEl.value = match.phone;
+                    }
+                    if (phoneDigitsEl && !phoneDigitsEl.value && match.phone) {
+                        const rawDigits = match.phone.replace(/^\+569/, '').replace(/\D/g,'').substring(0,8);
+                        phoneDigitsEl.value = rawDigits.replace(/(\d{4})(\d{1,4})/, '$1 $2');
+                    }
+                    if (emailEl && !emailEl.value && match.email) emailEl.value = match.email;
+                    if (rutEl && !rutEl.value && match.rut) rutEl.value = match.rut;
+                    if (statEl) {
+                        statEl.textContent = `✅ Cliente encontrado — Tel: ${match.phone || 'sin teléfono'}`;
+                        statEl.style.color = 'var(--green)';
+                    }
                 };
             }
         }
@@ -4793,9 +4851,14 @@
             ) || null;
           }
 
+          // Fix 2: Descontar POINTS_GOAL al canjear, sumar puntos en reserva normal
+          const POINTS_GOAL_LOCAL = 16690;
           if (extClient) {
+            const newPoints = isCanje
+              ? Math.max(0, (extClient.points || 0) - POINTS_GOAL_LOCAL)  // ← Descuenta puntos del canje
+              : (extClient.points || 0) + window.ptsForService(service, price);
             await sb.from('clients').update({
-              points: (extClient.points || 0) + (isCanje ? 0 : window.ptsForService(service, price)),
+              points: newPoints,
               total_visits: (extClient.total_visits || 0) + 1,
               last_barber: barber,
               // Completar datos faltantes sin borrar los existentes

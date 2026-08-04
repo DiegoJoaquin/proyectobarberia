@@ -101,9 +101,37 @@ serve(async (req) => {
             console.error("Error al guardar cliente global:", cErr);
           }
 
-          // NOTA: El envío automático de WhatsApp fue desactivado por costo.
-          // El cliente ahora envía el mensaje de confirmación manualmente desde la página de éxito.
+        } else {
+          // ⚠️ FIX 3b: RESERVA DE RESCATE
+          // Transbank confirmó el pago (AUTHORIZED) pero la reserva no se encontró en la DB.
+          // Esto ocurre cuando el cleanup eliminó el registro 'waiting_payment' antes de que
+          // Transbank devolviera el resultado (proceso lento > 30 min o sesión de browser caída).
+          // Creamos una reserva de rescate para que el admin pueda identificar al cliente y reagendar.
+          console.warn(`[RESCATE] Pago AUTHORIZED (auth: ${txData.authorization_code}) sin reserva en DB. Token: ${token}. Buy order: ${txData.buy_order}`);
+          try {
+            const monto = txData.amount ? `$${txData.amount}` : '(ver Transbank)';
+            await supabaseClient.from('bookings').insert({
+              name: `⚠️ PAGO SIN HORA — Verificar con cliente`,
+              phone: '',
+              service: `Pago confirmado Transbank — Monto: ${monto}`,
+              price: monto,
+              date: new Date().toISOString().split('T')[0],
+              time: new Date().toTimeString().substring(0,5),
+              barber: 'Por asignar',
+              status: 'confirmed',
+              payment_method: 'Webpay Plus',
+              attended: false,
+              notes: `[RESCATE] TBK_TOKEN:${token} | Auth:${txData.authorization_code} | BuyOrder:${txData.buy_order || ''} | Monto:${txData.amount || ''}`,
+              points_earned: 0,
+              created_at: new Date().toISOString()
+            });
+          } catch (rescErr: any) {
+            console.error("[RESCATE] Error al crear reserva de rescate:", rescErr.message);
+          }
         }
+
+        // NOTA: El envío automático de WhatsApp fue desactivado por costo.
+        // El cliente ahora envía el mensaje de confirmación manualmente desde la página de éxito.
         return Response.redirect(`https://www.spartanbarber.cl/?payment=success&token_ws=${token}`, 303)
       }
     }
