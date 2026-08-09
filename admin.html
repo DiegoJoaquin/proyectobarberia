@@ -4039,6 +4039,18 @@
         statusEl.textContent = 'Actualizando en la base de datos...';
 
         try {
+          // 0. Verificar si el teléfono ya está en uso por OTRO cliente
+          if (newPhone) {
+            const { data: phoneCheck } = await sb.from('clients').select('id, name').eq('phone', newPhone).neq('id', cId).maybeSingle();
+            if (phoneCheck) {
+              statusEl.style.color = '#e74c3c';
+              statusEl.textContent = `El teléfono ya está registrado para el cliente "${phoneCheck.name}". Usa un teléfono distinto.`;
+              saveBtn.disabled = false;
+              saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
+              return;
+            }
+          }
+
           // 1. Actualizar en tabla clients
           const { error } = await sb.from('clients').update({
             name:       newName,
@@ -4048,7 +4060,13 @@
             updated_at: new Date().toISOString()
           }).eq('id', cId);
 
-          if (error) throw error;
+          if (error) {
+            // Traducir el error de llave duplicada a un mensaje legible
+            if (error.message && error.message.includes('phone')) {
+              throw new Error('El teléfono ya está registrado para otro cliente. Usa un número diferente.');
+            }
+            throw error;
+          }
 
           // 2. Actualizar en memoria (allClients)
           const idx = (window.allClients || []).findIndex(c => String(c.id) === String(cId));
