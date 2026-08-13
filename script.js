@@ -485,6 +485,11 @@ const backdrop = document.getElementById('modal-backdrop');
 const closeBtn = document.getElementById('modal-close-btn');
 
 function openModal(serviceData) {
+  // ── CRÍTICO: Limpiar cualquier estado de sesión anterior guardado en localStorage.
+  // Esto evita que los datos de un cliente anterior (que abandonó Webpay) aparezcan
+  // pre-rellenados cuando una persona diferente abre el formulario de reserva.
+  localStorage.removeItem('booking_state');
+
   // Resetear readonly del autocompletado RUT
   ['f-name', 'f-email'].forEach(id => {
     const el = document.getElementById(id);
@@ -882,33 +887,45 @@ window.addEventListener('DOMContentLoaded', () => {
   
   if (paymentStatus === 'success') {
     // Al volver pago Pagado existosamente a través de las funciones Deno
-    openModal(null);
+    // NOTA: openModal() normalmente limpia booking_state, pero aquí necesitamos
+    // leerlo ANTES de que openModal() lo borre. Por eso lo leemos primero.
+    const savedStateRaw = localStorage.getItem('booking_state');
+    openModal(null); // Esto limpia localStorage.booking_state — ya recuperamos el valor arriba
     goToStep(4);
     stepContents.forEach(sc => sc.classList.remove('active'));
     
-    // RECUPERAR ESTADO PARA EL RESUMEN
-    const savedState = localStorage.getItem('booking_state');
-    if (savedState) {
+    // RECUPERAR ESTADO PARA EL RESUMEN (usamos la copia tomada antes del openModal)
+    if (savedStateRaw) {
       try {
-        const bkState = JSON.parse(savedState);
-        Object.assign(state, bkState);
-        updateSummary();
-        
+        const bkState = JSON.parse(savedStateRaw);
+
+        // Validación de seguridad: verificar que el token_ws devuelto por Transbank
+        // coincide con el token que guardamos en el estado. Esto previene que datos
+        // de una sesión anterior (de otro cliente) contaminen la pantalla de éxito.
+        const storedToken = (bkState.notes || '').match(/\[TBK_TOKEN:([^\]]+)\]/)?.[1];
+        if (tokenWs && storedToken && storedToken !== tokenWs) {
+          console.warn('[SEGURIDAD] El token_ws devuelto no coincide con el estado guardado. Se ignoran los datos del localStorage.');
+          // No asignar bkState al state — el flujo continúa sin datos de cliente
+        } else {
+          Object.assign(state, bkState);
+          updateSummary();
+        }
+
         // --- Enviar correo automático de comprobante al DUEÑO ---
         if (typeof emailjs !== 'undefined') {
           const emailParams = {
             to_name: "Administrador de Spartan Barber",
             from_name: "Webpay Sistema Automático",
-            reply_to: bkState.email || "noreply@spartanbarber.cl",
-            cliente_nombre: bkState.name || 'No indicado',
-            cliente_rut: bkState.rut || 'No indicado',
-            cliente_telefono: bkState.phone || 'No indicado',
-            servicio: bkState.service || 'No indicado',
-            fecha: bkState.date || 'No indicado',
-            hora: bkState.time || 'No indicado',
-            precio: bkState.price || '$0',
+            reply_to: state.email || "noreply@spartanbarber.cl",
+            cliente_nombre: state.name || 'No indicado',
+            cliente_rut: state.rut || 'No indicado',
+            cliente_telefono: state.phone || 'No indicado',
+            servicio: state.service || 'No indicado',
+            fecha: state.date || 'No indicado',
+            hora: state.time || 'No indicado',
+            precio: state.price || '$0',
             token_webpay: tokenWs || 'Sin Token',
-            message: `¡PAGO WEBPAY CONFIRMADO!\n\nCliente: ${bkState.name}\nTeléfono: ${bkState.phone}\nServicio: ${bkState.service}\nMonto: ${bkState.price}\nToken: ${tokenWs}`
+            message: `¡PAGO WEBPAY CONFIRMADO!\n\nCliente: ${state.name}\nTeléfono: ${state.phone}\nServicio: ${state.service}\nMonto: ${state.price}\nToken: ${tokenWs}`
           };
           emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, emailParams)
             .then(() => console.log('✅ Correo de comprobante enviado al dueño con éxito.'))
@@ -916,22 +933,22 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         // Buscar el booking recién insertado por la Edge Function para obtener su ID
-        if (SUPABASE_ON && bkState.phone) {
+        if (SUPABASE_ON && state.phone) {
           setTimeout(async () => {
             try {
               const { data: recentBooking } = await sb
                 .from('bookings')
                 .select('id')
-                .eq('phone', bkState.phone)
+                .eq('phone', state.phone)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .maybeSingle();
               
               const bookingObj = {
-                name: bkState.name || '',
-                phone: bkState.phone || '',
-                rut: bkState.rut || '',
-                email: bkState.email || ''
+                name: state.name || '',
+                phone: state.phone || '',
+                rut: state.rut || '',
+                email: state.email || ''
               };
               await upsertClient(bookingObj, recentBooking?.id || null);
               console.log('[upsertClient] Cliente registrado/actualizado tras pago exitoso.');
@@ -940,9 +957,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         
       } catch(e) { console.warn('Error parsing booking_state:', e); }
-      
-      // Limpiar datos
-      localStorage.removeItem('booking_state');
+      // localStorage.booking_state ya fue eliminado por openModal() arriba
     }
 
     document.querySelector('.steps-indicator').style.visibility = 'hidden';
