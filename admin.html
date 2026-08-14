@@ -4038,18 +4038,29 @@
         statusEl.style.color = '#81818a';
         statusEl.textContent = 'Actualizando en la base de datos...';
 
+        // Flag para confirmar teléfono compartido (ej: padre e hijo)
+        const forcePhoneSave = document.getElementById('p-edit-save-btn').dataset.forcePhone === 'true';
+
         try {
           // 0. Verificar si el teléfono ya está en uso por OTRO cliente
-          if (newPhone) {
+          if (newPhone && !forcePhoneSave) {
             const { data: phoneCheck } = await sb.from('clients').select('id, name').eq('phone', newPhone).neq('id', cId).maybeSingle();
             if (phoneCheck) {
-              statusEl.style.color = '#e74c3c';
-              statusEl.textContent = `El teléfono ya está registrado para el cliente "${phoneCheck.name}". Usa un teléfono distinto.`;
+              // Mostrar advertencia con opción de confirmar (caso padre/hijo)
+              statusEl.style.color = '#f39c12';
+              statusEl.innerHTML = `⚠️ El teléfono ya está registrado para el cliente <strong>"${phoneCheck.name}"</strong>.<br>¿Desea asignarlo a este cliente también (ej: padre e hijo)?<br><button id="p-confirm-phone-btn" style="margin-top:8px;padding:6px 14px;background:#f39c12;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Sí, guardar de todas formas</button>`;
               saveBtn.disabled = false;
               saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar';
+              // Al hacer clic en confirmar, reintenta con el flag activado
+              document.getElementById('p-confirm-phone-btn').addEventListener('click', () => {
+                saveBtn.dataset.forcePhone = 'true';
+                saveBtn.click();
+              });
               return;
             }
           }
+          // Limpiar el flag después de usarlo
+          saveBtn.dataset.forcePhone = 'false';
 
           // 1. Actualizar en tabla clients
           const { error } = await sb.from('clients').update({
@@ -4061,10 +4072,6 @@
           }).eq('id', cId);
 
           if (error) {
-            // Traducir el error de llave duplicada a un mensaje legible
-            if (error.message && error.message.includes('phone')) {
-              throw new Error('El teléfono ya está registrado para otro cliente. Usa un número diferente.');
-            }
             throw error;
           }
 
