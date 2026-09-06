@@ -702,17 +702,6 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
 
     let data = rows?.[0] || null;
 
-    // Fallback: buscar por el número base entrelazado para ignorar mágicamente cualquier formato (puntos, espacios)
-    if (!data && !error) {
-      const wild = '%' + rutSinTodo.slice(0, -1).split('').join('%') + '%';
-      const { data: rows2 } = await sb
-        .from('clients')
-        .select('id, name, phone, email, rut')
-        .ilike('rut', wild)
-        .limit(1);
-      data = rows2?.[0] || null;
-    }
-
     // Log para diagnóstico — ver en F12 > Console
     console.log('[RUT v3] formatos buscados:', [formattedRut, rutSinPuntos, rutSinTodo]);
     console.log('[RUT v3] error:', error);

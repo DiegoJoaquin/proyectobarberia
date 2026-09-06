@@ -4724,8 +4724,14 @@
           mRutTimeout = setTimeout(async () => {
               let client = null;
               try {
-                  const wild = searchVal.split('').join('%'); // 1%3%0...
-                  const url = `${SUPABASE_URL}/rest/v1/clients?select=id,name,rut,phone&rut=ilike.*${encodeURIComponent(wild)}*&limit=1`;
+                    let formattedRut = searchVal;
+                    if (searchVal.length > 1) {
+                        const dv = searchVal.slice(-1);
+                        const rutNum = searchVal.slice(0, -1);
+                        formattedRut = rutNum.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
+                    }
+                    const rutSinPuntos = formattedRut.replace(/\./g, '');
+                    const url = `/rest/v1/clients?select=id,name,rut,phone&rut=in.(,,)&limit=1`;
                   const res = await fetch(url, { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } });
                   const arr = await res.json();
                   if (arr && arr.length > 0) client = arr[0];
