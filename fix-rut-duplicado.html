@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Fix RUT Duplicado — Spartan Barber</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: monospace; background: #111; color: #eee; padding: 24px; }
+  h1 { color: #e2b96f; }
+  button { background: #e2b96f; color: #111; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 4px; margin: 6px 4px; font-size: 14px; }
+  button.danger { background: #eb0029; color: #fff; }
+  pre { background: #1a1a1a; padding: 16px; border-radius: 6px; overflow: auto; font-size: 13px; border: 1px solid #333; }
+  .card { background: #1e1e1e; border: 1px solid #444; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .card h3 { margin: 0 0 8px; color: #e2b96f; }
+  .bad { color: #eb0029; font-weight: bold; }
+  input { background: #222; border: 1px solid #555; color: #eee; padding: 8px 12px; border-radius: 4px; font-size: 14px; width: 260px; }
+  label { display: block; margin: 8px 0 4px; color: #aaa; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { color: #e2b96f; text-align: left; border-bottom: 1px solid #444; padding: 6px; }
+  td { padding: 6px; border-bottom: 1px solid #222; }
+</style>
+</head>
+<body>
+<h1>Diagnostico — RUT Duplicado Spartan Barber</h1>
+<div class="card">
+  <h3>Buscar por RUT</h3>
+  <label>RUT a diagnosticar:</label>
+  <input type="text" id="rut-input" value="15.024.904-K" />
+  <br><br>
+  <button onclick="buscarRUT()">Buscar duplicados</button>
+  <button onclick="verTodos()" style="background:#555;color:#fff">Ver todos los clientes</button>
+</div>
+<div id="resultados"></div>
+<div id="todos-resultados"></div>
+<script>
+const SUPABASE_URL = 'https://hgxayxrszmcmmrrwxlxz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhneGF5eHJzem1jbW1ycnd4bHh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTU4MjgsImV4cCI6MjA4ODY3MTgyOH0.0l74BmKm6GqPa50tRbUt46I2nzavr4X8XxQfxsclUc0';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const normalizeRut = (r) => (r || '').replace(/[.\-\s]/g, '').toUpperCase();
+
+async function buscarRUT() {
+  const rut = document.getElementById('rut-input').value.trim();
+  const rutNorm = normalizeRut(rut);
+  const div = document.getElementById('resultados');
+  div.innerHTML = '<p>Buscando...</p>';
+  const { data, error } = await sb.from('clients').select('id, name, phone, email, rut, created_at, updated_at');
+  if (error) { div.innerHTML = '<pre style="color:red">ERROR: ' + JSON.stringify(error) + '</pre>'; return; }
+  const matches = (data || []).filter(c => normalizeRut(c.rut) === rutNorm);
+  if (matches.length === 0) {
+    div.innerHTML = '<div class="card"><p>No se encontro ningun cliente con RUT <strong>' + rut + '</strong> (normalizado: <code>' + rutNorm + '</code>).<br>El autocomplete deberia decir "Cliente nuevo". Si sigue mostrando datos, es cache del navegador: haz <strong>Ctrl+Shift+R</strong> en la pagina principal.</p></div>';
+    return;
+  }
+  if (matches.length === 1) {
+    div.innerHTML = '<div class="card"><p>Solo UN registro con ese RUT (correcto, sin duplicados):</p><pre>' + JSON.stringify(matches[0], null, 2) + '</pre><p>Si el autocompletado muestra al cliente equivocado, el navegador tiene el script viejo. Haz <strong>Ctrl+Shift+R</strong> en la pagina principal.</p></div>';
+    return;
+  }
+  let html = '<div class="card"><p class="bad">PROBLEMA: ' + matches.length + ' registros con el mismo RUT ' + rut + ':</p>';
+  matches.forEach(function(c, i) {
+    html += '<div style="border:1px solid #555;border-radius:6px;padding:12px;margin:8px 0;"><h3 style="color:' + (i===0?'#32cd32':'#eb0029') + '">Registro ' + (i+1) + (i===0?' (este es el que se muestra primero)':'') + '</h3><pre>' + JSON.stringify(c, null, 2) + '</pre><button class="danger" onclick="limpiarRUT(\'' + c.id + '\', \'' + c.name.replace(/'/g,"\'") + '\')">Limpiar RUT de ' + c.name + '</button></div>';
+  });
+  html += '</div>';
+  div.innerHTML = html;
+}
+
+async function limpiarRUT(id, nombre) {
+  if (!confirm('Seguro que quieres BORRAR el RUT del registro de "' + nombre + '"?\n\nEsto quita el RUT de ese cliente (no borra el cliente).')) return;
+  const { error } = await sb.from('clients').update({ rut: null }).eq('id', id);
+  if (error) { alert('Error: ' + JSON.stringify(error)); }
+  else { alert('RUT limpiado de "' + nombre + '". Ahora solo el cliente correcto tendra ese RUT.'); buscarRUT(); }
+}
+
+async function verTodos() {
+  const div = document.getElementById('todos-resultados');
+  div.innerHTML = '<p>Cargando...</p>';
+  const { data, error } = await sb.from('clients').select('id, name, phone, email, rut, created_at').order('created_at', { ascending: false });
+  if (error) { div.innerHTML = '<pre style="color:red">ERROR: ' + JSON.stringify(error) + '</pre>'; return; }
+  const rutCount = {};
+  (data || []).forEach(function(c) { const norm = normalizeRut(c.rut); if (norm) rutCount[norm] = (rutCount[norm] || 0) + 1; });
+  const dupCount = Object.values(rutCount).filter(function(v){ return v > 1; }).length;
+  let html = '<div class="card"><h3>Total: ' + (data||[]).length + ' clientes | RUTs duplicados: <span class="bad">' + dupCount + '</span></h3><table><tr><th>Nombre</th><th>RUT</th><th>Telefono</th><th>Duplicado</th></tr>';
+  (data || []).forEach(function(c) {
+    const norm = normalizeRut(c.rut);
+    const isDup = norm && rutCount[norm] > 1;
+    html += '<tr style="' + (isDup ? 'background:#2a0000' : '') + '"><td>' + c.name + '</td><td>' + (c.rut||'—') + '</td><td>' + (c.phone||'—') + '</td><td>' + (isDup ? '<span class="bad">DUPLICADO</span>' : 'OK') + '</td></tr>';
+  });
+  html += '</table></div>';
+  div.innerHTML = html;
+}
+window.onload = function() { buscarRUT(); };
+</script>
+</body>
+</html>
