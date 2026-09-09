@@ -88,14 +88,8 @@ async function upsertClient(booking, bookingId) {
   try {
     let existing = null;
 
-    // 1. Buscar por teléfono (más confiable)
-    if (booking.phone) {
-      const { data } = await sb.from('clients').select('id, name, email, rut, phone, points, total_visits').eq('phone', booking.phone).maybeSingle();
-      existing = data;
-    }
-
-    // 2. Si no encontró por teléfono, buscar por RUT
-    if (!existing && booking.rut) {
+    // 1. Buscar por RUT primero (identificador único) si existe
+    if (booking.rut) {
       const normRut = booking.rut.replace(/[.\-\s]/g, '').toUpperCase();
       const { data: allClients } = await sb.from('clients').select('id, name, email, rut, phone, points, total_visits');
       existing = (allClients || []).find(c =>
@@ -103,10 +97,16 @@ async function upsertClient(booking, bookingId) {
       ) || null;
     }
 
+    // 2. Si no encontró por RUT, buscar por teléfono
+    if (!existing && booking.phone) {
+      const { data } = await sb.from('clients').select('id, name, email, rut, phone, points, total_visits').eq('phone', booking.phone).maybeSingle();
+      existing = data;
+    }
+
     let clientId;
     if (existing) {
       clientId = existing.id;
-      // Actualizar datos si mejoran (nunca borrar datos existentes)
+      // Actualizar datos confirmados por el cliente en la reserva
       await sb.from('clients').update({
         name: booking.name || existing.name,
         email: booking.email || existing.email,
@@ -737,27 +737,46 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
       const digitsEl = document.getElementById('f-phone-digits');
       const hiddenEl = document.getElementById('f-phone');
 
-      if (nameEl)  { nameEl.value  = data.name  || ''; nameEl.readOnly  = true; nameEl.style.opacity  = '0.7'; }
-      if (emailEl && data.email) { emailEl.value = data.email; emailEl.readOnly = true; emailEl.style.opacity = '0.7'; }
-
-      // Extraer los dígitos después del +569 para mostrar solo el número local
-      if (digitsEl && data.phone) {
-        const stripped = data.phone.replace(/\s/g, '').replace(/^\+?569?/, ''); // quita +56 9 del inicio
-        digitsEl.value = stripped;
-        digitsEl.readOnly = true;
-        digitsEl.style.opacity = '0.7';
-        if (hiddenEl) hiddenEl.value = '+569' + stripped;
+      // Pre-cargar datos sugeridos manteniendo los campos 100% editables
+      if (nameEl) {
+        nameEl.value = data.name || '';
+        nameEl.readOnly = false;
+        nameEl.style.opacity = '1';
+      }
+      if (emailEl) {
+        if (data.email) emailEl.value = data.email;
+        emailEl.readOnly = false;
+        emailEl.style.opacity = '1';
       }
 
-      if (statusEl) { statusEl.textContent = '\u2705 Cliente encontrado \u2014 datos autocargados'; statusEl.style.color = '#32cd32'; }
+      // Extraer los dígitos después del +569 para mostrar el número local
+      if (digitsEl && data.phone) {
+        const rawPhone = data.phone.replace(/\s/g, '').replace(/^\+?569?/, ''); // quita +56 9 del inicio
+        if (rawPhone.length > 4) {
+          digitsEl.value = rawPhone.slice(0, 4) + ' ' + rawPhone.slice(4, 8);
+        } else {
+          digitsEl.value = rawPhone;
+        }
+        digitsEl.readOnly = false;
+        digitsEl.style.opacity = '1';
+        if (hiddenEl) hiddenEl.value = '+569' + rawPhone.slice(0, 8);
+      }
+
+      if (statusEl) {
+        statusEl.textContent = '✅ Datos cargados (puedes editarlos si deseas cambiarlos)';
+        statusEl.style.color = '#32cd32';
+      }
     } else {
-      ['f-name', 'f-phone', 'f-email'].forEach(id => {
+      ['f-name', 'f-email'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.readOnly = false; el.style.opacity = '1'; }
       });
+      const dEl = document.getElementById('f-phone-digits');
+      if (dEl) { dEl.readOnly = false; dEl.style.opacity = '1'; }
+
       if (error) {
         console.error('[RUT v6] ERROR completo:', JSON.stringify(error));
-        if (statusEl) { statusEl.textContent = '\u26a0\ufe0f Error: ' + (error.message || error.code); statusEl.style.color = '#eb0029'; }
+        if (statusEl) { statusEl.textContent = '⚠️ Error: ' + (error.message || error.code); statusEl.style.color = '#eb0029'; }
       } else {
         if (statusEl) { statusEl.textContent = 'Cliente nuevo, ingresa tus datos.'; statusEl.style.color = 'var(--gold)'; }
       }

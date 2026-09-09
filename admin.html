@@ -4133,6 +4133,15 @@
 
       sb.channel('admin-bookings-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, debouncedLoadAll).subscribe();
       sb.channel('admin-clients-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, debouncedLoadAll).subscribe();
+
+      // Sincronización automática de respaldo: cada 20 segundos y al cambiar a la pestaña
+      setInterval(() => {
+          if (!document.hidden) loadAll();
+      }, 20000);
+
+      document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) loadAll();
+      });
     })();
   </script>
 

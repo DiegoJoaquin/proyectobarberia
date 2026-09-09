@@ -76,16 +76,21 @@ serve(async (req) => {
           // Guardar a cliente en el directorio global (Upsert)
           try {
             const pts = booking.points_earned || 0;
-            const { data: ext } = await supabaseClient.from('clients').select('id, points, total_visits').eq('rut', booking.rut).maybeSingle();
+            const { data: ext } = await supabaseClient.from('clients').select('id, name, phone, email, points, total_visits').eq('rut', booking.rut).maybeSingle();
+            let clientId = null;
             if (ext) {
+              clientId = ext.id;
               await supabaseClient.from('clients').update({
+                name: booking.name || ext.name,
+                phone: booking.phone || ext.phone,
+                email: booking.email || ext.email,
                 points: (ext.points || 0) + pts,
                 total_visits: (ext.total_visits || 0) + 1,
                 last_barber: booking.barber,
                 updated_at: new Date().toISOString()
               }).eq('id', ext.id);
             } else {
-              await supabaseClient.from('clients').insert({
+              const { data: newCl } = await supabaseClient.from('clients').insert({
                 name: booking.name,
                 phone: booking.phone,
                 email: booking.email || null,
@@ -95,7 +100,11 @@ serve(async (req) => {
                 last_barber: booking.barber,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
-              });
+              }).select('id').maybeSingle();
+              clientId = newCl?.id;
+            }
+            if (clientId) {
+              await supabaseClient.from('bookings').update({ client_id: clientId }).eq('id', booking.id);
             }
           } catch (cErr: any) {
             console.error("Error al guardar cliente global:", cErr);
