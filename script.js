@@ -751,15 +751,15 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
 
       // Extraer los dígitos después del +569 para mostrar el número local
       if (digitsEl && data.phone) {
-        const rawPhone = data.phone.replace(/\s/g, '').replace(/^\+?569?/, ''); // quita +56 9 del inicio
-        if (rawPhone.length > 4) {
-          digitsEl.value = rawPhone.slice(0, 4) + ' ' + rawPhone.slice(4, 8);
-        } else {
-          digitsEl.value = rawPhone;
-        }
+        let digits = String(data.phone).replace(/\D/g, '');
+        if (digits.startsWith('56')) digits = digits.slice(2);
+        if (digits.length === 9 && digits.startsWith('9')) digits = digits.slice(1);
+        if (digits.length > 8) digits = digits.slice(-8);
+
+        digitsEl.value = digits.length > 4 ? digits.slice(0, 4) + ' ' + digits.slice(4) : digits;
         digitsEl.readOnly = false;
         digitsEl.style.opacity = '1';
-        if (hiddenEl) hiddenEl.value = '+569' + rawPhone.slice(0, 8);
+        if (hiddenEl) hiddenEl.value = '+569' + digits;
       }
 
       if (statusEl) {

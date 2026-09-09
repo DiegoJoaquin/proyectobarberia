@@ -2621,14 +2621,27 @@
                    }
                    
                    const match = allClients.find(c => cleanStr(c.phone).includes(query) || (c.rut && cleanStr(c.rut).includes(query)));
-                   if (match && !document.getElementById('m-name').value) {
-                       document.getElementById('m-name').value = match.name;
-                       document.getElementById('m-phone').value = match.phone || '';
+                   if (match) {
+                       const mNameEl = document.getElementById('m-name');
+                       if (mNameEl && !mNameEl.value) mNameEl.value = match.name || '';
+
+                       const phoneDigitsEl = document.getElementById('m-phone-digits');
+                       const phoneHiddenEl = document.getElementById('m-phone');
+                       if (match.phone) {
+                           if (phoneHiddenEl) phoneHiddenEl.value = match.phone;
+                           if (phoneDigitsEl) {
+                               let digits = String(match.phone).replace(/\D/g, '');
+                               if (digits.startsWith('56')) digits = digits.slice(2);
+                               if (digits.length === 9 && digits.startsWith('9')) digits = digits.slice(1);
+                               if (digits.length > 8) digits = digits.slice(-8);
+                               phoneDigitsEl.value = digits.length > 4 ? digits.slice(0, 4) + ' ' + digits.slice(4) : digits;
+                           }
+                       }
                        const mEmail = document.getElementById('m-email');
-                       if (mEmail && match.email) mEmail.value = match.email;
+                       if (mEmail && match.email && !mEmail.value) mEmail.value = match.email;
                        
                        if (stat) {
-                           stat.textContent = `Cliente encontrado: ${match.name}`;
+                           stat.textContent = `✅ Cliente encontrado: ${match.name}`;
                            stat.style.color = 'var(--green)';
                        }
                    } else if (!match) {
