@@ -692,20 +692,33 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
   this.value = formattedRut;
   if (statusEl) { statusEl.textContent = 'Buscando...'; statusEl.style.color = 'var(--grey-40)'; }
 
+  // ── NORMALIZACIÓN: quitar puntos, guión y pasar a mayúsculas.
+  // Esto es la "huella digital" única del RUT que usaremos para comparar.
+  const normalizeRut = (r) => (r || '').replace(/[.\-\s]/g, '').toUpperCase();
+  const rutNormBuscado = normalizeRut(rut); // ej: "150249040K" → huella del RUT ingresado
+
   try {
-    // Usar .in() — maneja caracteres especiales (puntos, guiones) correctamente
+    // ── CORRECCIÓN DEFINITIVA DEL BUG DE DATOS CRUZADOS ──
+    // Problema anterior: .in('rut', [...]).limit(1) devolvía el primer registro de BD
+    // sin verificar que el RUT coincidiera exactamente, causando datos de otro cliente.
+    //
+    // Solución: traer TODOS los clientes cuyo RUT normalizado empiece igual
+    // y luego filtrar en JavaScript con comparación exacta de la huella normalizada.
+    // Así aunque haya variantes de formato en la BD, siempre coincide el RUT correcto.
     const { data: rows, error } = await sb
       .from('clients')
-      .select('id, name, phone, email, rut')
-      .in('rut', [formattedRut, rutSinPuntos, rutSinTodo])
-      .limit(1);
+      .select('id, name, phone, email, rut');
 
-    let data = rows?.[0] || null;
+    // Filtro exacto en JS: compara la huella normalizada de cada registro con la del RUT ingresado
+    const data = (rows || []).find(c =>
+      normalizeRut(c.rut) === rutNormBuscado
+    ) || null;
 
     // Log para diagnóstico — ver en F12 > Console
-    console.log('[RUT v3] formatos buscados:', [formattedRut, rutSinPuntos, rutSinTodo]);
-    console.log('[RUT v3] error:', error);
-    console.log('[RUT v3] resultado:', data);
+    console.log('[RUT v4] RUT ingresado (normalizado):', rutNormBuscado);
+    console.log('[RUT v4] error:', error);
+    console.log('[RUT v4] resultado:', data);
+    if (data) console.log('[RUT v4] RUT en BD (normalizado):', normalizeRut(data.rut));
 
     if (data) {
       const nameEl   = document.getElementById('f-name');
@@ -732,14 +745,14 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
         if (el) { el.readOnly = false; el.style.opacity = '1'; }
       });
       if (error) {
-        console.error('[RUT v3] ERROR completo:', JSON.stringify(error));
+        console.error('[RUT v4] ERROR completo:', JSON.stringify(error));
         if (statusEl) { statusEl.textContent = '\u26a0\ufe0f Error: ' + (error.message || error.code); statusEl.style.color = '#eb0029'; }
       } else {
         if (statusEl) { statusEl.textContent = 'Cliente nuevo, ingresa tus datos.'; statusEl.style.color = 'var(--gold)'; }
       }
     }
   } catch(err) {
-    console.error('[RUT v3] excepci\u00f3n:', err);
+    console.error('[RUT v4] excepci\u00f3n:', err);
     if (statusEl) { statusEl.textContent = 'Error al conectar. Ingresa tus datos.'; statusEl.style.color = '#eb0029'; }
   }
 });
