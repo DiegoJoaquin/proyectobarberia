@@ -684,10 +684,7 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
   }
 
   const formattedRut  = formatRUT(rut);          // "13.097.529-1"
-  const rutSinPuntos  = formattedRut.replace(/\./g, '');        // "13097529-1"
-  const rutSinTodo    = formattedRut.replace(/[.\-]/g, '');     // "130975291"
-  // Patrón ilike correcto: busca dentro del valor almacenado con puntos, ignorando el dígito verif.
-  const rutBodyConPuntos = formattedRut.replace(/-[0-9kK]$/, ''); // "13.097.529"
+
 
   this.value = formattedRut;
   if (statusEl) { statusEl.textContent = 'Buscando...'; statusEl.style.color = 'var(--grey-40)'; }
@@ -697,26 +694,30 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
   const normalizeRut = (r) => (r || '').replace(/[.\-\s]/g, '').toUpperCase();
   const rutNormBuscado = normalizeRut(rut); // ej: "150249040K"
 
-  // Extraer el cuerpo numérico del RUT (sin dígito verificador) para el filtro ilike
-  // Ej: "15.024.904-K" → body = "15024904"
-  const rutBody = rutNormBuscado.slice(0, -1); // quita el último caracter (DV)
+  // Dos formatos del cuerpo (sin DV) para cubrir todos los formatos de almacenamiento:
+  //   rutBodyFmt = "15.024.904"  → coincide con "15.024.904-K" (formato con puntos en BD)
+  //   rutBodyRaw = "15024904"    → coincide con "15024904-K"   (formato sin puntos en BD)
+  // El .or() de Supabase busca con AMBOS, y el filtro JS luego verifica la coincidencia exacta.
+  const rutBodyFmt = formattedRut.replace(/-[0-9kK]$/i, ''); // "15.024.904"
+  const rutBodyRaw = rutBodyFmt.replace(/\./g, '');           // "15024904"
 
   try {
-    // ── CORRECCIÓN v5: filtro ilike en BD + comparación exacta en JS ──
+    // ── CORRECCIÓN v6 DEFINITIVA: or(ilike con puntos, ilike sin puntos) + exacto en JS ──
     //
-    // v3 BUG: .in('rut',[...]).limit(1) → tomaba el primer registro sin verificar exactitud.
-    // v4 BUG: .select() sin filtro → Supabase devuelve máx 1000 filas; clientes antiguos
-    //         (ej: id 8052 de 2021) quedaban fuera y no se encontraban.
+    // v3 BUG: .in('rut',[...]).limit(1) → primer registro sin verificar exactitud.
+    // v4 BUG: .select() sin filtro → límite de 1000 filas; clientes antiguos no encontrados.
+    // v5 BUG: ilike('%15024904%') no encuentra '15.024.904-K' porque los puntos
+    //         interrumpen la secuencia y no es un substring válido.
     //
-    // v5 SOLUCIÓN:
-    //   1. Filtrar en la BD con ilike(*rutBody*) → conjunto pequeño de candidatos (<10)
-    //      Así nunca se supera el límite de filas independientemente del tamaño de la BD.
-    //   2. Comparar la normalización exacta en JS → garantía de que es el RUT correcto
-    //      y no un falso positivo de otro cliente.
+    // v6 SOLUCIÓN:
+    //   1. Buscar con OR: ilike cuerpo-con-puntos OR ilike cuerpo-sin-puntos.
+    //      Cubre TODOS los formatos de almacenamiento posibles en la BD.
+    //      El resultado es siempre un conjunto pequeño (<10 candidatos).
+    //   2. Comparar normalización exacta en JS → cero falsos positivos.
     const { data: rows, error } = await sb
       .from('clients')
       .select('id, name, phone, email, rut')
-      .ilike('rut', `%${rutBody}%`);
+      .or(`rut.ilike.%${rutBodyFmt}%,rut.ilike.%${rutBodyRaw}%`);
 
     // Filtro exacto en JS: comparación de la huella normalizada completa (incluyendo DV)
     const data = (rows || []).find(c =>
@@ -724,10 +725,11 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
     ) || null;
 
     // Log para diagnóstico — ver en F12 > Console
-    console.log('[RUT v5] RUT ingresado (normalizado):', rutNormBuscado);
-    console.log('[RUT v5] Candidatos encontrados en BD:', rows?.length ?? 0);
-    console.log('[RUT v5] error:', error);
-    console.log('[RUT v5] resultado final:', data);
+    console.log('[RUT v6] RUT ingresado (normalizado):', rutNormBuscado);
+    console.log('[RUT v6] Buscando con formato:', rutBodyFmt, '| sin puntos:', rutBodyRaw);
+    console.log('[RUT v6] Candidatos encontrados en BD:', rows?.length ?? 0, rows);
+    console.log('[RUT v6] error:', error);
+    console.log('[RUT v6] resultado final:', data);
 
     if (data) {
       const nameEl   = document.getElementById('f-name');
@@ -754,14 +756,14 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
         if (el) { el.readOnly = false; el.style.opacity = '1'; }
       });
       if (error) {
-        console.error('[RUT v5] ERROR completo:', JSON.stringify(error));
+        console.error('[RUT v6] ERROR completo:', JSON.stringify(error));
         if (statusEl) { statusEl.textContent = '\u26a0\ufe0f Error: ' + (error.message || error.code); statusEl.style.color = '#eb0029'; }
       } else {
         if (statusEl) { statusEl.textContent = 'Cliente nuevo, ingresa tus datos.'; statusEl.style.color = 'var(--gold)'; }
       }
     }
   } catch(err) {
-    console.error('[RUT v5] excepci\u00f3n:', err);
+    console.error('[RUT v6] excepción:', err);
     if (statusEl) { statusEl.textContent = 'Error al conectar. Ingresa tus datos.'; statusEl.style.color = '#eb0029'; }
   }
 });
