@@ -695,30 +695,39 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
   // ── NORMALIZACIÓN: quitar puntos, guión y pasar a mayúsculas.
   // Esto es la "huella digital" única del RUT que usaremos para comparar.
   const normalizeRut = (r) => (r || '').replace(/[.\-\s]/g, '').toUpperCase();
-  const rutNormBuscado = normalizeRut(rut); // ej: "150249040K" → huella del RUT ingresado
+  const rutNormBuscado = normalizeRut(rut); // ej: "150249040K"
+
+  // Extraer el cuerpo numérico del RUT (sin dígito verificador) para el filtro ilike
+  // Ej: "15.024.904-K" → body = "15024904"
+  const rutBody = rutNormBuscado.slice(0, -1); // quita el último caracter (DV)
 
   try {
-    // ── CORRECCIÓN DEFINITIVA DEL BUG DE DATOS CRUZADOS ──
-    // Problema anterior: .in('rut', [...]).limit(1) devolvía el primer registro de BD
-    // sin verificar que el RUT coincidiera exactamente, causando datos de otro cliente.
+    // ── CORRECCIÓN v5: filtro ilike en BD + comparación exacta en JS ──
     //
-    // Solución: traer TODOS los clientes cuyo RUT normalizado empiece igual
-    // y luego filtrar en JavaScript con comparación exacta de la huella normalizada.
-    // Así aunque haya variantes de formato en la BD, siempre coincide el RUT correcto.
+    // v3 BUG: .in('rut',[...]).limit(1) → tomaba el primer registro sin verificar exactitud.
+    // v4 BUG: .select() sin filtro → Supabase devuelve máx 1000 filas; clientes antiguos
+    //         (ej: id 8052 de 2021) quedaban fuera y no se encontraban.
+    //
+    // v5 SOLUCIÓN:
+    //   1. Filtrar en la BD con ilike(*rutBody*) → conjunto pequeño de candidatos (<10)
+    //      Así nunca se supera el límite de filas independientemente del tamaño de la BD.
+    //   2. Comparar la normalización exacta en JS → garantía de que es el RUT correcto
+    //      y no un falso positivo de otro cliente.
     const { data: rows, error } = await sb
       .from('clients')
-      .select('id, name, phone, email, rut');
+      .select('id, name, phone, email, rut')
+      .ilike('rut', `%${rutBody}%`);
 
-    // Filtro exacto en JS: compara la huella normalizada de cada registro con la del RUT ingresado
+    // Filtro exacto en JS: comparación de la huella normalizada completa (incluyendo DV)
     const data = (rows || []).find(c =>
       normalizeRut(c.rut) === rutNormBuscado
     ) || null;
 
     // Log para diagnóstico — ver en F12 > Console
-    console.log('[RUT v4] RUT ingresado (normalizado):', rutNormBuscado);
-    console.log('[RUT v4] error:', error);
-    console.log('[RUT v4] resultado:', data);
-    if (data) console.log('[RUT v4] RUT en BD (normalizado):', normalizeRut(data.rut));
+    console.log('[RUT v5] RUT ingresado (normalizado):', rutNormBuscado);
+    console.log('[RUT v5] Candidatos encontrados en BD:', rows?.length ?? 0);
+    console.log('[RUT v5] error:', error);
+    console.log('[RUT v5] resultado final:', data);
 
     if (data) {
       const nameEl   = document.getElementById('f-name');
@@ -745,14 +754,14 @@ document.getElementById('f-rut')?.addEventListener('blur', async function() {
         if (el) { el.readOnly = false; el.style.opacity = '1'; }
       });
       if (error) {
-        console.error('[RUT v4] ERROR completo:', JSON.stringify(error));
+        console.error('[RUT v5] ERROR completo:', JSON.stringify(error));
         if (statusEl) { statusEl.textContent = '\u26a0\ufe0f Error: ' + (error.message || error.code); statusEl.style.color = '#eb0029'; }
       } else {
         if (statusEl) { statusEl.textContent = 'Cliente nuevo, ingresa tus datos.'; statusEl.style.color = 'var(--gold)'; }
       }
     }
   } catch(err) {
-    console.error('[RUT v4] excepci\u00f3n:', err);
+    console.error('[RUT v5] excepci\u00f3n:', err);
     if (statusEl) { statusEl.textContent = 'Error al conectar. Ingresa tus datos.'; statusEl.style.color = '#eb0029'; }
   }
 });
