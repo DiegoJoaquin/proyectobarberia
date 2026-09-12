@@ -1344,7 +1344,7 @@
             <div>
               <label style="font-size:.7rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-40);display:block;margin-bottom:5px;">Barbero *</label>
               <select id="m-barber" style="width:100%;background:var(--grey-80);border:1px solid var(--grey-70);border-radius:4px;padding:10px 14px;color:var(--white);font-size:.85rem;font-family:var(--font-sans);outline:none;cursor:pointer;">
-                <<option value="Matías N.">Matías N.</option>
+                <option value="Matías N.">Matías N.</option>
                 <option value="Ángel">Ángel</option>
                 <option value="Benjamín">Benjamín</option>
                 <option value="Gonzalo">Gonzalo</option>
@@ -1578,7 +1578,7 @@
              <div>
                 <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
                 <select id="reag-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:10px;border-radius:4px;font-size:.85rem;outline:none;">
-                   <<option value="Matías N.">Matías N.</option>
+                <option value="Matías N.">Matías N.</option>
                    <option value="Ángel">Ángel</option>
                    <option value="Benjamín">Benjamín</option>
                    <option value="Gonzalo">Gonzalo</option>
@@ -1669,7 +1669,7 @@
             <div>
               <label style="display:block;font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-50);margin-bottom:6px;">Barbero</label>
               <select id="wi-barber" style="width:100%;background:#111;border:1px solid #2b2b30;color:#fff;padding:9px 12px;border-radius:4px;font-size:.84rem;outline:none;">
-                <<option value="Matías N.">Matías N.</option>
+                <option value="Matías N.">Matías N.</option>
                 <option value="Ángel">Ángel</option>
                 <option value="Benjamín">Benjamín</option>
                 <option value="Gonzalo">Gonzalo</option>
@@ -4753,7 +4753,7 @@
                         formattedRut = rutNum.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '-' + dv;
                     }
                     const rutSinPuntos = formattedRut.replace(/\./g, '');
-                    const url = `/rest/v1/clients?select=id,name,rut,phone&rut=in.(,,)&limit=1`;
+                    const url = `${SUPABASE_URL}/rest/v1/clients?select=id,name,rut,phone,email,last_barber&or=(rut.ilike.%25${encodeURIComponent(formattedRut)}%25,rut.ilike.%25${encodeURIComponent(rutSinPuntos)}%25)&limit=5`;
                   const res = await fetch(url, { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } });
                   const arr = await res.json();
                   if (arr && arr.length > 0) client = arr[0];
