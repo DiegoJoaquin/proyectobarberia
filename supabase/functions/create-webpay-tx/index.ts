@@ -29,7 +29,7 @@ serve(async (req) => {
     
     // 2. URL de Retorno (Apuntando a la 2da Edge Function `webpay-return`)
     const reqUrl = new URL(req.url)
-    const returnUrl = `${reqUrl.origin}/webpay-return` 
+    const returnUrl = `${reqUrl.origin}/functions/v1/webpay-return` 
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
