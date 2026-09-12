@@ -828,7 +828,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   const finalNotes = notes || '';
 
   const booking = {
-    id: Date.now(), name, rut: cleanRut, phone, email, notes: finalNotes,
+    name, rut: cleanRut, phone, email, notes: finalNotes,
     service: state.service || '(Sin especificar)',
     price: state.price || '—',
     duration: state.duration || '—',
