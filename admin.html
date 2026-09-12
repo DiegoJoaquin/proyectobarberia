@@ -4522,10 +4522,10 @@
       timeSelect.innerHTML = '<option value="">Cargando slots...</option>';
       if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
 
-      // ✨ Limpieza preventiva: borrar fantasmas de más de 10 min antes de consultar
-      // Así no importa si el admin estuvo cerrado horas: la consulta siempre parté limpia.
+      // ✨ Limpieza preventiva: borrar fantasmas de más de 20 min antes de consultar
+      // 20 min = margen suficiente para que Transbank procese el pago en casos lentos.
       try {
-        const tenMinsAgoIso = new Date(Date.now() - 10 * 60000).toISOString();
+        const tenMinsAgoIso = new Date(Date.now() - 20 * 60000).toISOString();
         await fetch(
           `${SUPABASE_URL}/rest/v1/bookings?status=eq.waiting_payment&created_at=lt.${encodeURIComponent(tenMinsAgoIso)}`,
           {
@@ -4540,11 +4540,11 @@
       } catch(cleanErr) { console.warn('[Cleanup preventivo]', cleanErr); }
 
       try {
-        // Calcular el límite de tiempo: solo contar waiting_payment recientes (últimos 10 min)
-        // Las reservas abandonadas más antiguas NO bloquean el slot
-        const tenMinsAgoIso = new Date(Date.now() - 10 * 60000).toISOString();
+        // Calcular el límite de tiempo: solo contar waiting_payment recientes (últimos 20 min)
+        // 20 min = margen suficiente para pagos lentos de Transbank
+        const tenMinsAgoIso = new Date(Date.now() - 20 * 60000).toISOString();
 
-        // Para waiting_payment: solo incluir los creados en los últimos 10 minutos (evita fantasmas)
+        // Para waiting_payment: solo incluir los creados en los últimos 20 minutos (evita fantasmas)
         // Para el resto de estados confirmados: incluir todos
         const confirmedStatuses = ['confirmed','Confirmado','Llegó','Atendido','Reserva Normal','Pendiente'];
         const confirmedQuery = confirmedStatuses.map(s => encodeURIComponent(`"${s}"`)).join(',');
@@ -4556,7 +4556,7 @@
         );
         const bookedConfirmed = await resConfirmed.json();
 
-        // Traer waiting_payment RECIENTES (creadas en los últimos 10 min) — temporalmente bloquean
+        // Traer waiting_payment RECIENTES (creadas en los últimos 20 min) — temporalmente bloquean
         const resWaiting = await fetch(
           `${SUPABASE_URL}/rest/v1/bookings?select=time,status,created_at&barber=eq.${encodeURIComponent(barber)}&date=eq.${date}&status=eq.waiting_payment&created_at=gt.${encodeURIComponent(tenMinsAgoIso)}`,
           { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
@@ -4656,8 +4656,8 @@
       btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Limpiando...';
 
       try {
-        // Borrar TODOS los waiting_payment de más de 10 minutos (sin importar barbero/fecha)
-        const tenMinsAgoIso = new Date(Date.now() - 10 * 60000).toISOString();
+        // Borrar TODOS los waiting_payment de más de 20 minutos (sin importar barbero/fecha)
+        const tenMinsAgoIso = new Date(Date.now() - 20 * 60000).toISOString();
         const res = await fetch(
           `${SUPABASE_URL}/rest/v1/bookings?status=eq.waiting_payment&created_at=lt.${encodeURIComponent(tenMinsAgoIso)}`,
           {

@@ -150,13 +150,14 @@ async function getBookedTimesForBarber(dateStr, barberName) {
       .in('status', ['confirmed', 'waiting_payment', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente']);
     if (error) { console.warn('Supabase select error:', error); }
     
-    // Filtrar waiting_payment con > 10 minutos (bloqueo caducado por abandono de Webpay)
+    // Filtrar waiting_payment con > 20 minutos (bloqueo caducado por abandono de Webpay)
+    // Nota: 20 min para cubrir casos lentos de Transbank (antes 10 min era insuficiente)
     const now = new Date().getTime();
     const validData = (data || []).filter(r => {
       if (r.status === 'waiting_payment') {
         const created = new Date(r.created_at).getTime();
         const diffMinutes = (now - created) / 60000;
-        if (diffMinutes > 10) return false; // Libera la hora
+        if (diffMinutes > 20) return false; // Libera la hora
       }
       return true;
     });
@@ -623,7 +624,7 @@ document.getElementById('s3-next').addEventListener('click', async () => {
   goToStep(4);
 });
 
-document.getElementById('s4-back').addEventListener('click', () => goToStep(3));
+document.getElementById('s4-back').addEventListener('click', () => { goToStep(3); refreshTimePills(); });
 
 /* ──────────────────────────────────────────────────────────────
    RUT VALIDATION & FORMATTING
@@ -851,6 +852,35 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   
   try {
     const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
+
+    // ── GUARDA ANTI-DOBLE-RESERVA: Verificar disponibilidad justo antes de pagar ──
+    // Esto cubre la condición de carrera donde dos clientes eligen el mismo slot
+    // simultáneamente y ambos ven el horario como libre en la UI.
+    confirmBtn.textContent = 'Verificando disponibilidad...';
+    try {
+      const { count: slotCount } = await sb
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('barber', booking.barber)
+        .eq('date', booking.date)
+        .eq('time', booking.time)
+        .in('status', ['confirmed', 'waiting_payment', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente']);
+
+      if (slotCount && slotCount > 0) {
+        showToast('⚠️ Lo sentimos, ese horario acaba de ser reservado. Por favor elige otro horario.');
+        await refreshTimePills();
+        state.time = null;
+        updateSummary();
+        goToStep(3);
+        resetBtn();
+        return;
+      }
+    } catch (slotErr) {
+      // Si la verificación falla por red, no bloqueamos — el servidor tiene la guarda final
+      console.warn('[SlotCheck] Error en verificación previa (no crítico):', slotErr);
+    }
+    confirmBtn.textContent = 'Procesando...';
+    // ── FIN GUARDA ──
     
     // Inyectar datos del cliente al state para recuperarlos a la vuelta del pago
     state.name = name;
@@ -862,10 +892,11 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     // Guardamos el estado para no perder el resumen al volver
     localStorage.setItem('booking_state', JSON.stringify(state));
 
-    // Timeout de 20 segundos: si la Edge Function no responde, mostramos error
-    // (Ad blockers, redes lentas o firewall pueden colgar la llamada indefinidamente)
+    // Timeout de 40 segundos: si la Edge Function no responde, mostramos error.
+    // (Redes lentas / 3G en móvil + latencia Transbank pueden superar 20s fácilmente;
+    //  la Edge Function tiene su propio timeout interno de 35s contra TBK)
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT')), 20000)
+      setTimeout(() => reject(new Error('TIMEOUT')), 40000)
     );
 
     const invokePromise = sb.functions.invoke('create-webpay-tx', {
@@ -879,6 +910,17 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     });
 
     const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
+
+    // Manejar error de conflicto (horario ocupado detectado en el servidor)
+    if (data?.conflict) {
+      showToast('⚠️ Lo sentimos, ese horario acaba de ser reservado por otro cliente. Por favor elige otro horario.');
+      await refreshTimePills();
+      state.time = null;
+      updateSummary();
+      goToStep(3);
+      resetBtn();
+      return;
+    }
     
     if (error || !data?.token || !data?.url) {
       throw new Error(error?.message || 'Error al conectar con Transbank');
@@ -895,7 +937,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     form.appendChild(input);
     document.body.appendChild(form);
     
-    confirmBtn.textContent = 'Redirigiendo al Banco...';
+    confirmBtn.textContent = 'Redirigiendo a Webpay... ✓';
     form.submit();
     return;
 
@@ -1061,8 +1103,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     
   } else if (paymentStatus === 'failed' || paymentStatus === 'rejected') {
-     alert('Tu pago en Webpay rebotó o fue cancelado. La reserva no se procesó. Puedes reintentar o pagar en el local.');
      window.history.replaceState({}, document.title, window.location.pathname);
+     setTimeout(() => showToast('⚠️ El pago fue cancelado o rechazado. La reserva no se procesó. Puedes reintentar o pagar directamente en el local.'), 400);
   } else if (paymentStatus === 'timeout') {
     window.history.replaceState({}, document.title, window.location.pathname);
     setTimeout(() => showToast('⏳ La sesión de pago ha expirado por inactividad. Por favor, intenta agendar nuevamente.'), 500);
