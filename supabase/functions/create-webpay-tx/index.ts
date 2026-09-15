@@ -28,8 +28,7 @@ serve(async (req) => {
     const buyOrder = `SBC-${sessionId.slice(-10)}` // Número de pedido autogenerado
     
     // 2. URL de Retorno (Apuntando a la 2da Edge Function `webpay-return`)
-    const reqUrl = new URL(req.url)
-    const returnUrl = `${reqUrl.origin}/functions/v1/webpay-return` 
+    const returnUrl = `https://hgxayxrszmcmmrrwxlxz.supabase.co/functions/v1/webpay-return` 
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -123,11 +122,11 @@ serve(async (req) => {
       payment_method:  'Webpay Plus',
       attended:        false,
       status:          'waiting_payment',
-      created_at:      booking.created_at      || new Date().toISOString(),
+      created_at:      new Date().toISOString(), // SIEMPRE usar la hora del servidor (UTC) para evitar bugs de limpieza
       notes: `${booking.notes || ''} | [TBK_TOKEN:${txData.token}] | [FRONT_URL:${fUrl}]`.trim(),
     }
 
-    const { error: dbError } = await supabaseClient.from('bookings').insert(bookingToInsert)
+    const { data: dbData, error: dbError } = await supabaseClient.from('bookings').insert(bookingToInsert).select()
     if (dbError) {
       // Si el error es un conflicto de UNIQUE index (23505), devolver conflict
       if (dbError.code === '23505') {
@@ -145,7 +144,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         token: txData.token,
-        url: txData.url
+        url: txData.url,
+        dbData: dbData,
+        dbError: dbError
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
