@@ -24,7 +24,7 @@ serve(async (req) => {
       ? 'https://webpay3g.transbank.cl'
       : 'https://webpay3gint.transbank.cl'
       
-    const sessionId = booking.id ? booking.id.toString() : Date.now().toString()
+    const sessionId = Date.now().toString()
     const buyOrder = `SBC-${sessionId.slice(-10)}` // Número de pedido autogenerado
     
     // 2. URL de Retorno (Apuntando a la 2da Edge Function `webpay-return`)
@@ -104,23 +104,41 @@ serve(async (req) => {
     // 4. Inyectar Reserva Temporal en Base de Datos (Esperando Confirmación)
     const fUrl = frontendUrl || req.headers.get('origin') || 'https://spartan-barber.com'
 
-    // Atamos el 'token' a las notas para que la segunda función pueda encontrarlo
-    booking.payment_method = 'Webpay Plus'
-    booking.attended = false
-    booking.notes = `${booking.notes || ''} | [TBK_TOKEN:${txData.token}] | [FRONT_URL:${fUrl}]`
+    // IMPORTANTE: Nunca enviar el campo 'id' del frontend a Supabase.
+    // El frontend puede mandar id: Date.now() (13 dígitos) que excede el rango
+    // del tipo integer/serial de Supabase y causa que el INSERT falle silenciosamente.
+    // Construimos un objeto limpio con solo los campos conocidos.
+    const bookingToInsert = {
+      name:            booking.name            || null,
+      phone:           booking.phone           || null,
+      email:           booking.email           || null,
+      rut:             booking.rut             || null,
+      service:         booking.service         || null,
+      price:           booking.price           || null,
+      duration:        booking.duration        || null,
+      date:            booking.date            || null,
+      time:            booking.time            || null,
+      barber:          booking.barber          || null,
+      points_earned:   booking.points_earned   || 0,
+      payment_method:  'Webpay Plus',
+      attended:        false,
+      status:          'waiting_payment',
+      created_at:      booking.created_at      || new Date().toISOString(),
+      notes: `${booking.notes || ''} | [TBK_TOKEN:${txData.token}] | [FRONT_URL:${fUrl}]`.trim(),
+    }
 
-    const { error: dbError } = await supabaseClient.from('bookings').insert(booking)
+    const { error: dbError } = await supabaseClient.from('bookings').insert(bookingToInsert)
     if (dbError) {
       // Si el error es un conflicto de UNIQUE index (23505), devolver conflict
       if (dbError.code === '23505') {
-        console.warn(`[CONFLICT DB] Constraint UNIQUE violado: ${booking.barber} | ${booking.date} ${booking.time}`)
+        console.warn(`[CONFLICT DB] Constraint UNIQUE violado: ${bookingToInsert.barber} | ${bookingToInsert.date} ${bookingToInsert.time}`)
         return new Response(
           JSON.stringify({ conflict: true, message: 'Horario ya reservado (constraint DB).' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 409 }
         )
       }
       console.error("DB Reservation Error:", dbError)
-      throw new Error("Error al guardar reserva en Base de Datos local.")
+      throw new Error("Error al guardar reserva en Base de Datos local. Código: " + dbError.code)
     }
 
     // 5. Entregar Llave al Frontend para Inyección y Vuelo
