@@ -2167,12 +2167,12 @@
         // ✨ Auto-Limpieza: Borrar "Fantasmas" (waiting_payment) de más de 10 min de antigüedad
         // 10 min = tiempo máximo razonable para que alguien complete Webpay
         try {
-            const tenMinsAgo = new Date(Date.now() - 30 * 60000).toISOString(); // 30 min — margen suficiente para Webpay
-            const { error: delErr } = await sb.from('bookings')
-                .delete()
-                .eq('status', 'waiting_payment')
-                .lt('created_at', tenMinsAgo);
-            if (delErr) console.warn('[Cleanup] Error limpieza fantasmas:', delErr);
+            // const tenMinsAgo = new Date(Date.now() - 30 * 60000).toISOString(); // 30 min — margen suficiente para Webpay
+            // const { error: delErr } = await sb.from('bookings')
+            //     .delete()
+            //     .eq('status', 'waiting_payment')
+            //     .lt('created_at', tenMinsAgo);
+            // if (delErr) console.warn('[Cleanup] Error limpieza fantasmas:', delErr);
         } catch(e) { console.error('[Cleanup] Error crítico:', e); }
 
         const data = await fetchPaginated('bookings', 'created_at', false);
