@@ -4522,22 +4522,9 @@
       timeSelect.innerHTML = '<option value="">Cargando slots...</option>';
       if (statusEl) statusEl.textContent = 'Consultando disponibilidad...';
 
-      // ✨ Limpieza preventiva: borrar fantasmas de más de 20 min antes de consultar
-      // 20 min = margen suficiente para que Transbank procese el pago en casos lentos.
-      try {
-        const tenMinsAgoIso = new Date(Date.now() - 20 * 60000).toISOString();
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/bookings?status=eq.waiting_payment&created_at=lt.${encodeURIComponent(tenMinsAgoIso)}`,
-          {
-            method: 'DELETE',
-            headers: {
-              'apikey': SUPABASE_ANON,
-              'Authorization': `Bearer ${SUPABASE_ANON}`,
-              'Prefer': 'return=minimal'
-            }
-          }
-        );
-      } catch(cleanErr) { console.warn('[Cleanup preventivo]', cleanErr); }
+      // ✨ Limpieza preventiva DESACTIVADA: no borrar waiting_payment automáticamente
+      // El auto-cleanup causaba que reservas activas se borraran si el reloj del admin
+      // estaba desincronizado con el servidor. La limpieza se hace manualmente desde el botón.
 
       try {
         // Calcular el límite de tiempo: solo contar waiting_payment recientes (últimos 20 min)
@@ -4656,10 +4643,11 @@
       btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Limpiando...';
 
       try {
-        // Borrar TODOS los waiting_payment de más de 20 minutos (sin importar barbero/fecha)
-        const tenMinsAgoIso = new Date(Date.now() - 20 * 60000).toISOString();
+        // Limpieza manual: usa hora del SERVIDOR (ahora - 60 min) para evitar problemas de reloj local
+        // Se usa 60 min para dar margen suficiente (Transbank nunca tarda más de 10 min)
+        const serverSafeIso = new Date(Date.now() - 60 * 60000).toISOString();
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/bookings?status=eq.waiting_payment&created_at=lt.${encodeURIComponent(tenMinsAgoIso)}`,
+          `${SUPABASE_URL}/rest/v1/bookings?status=eq.waiting_payment&created_at=lt.${encodeURIComponent(serverSafeIso)}`,
           {
             method: 'DELETE',
             headers: {
