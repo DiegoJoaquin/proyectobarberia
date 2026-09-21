@@ -2653,43 +2653,99 @@
                 };
             }
 
-            // Fix 1: Autocompletado de nombre → teléfono/email/RUT en Reserva Manual
+            // Fix 1: Autocompletado de nombre → muestra opciones para elegir (NO rellena automático)
             const mName = document.getElementById('m-name');
             if (mName) {
-                mName.oninput = () => {
-                    const query = mName.value.trim().toLowerCase();
-                    if (query.length < 3) return;
+                let nameDebounceTimer = null;
 
-                    // Buscar match exacto primero, luego parcial
-                    const match = allClients.find(c =>
-                        c.name && c.name.toLowerCase() === query
-                    ) || allClients.find(c =>
-                        c.name && c.name.toLowerCase().startsWith(query)
-                    );
+                // Eliminar dropdown previo si existe
+                const removeNameDropdown = () => {
+                    const old = document.getElementById('m-name-dropdown');
+                    if (old) old.remove();
+                };
 
-                    if (!match) return;
+                const fillClientData = (match) => {
+                    removeNameDropdown();
+                    // Rellenar nombre completo
+                    mName.value = match.name || '';
 
-                    // Autocompletar solo si los campos están vacíos
                     const phoneDigitsEl = document.getElementById('m-phone-digits');
                     const phoneHiddenEl = document.getElementById('m-phone');
                     const emailEl = document.getElementById('m-email');
                     const rutEl = document.getElementById('m-rut');
                     const statEl = document.getElementById('m-rut-status');
 
-                    if (phoneHiddenEl && !phoneHiddenEl.value && match.phone) {
-                        phoneHiddenEl.value = match.phone;
-                    }
-                    if (phoneDigitsEl && !phoneDigitsEl.value && match.phone) {
+                    if (phoneHiddenEl && match.phone) phoneHiddenEl.value = match.phone;
+                    if (phoneDigitsEl && match.phone) {
                         const rawDigits = match.phone.replace(/^\+569/, '').replace(/\D/g,'').substring(0,8);
                         phoneDigitsEl.value = rawDigits.replace(/(\d{4})(\d{1,4})/, '$1 $2');
                     }
-                    if (emailEl && !emailEl.value && match.email) emailEl.value = match.email;
-                    if (rutEl && !rutEl.value && match.rut) rutEl.value = match.rut;
+                    if (emailEl && match.email) emailEl.value = match.email;
+                    if (rutEl && match.rut) rutEl.value = match.rut;
                     if (statEl) {
-                        statEl.textContent = `✅ Cliente encontrado — Tel: ${match.phone || 'sin teléfono'}`;
+                        statEl.textContent = `✅ ${match.name} — Tel: ${match.phone || 'sin teléfono'}`;
                         statEl.style.color = 'var(--green)';
                     }
                 };
+
+                mName.oninput = () => {
+                    clearTimeout(nameDebounceTimer);
+                    removeNameDropdown();
+                    const query = mName.value.trim().toLowerCase();
+                    if (query.length < 3) return;
+
+                    nameDebounceTimer = setTimeout(() => {
+                        // Buscar coincidencias (nombre contiene la búsqueda)
+                        const matches = allClients.filter(c =>
+                            c.name && c.name.toLowerCase().includes(query)
+                        ).slice(0, 8); // máximo 8 resultados
+
+                        if (matches.length === 0) return;
+
+                        // Si hay coincidencia exacta única, rellenar directo
+                        const exact = matches.find(c => c.name && c.name.toLowerCase() === query);
+                        if (exact && matches.length === 1) {
+                            fillClientData(exact);
+                            return;
+                        }
+
+                        // Mostrar dropdown de selección
+                        const dropdown = document.createElement('div');
+                        dropdown.id = 'm-name-dropdown';
+                        dropdown.style.cssText = `
+                            position:absolute; z-index:9999; background:#1a1a1f;
+                            border:1px solid #444; border-radius:6px; width:100%;
+                            max-height:220px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,0.7);
+                            top:100%; left:0;
+                        `;
+
+                        matches.forEach(m => {
+                            const item = document.createElement('div');
+                            item.style.cssText = 'padding:10px 14px; cursor:pointer; font-size:0.82rem; color:#ddd; border-bottom:1px solid #2a2a2a;';
+                            item.innerHTML = `<strong style="color:#fff">${esc(m.name)}</strong>
+                                <span style="color:#888; font-size:0.72rem; margin-left:8px">${m.rut || ''} · ${m.phone || ''}</span>`;
+                            item.addEventListener('mouseenter', () => item.style.background = '#2a2a35');
+                            item.addEventListener('mouseleave', () => item.style.background = '');
+                            item.addEventListener('mousedown', (e) => {
+                                e.preventDefault(); // evitar blur antes del click
+                                fillClientData(m);
+                            });
+                            dropdown.appendChild(item);
+                        });
+
+                        // Posicionar relativo al input
+                        const wrapper = mName.parentElement;
+                        if (wrapper) {
+                            wrapper.style.position = 'relative';
+                            wrapper.appendChild(dropdown);
+                        }
+                    }, 350);
+                };
+
+                // Cerrar dropdown al perder foco
+                mName.addEventListener('blur', () => {
+                    setTimeout(removeNameDropdown, 200);
+                });
             }
         }
         
