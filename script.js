@@ -850,6 +850,13 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   // Helper: resetear el botón al estado original
   const resetBtn = () => { confirmBtn.disabled = false; confirmBtn.textContent = 'Confirmar reserva'; };
   
+  let progressTimer1, progressTimer2, progressTimer3;
+  const clearProgressTimers = () => {
+    clearTimeout(progressTimer1);
+    clearTimeout(progressTimer2);
+    clearTimeout(progressTimer3);
+  };
+
   try {
     const numericPrice = parseInt((state.price || '0').replace(/[^0-9]/g, ''), 10);
 
@@ -892,12 +899,17 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     // Guardamos el estado para no perder el resumen al volver
     localStorage.setItem('booking_state', JSON.stringify(state));
 
-    // Timeout de 40 segundos: si la Edge Function no responde, mostramos error.
-    // (Redes lentas / 3G en móvil + latencia Transbank pueden superar 20s fácilmente;
-    //  la Edge Function tiene su propio timeout interno de 35s contra TBK)
+    // Timeout de 60 segundos: conexiones lentas de celular + Transbank pueden tardar mucho
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT')), 40000)
+      setTimeout(() => reject(new Error('TIMEOUT')), 60000)
     );
+
+    // Mensajes de progreso para que el usuario no piense que se trabó
+    confirmBtn.textContent = 'Conectando con Webpay...';
+    const progressTimer1 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Procesando pago... ⏳'; }, 8000);
+    const progressTimer2 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Casi listo, espera un momento...'; }, 20000);
+    const progressTimer3 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Conexión lenta, por favor espera...'; }, 35000);
+    const clearProgressTimers = () => { clearTimeout(progressTimer1); clearTimeout(progressTimer2); clearTimeout(progressTimer3); };
 
     const invokePromise = sb.functions.invoke('create-webpay-tx', {
       body: {
@@ -925,6 +937,8 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     if (error || !data?.token || !data?.url) {
       throw new Error(error?.message || 'Error al conectar con Transbank');
     }
+
+    clearProgressTimers();
 
     // Formulario oculto para redirigir al banco de forma segura (POST)
     const form = document.createElement('form');

@@ -2792,6 +2792,10 @@
         const calendarEl = document.getElementById('calendar');
         if (!calendarEl) return;
         
+        // Guardar posición de scroll antes de destruir el calendario
+        const calendarScroller = calendarEl.querySelector('.fc-scroller-liquid-absolute') || calendarEl.querySelector('.fc-scroller');
+        const savedScrollTop = calendarScroller ? calendarScroller.scrollTop : 0;
+        
         if (window.calendar) window.calendar.destroy();
         window.calendar = null;
         const BARBER_COLUMNS = ['Matías N.', 'Ángel', 'Benjamín', 'Gonzalo', 'Matias Muñoz Quevedo', 'Victor Lillo'];
@@ -2905,6 +2909,7 @@
             headerToolbar: false, // Hidden native toolbar
             resources: BARBER_COLUMNS.map(b => ({ id: b.split(' ')[0], title: b })),
             events: events,
+            scrollTime: savedScrollTop > 0 ? undefined : (currentAgendaDateObj.getDay() === 6 ? '10:00:00' : '11:00:00'),
             dateClick: function(info) {
                 let m = info.date.getMinutes();
                 let h = info.date.getHours();
@@ -2980,6 +2985,11 @@
         // antes de llamar a render(). Esto resuelve el problema de "todo amontonado en una celda".
         requestAnimationFrame(() => {
           window.calendar.render();
+          // Restaurar posición de scroll si había una guardada
+          if (savedScrollTop > 0) {
+            const newScroller = calendarEl.querySelector('.fc-scroller-liquid-absolute') || calendarEl.querySelector('.fc-scroller');
+            if (newScroller) newScroller.scrollTop = savedScrollTop;
+          }
         });
       }
       
