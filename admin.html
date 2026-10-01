@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -4023,9 +4023,13 @@
            }
 
            // Estrategia 3: por RUT (cubre bookings manuales con RUT)
+           // FIX 5: filtrar por RUT en la DB, no descargar toda la tabla bookings
            if (client.rut) {
              const normRut = client.rut.replace(/[.\-\s]/g,'').toUpperCase();
-             const { data: allBk } = await sb.from('bookings').select('date, service, barber, price, id, rut, status, attended');
+             const rutBody = normRut.length > 1 ? normRut.slice(0, -1) : normRut;
+             const { data: allBk } = await sb.from('bookings')
+               .select('date, service, barber, price, id, rut, status, attended')
+               .or(`rut.ilike.%${normRut}%,rut.ilike.%${rutBody}%`);
              (allBk || []).forEach(h => {
                if (!h.rut || seenIds.has(h.id)) return;
                if (h.rut.replace(/[.\-\s]/g,'').toUpperCase() === normRut) {
@@ -4213,23 +4217,32 @@
       loadAll();
       
       let reloadTimeout = null;
+      // Timestamp del último loadAll completo (para evitar recargas redundantes)
+      let _lastFullLoad = Date.now();
+      const _origLoadAll = loadAll;
+      const _trackedLoadAll = () => { _lastFullLoad = Date.now(); return _origLoadAll(); };
+
       function debouncedLoadAll() {
           if (reloadTimeout) clearTimeout(reloadTimeout);
           reloadTimeout = setTimeout(() => {
-              loadAll();
+              _trackedLoadAll();
           }, 2000); // 2 segundos de pausa agrupan miles de eventos masivos
       }
 
       sb.channel('admin-bookings-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, debouncedLoadAll).subscribe();
       sb.channel('admin-clients-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, debouncedLoadAll).subscribe();
 
-      // Sincronización automática de respaldo: cada 20 segundos y al cambiar a la pestaña
+      // FIX 1: Polling de respaldo reducido de 20s → 5min (era la mayor fuente de Disk IO)
+      // El Realtime ya se encarga de las actualizaciones al instante; esto solo es un safety-net.
       setInterval(() => {
-          if (!document.hidden) loadAll();
-      }, 20000);
+          if (!document.hidden) _trackedLoadAll();
+      }, 300000); // 5 minutos en vez de 20 segundos
 
+      // FIX 2: visibilitychange con cooldown de 2 minutos para no recargar todo al cambiar de pestaña
       document.addEventListener('visibilitychange', () => {
-          if (!document.hidden) loadAll();
+          if (!document.hidden && (Date.now() - _lastFullLoad) > 120000) {
+              _trackedLoadAll();
+          }
       });
     })();
   </script>

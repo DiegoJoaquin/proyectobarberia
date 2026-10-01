@@ -91,8 +91,12 @@ async function upsertClient(booking, bookingId) {
     // 1. Buscar por RUT primero (identificador único) si existe
     if (booking.rut) {
       const normRut = booking.rut.replace(/[.\-\s]/g, '').toUpperCase();
-      const { data: allClients } = await sb.from('clients').select('id, name, email, rut, phone, points, total_visits');
-      existing = (allClients || []).find(c =>
+      // FIX 3: Filtrar en la DB en vez de descargar todos los clientes a JS
+      const rutBody = normRut.replace(/[K-]/gi, s => s).slice(0, -1); // cuerpo sin DV
+      const { data: rows } = await sb.from('clients')
+        .select('id, name, email, rut, phone, points, total_visits')
+        .or(`rut.ilike.%${normRut}%,rut.ilike.%${rutBody}%`);
+      existing = (rows || []).find(c =>
         c.rut && c.rut.replace(/[.\-\s]/g, '').toUpperCase() === normRut
       ) || null;
     }
