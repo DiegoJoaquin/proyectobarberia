@@ -2042,10 +2042,15 @@
         errEl.textContent = '';
 
         try {
-          const { data, error } = await sb.auth.signInWithPassword({
+          // Timeout de 15 segundos para evitar que quede "Iniciando..." indefinidamente
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT')), 15000)
+          );
+          const loginPromise = sb.auth.signInWithPassword({
             email: email,
             password: pwd
           });
+          const { data, error } = await Promise.race([loginPromise, timeoutPromise]);
 
           if (error) {
             // Mostrar mensaje de error específico para diagnóstico
@@ -2063,8 +2068,13 @@
             setTimeout(() => { errEl.textContent = ''; }, 5000);
           }
         } catch (ex) {
-          errEl.textContent = 'Error de conexión. Intenta de nuevo.';
-          setTimeout(() => { errEl.textContent = ''; }, 5000);
+          if (ex.message === 'TIMEOUT') {
+            errEl.textContent = 'El servidor tardó demasiado. Supabase puede estar sobrecargado, intenta en unos minutos.';
+            setTimeout(() => { errEl.textContent = ''; }, 8000);
+          } else {
+            errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+            setTimeout(() => { errEl.textContent = ''; }, 5000);
+          }
         } finally {
           loginBtn.disabled = false;
           loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión';
