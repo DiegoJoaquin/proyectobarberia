@@ -66,10 +66,10 @@ serve(async (req) => {
       return_url: returnUrl
     }
 
-    // Timeout de 35s contra Transbank: si TBK no responde, lanzar error claro
-    // (El frontend tiene 40s de margen, así este timeout siempre dispara primero)
+    // Timeout de 25s contra Transbank: si TBK no responde, lanzar error claro
+    // (El frontend tiene 40s por intento, así este timeout dispara primero y permite reintento)
     const tbkAbortCtrl = new AbortController()
-    const tbkTimeout = setTimeout(() => tbkAbortCtrl.abort(), 35000)
+    const tbkTimeout = setTimeout(() => tbkAbortCtrl.abort(), 25000)
     let txResponse: Response
     try {
       txResponse = await fetch(`${tbkBaseUrl}/rswebpaytransaction/api/webpay/v1.2/transactions`, {

@@ -903,29 +903,54 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     // Guardamos el estado para no perder el resumen al volver
     localStorage.setItem('booking_state', JSON.stringify(state));
 
-    // Timeout de 60 segundos: conexiones lentas de celular + Transbank pueden tardar mucho
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT')), 60000)
-    );
+    // Función auxiliar para invocar la Edge Function con timeout individual
+    const invokeWithTimeout = (timeoutMs) => {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
+      );
+      const invokePromise = sb.functions.invoke('create-webpay-tx', {
+        body: {
+          title: state.service,
+          price: numericPrice,
+          payer_name: name,
+          booking: booking,
+          frontendUrl: window.location.origin + window.location.pathname
+        }
+      });
+      return Promise.race([invokePromise, timeoutPromise]);
+    };
 
-    // Mensajes de progreso para que el usuario no piense que se trabó
+    // Mensajes de progreso tranquilizadores (sin alarmar al usuario)
     confirmBtn.textContent = 'Conectando con Webpay...';
     const progressTimer1 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Procesando pago... ⏳'; }, 8000);
-    const progressTimer2 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Casi listo, espera un momento...'; }, 20000);
-    const progressTimer3 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Conexión lenta, por favor espera...'; }, 35000);
+    const progressTimer2 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Preparando tu reserva...'; }, 20000);
+    const progressTimer3 = setTimeout(() => { if (confirmBtn.disabled) confirmBtn.textContent = 'Un momento más, casi listo...'; }, 35000);
     const clearProgressTimers = () => { clearTimeout(progressTimer1); clearTimeout(progressTimer2); clearTimeout(progressTimer3); };
 
-    const invokePromise = sb.functions.invoke('create-webpay-tx', {
-      body: {
-        title: state.service,
-        price: numericPrice,
-        payer_name: name,
-        booking: booking,
-        frontendUrl: window.location.origin + window.location.pathname
+    // Intento 1: timeout de 40 segundos
+    let result;
+    try {
+      result = await invokeWithTimeout(40000);
+    } catch (firstErr) {
+      if (firstErr.message === 'TIMEOUT') {
+        // Intento 2: reintento automático silencioso
+        console.warn('[TBK] Primer intento tardó demasiado, reintentando automáticamente...');
+        confirmBtn.textContent = 'Reintentando conexión...';
+        try {
+          result = await invokeWithTimeout(40000);
+        } catch (secondErr) {
+          // Ambos intentos fallaron
+          clearProgressTimers();
+          throw new Error('TIMEOUT');
+        }
+      } else {
+        clearProgressTimers();
+        throw firstErr;
       }
-    });
+    }
 
-    const { data, error } = await Promise.race([invokePromise, timeoutPromise]);
+    clearProgressTimers();
+    const { data, error } = result;
 
     // Manejar error de conflicto (horario ocupado detectado en el servidor)
     if (data?.conflict) {
@@ -941,8 +966,6 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     if (error || !data?.token || !data?.url) {
       throw new Error(error?.message || 'Error al conectar con Transbank');
     }
-
-    clearProgressTimers();
 
     // Formulario oculto para redirigir al banco de forma segura (POST)
     const form = document.createElement('form');
@@ -962,7 +985,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
   } catch (err) {
     console.error('Error TBK:', err);
     if (err.message === 'TIMEOUT') {
-      showToast('⏳ La conexión tardó demasiado. Verifica tu internet y vuelve a intentarlo, o escríbenos al WhatsApp.');
+      showToast('⏳ No se pudo conectar con Webpay en este momento. Por favor inténtalo de nuevo en unos segundos, o escríbenos al WhatsApp.');
     } else {
       showToast('⚠️ No se pudo conectar con Webpay. Intenta de nuevo o escríbenos al WhatsApp para agendar.');
     }
