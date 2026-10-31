@@ -2166,10 +2166,25 @@
       };
 
       /* ── HELPER PAGINACIÓN OBJETIVA SUPABASE (Max 3000 para estabilidad) ────────────────── */
-      async function fetchPaginated(table, orderField, asc = false) {
-          const { data, error } = await sb.from(table).select('*').order(orderField, { ascending: asc }).limit(3000);
+      async function fetchPaginated(table, orderField, asc = false, columns = '*', filter = null) {
+          let q = sb.from(table).select(columns);
+          if (filter) q = filter(q);
+          const { data, error } = await q.order(orderField, { ascending: asc }).limit(3000);
           if (error) { console.warn('Fetch error:', error); return []; }
           return data || [];
+      }
+
+      // Solo las columnas que usa el panel (menos datos descargados = menos egress)
+      const BOOKING_COLUMNS = 'id, name, phone, email, service, price, duration, date, time, barber, notes, attended, client_id, created_at, payment_method, status, rut';
+      function mapBookingRow(r) {
+        return {
+          id: r.id, name: r.name, phone: r.phone, email: r.email,
+          service: r.service, price: r.price, duration: r.duration,
+          date: r.date, time: r.time, barber: r.barber, notes: r.notes,
+          attended: r.attended, client_id: r.client_id, createdAt: r.created_at,
+          payment_method: r.payment_method || '',
+          status: r.status, rut: r.rut
+        };
       }
 
       /* ── BOOKINGS ──────────────────────────────────── */
@@ -2185,21 +2200,14 @@
             // if (delErr) console.warn('[Cleanup] Error limpieza fantasmas:', delErr);
         } catch(e) { console.error('[Cleanup] Error crítico:', e); }
 
-        const data = await fetchPaginated('bookings', 'created_at', false);
+        // Los "fantasmas" (waiting_payment) se filtran en la DB para no descargarlos
+        const data = await fetchPaginated('bookings', 'created_at', false, BOOKING_COLUMNS,
+          q => q.or('status.is.null,status.neq.waiting_payment'));
         if (!data || data.length === 0) {
           try { return (JSON.parse(localStorage.getItem(LS) || '[]')).reverse(); } catch { return []; }
         }
-        
-        // ? Mapeo Universal: Ocultar visualmente los "fantasmas" (waiting_payment) como pide el usuario
-        // ? Pero el cleanup mantendrá la DB sana.
-        return data.filter(r => r.status !== 'waiting_payment').map(r => ({
-          id: r.id, name: r.name, phone: r.phone, email: r.email,
-          service: r.service, price: r.price, duration: r.duration,
-          date: r.date, time: r.time, barber: r.barber, notes: r.notes,
-          attended: r.attended, client_id: r.client_id, createdAt: r.created_at,
-          payment_method: r.payment_method || '',
-          status: r.status, rut: r.rut
-        }));
+
+        return data.filter(r => r.status !== 'waiting_payment').map(mapBookingRow);
       }
 
       function renderBookings(filter = '') {
@@ -2553,13 +2561,41 @@
       }
 
       /* ── LOAD ALL ────────────────────────────────────── */
-      window.loadAll = async function loadAll() {
-        document.getElementById('loading-bookings').style.display = 'block';
-        document.getElementById('loading-clients').style.display = 'block';
-        document.getElementById('table-section').style.display = 'none';
-        document.getElementById('clients-grid').innerHTML = '';
-        [allBookings, allClients, allBlocks] = await Promise.all([fetchBookings(), fetchClients(), fetchAllBlocks()]);
-        
+      // ── Caché local + Realtime ──
+      // Antes cada cambio (y cada acción del admin) volvía a descargar las tablas completas
+      // de bookings y clients. Eso consumía la cuota de egress/Disk IO del plan gratis.
+      // Ahora los eventos Realtime se aplican a los arrays locales y solo se descarga todo
+      // al abrir el panel, con el botón "Actualizar", o si el Realtime no está funcionando.
+      const _rt = { bookings: false, clients: false, lastEventAt: 0, lastFullLoad: 0, watchdog: null };
+      const FULL_RELOAD_MAX_AGE = 30 * 60000; // recarga completa como máximo cada 30 min
+
+      function realtimeHealthy() {
+        return _rt.bookings && _rt.clients && (Date.now() - _rt.lastFullLoad) < FULL_RELOAD_MAX_AGE;
+      }
+
+      // opts.force   → descarga completa (botón actualizar, polling de respaldo)
+      // opts.cacheOnly → solo re-renderiza con los datos en memoria (eventos Realtime)
+      window.loadAll = async function loadAll(opts = {}) {
+        if (opts instanceof Event) opts = { force: true };
+        const useCache = opts.cacheOnly || (!opts.force && _rt.lastFullLoad && realtimeHealthy());
+
+        if (useCache) {
+          // Tras una escritura del admin, el evento Realtime trae el cambio. Si no llega
+          // en unos segundos (Realtime caído o tabla sin publicar), se hace la descarga completa.
+          if (!opts.cacheOnly && Date.now() - _rt.lastEventAt > 3000) {
+            clearTimeout(_rt.watchdog);
+            _rt.watchdog = setTimeout(() => loadAll({ force: true }), 4000);
+          }
+        } else {
+          clearTimeout(_rt.watchdog);
+          document.getElementById('loading-bookings').style.display = 'block';
+          document.getElementById('loading-clients').style.display = 'block';
+          document.getElementById('table-section').style.display = 'none';
+          document.getElementById('clients-grid').innerHTML = '';
+          [allBookings, allClients, allBlocks] = await Promise.all([fetchBookings(), fetchClients(), fetchAllBlocks()]);
+          _rt.lastFullLoad = Date.now();
+        }
+
         window.allBookings = allBookings;
         window.allClients = allClients;
         window.allBlocks = allBlocks;
@@ -3212,7 +3248,9 @@
                  // 4. Fallback: query Supabase by RUT (exact)
                  if (!cId && hasRut) {
                      const normRut = booking.rut.replace(/[\.\-\s]/g,'').toUpperCase();
-                     const { data: rows } = await sb.from('clients').select('id,rut');
+                     const rutBody = normRut.length > 1 ? normRut.slice(0, -1) : normRut;
+                     const { data: rows } = await sb.from('clients').select('id,rut')
+                       .or(`rut.ilike.%${normRut}%,rut.ilike.%${rutBody}%`);
                      if (rows) {
                          const match = rows.find(c => c.rut && c.rut.replace(/[\.\-\s]/g,'').toUpperCase() === normRut);
                          if (match) { cId = match.id; console.log('[HistBtn] Matched by RUT in Supabase'); }
@@ -3745,8 +3783,8 @@
       const finanzasPeriodEl = document.getElementById('finanzas-period');
       if (finanzasPeriodEl) finanzasPeriodEl.addEventListener('change', updateFinanzas);
       
-      document.getElementById('refresh-btn').addEventListener('click', loadAll);
-      document.getElementById('refresh-clients-btn').addEventListener('click', loadAll);
+      document.getElementById('refresh-btn').addEventListener('click', () => loadAll({ force: true }));
+      document.getElementById('refresh-clients-btn').addEventListener('click', () => loadAll({ force: true }));
 
       document.getElementById('clear-all-btn').addEventListener('click', async () => {
         if (!confirm('¿Eliminar TODAS las reservas?')) return;
@@ -4214,34 +4252,62 @@
       });
 
       /* ── INIT + REAL-TIME ────────────────────────────── */
-      loadAll();
-      
-      let reloadTimeout = null;
-      // Timestamp del último loadAll completo (para evitar recargas redundantes)
-      let _lastFullLoad = Date.now();
-      const _origLoadAll = loadAll;
-      const _trackedLoadAll = () => { _lastFullLoad = Date.now(); return _origLoadAll(); };
+      loadAll({ force: true });
 
-      function debouncedLoadAll() {
-          if (reloadTimeout) clearTimeout(reloadTimeout);
-          reloadTimeout = setTimeout(() => {
-              _trackedLoadAll();
-          }, 2000); // 2 segundos de pausa agrupan miles de eventos masivos
+      let renderTimeout = null;
+      function debouncedRender() {
+          if (renderTimeout) clearTimeout(renderTimeout);
+          renderTimeout = setTimeout(() => loadAll({ cacheOnly: true }), 500);
       }
 
-      sb.channel('admin-bookings-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, debouncedLoadAll).subscribe();
-      sb.channel('admin-clients-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, debouncedLoadAll).subscribe();
+      // Aplica el cambio que trae el evento Realtime a la lista local (sin volver a descargar la tabla)
+      function applyChange(list, payload, mapRow, keep) {
+          const id = (payload.new && payload.new.id) ?? (payload.old && payload.old.id);
+          const idx = list.findIndex(x => x.id === id);
+          if (payload.eventType === 'DELETE' || !keep(payload.new)) {
+              if (idx !== -1) list.splice(idx, 1);
+              return;
+          }
+          const row = mapRow(payload.new);
+          if (idx !== -1) list[idx] = { ...list[idx], ...row };
+          else list.unshift(row);
+      }
 
-      // FIX 1: Polling de respaldo reducido de 20s → 5min (era la mayor fuente de Disk IO)
-      // El Realtime ya se encarga de las actualizaciones al instante; esto solo es un safety-net.
+      function onRealtime(payload, table) {
+          _rt.lastEventAt = Date.now();
+          clearTimeout(_rt.watchdog);
+          if (table === 'bookings') {
+              applyChange(allBookings, payload, mapBookingRow, r => r.status !== 'waiting_payment');
+          } else {
+              applyChange(allClients, payload, r => r, () => true);
+              allClients.sort((a, b) => (b.points || 0) - (a.points || 0));
+          }
+          debouncedRender();
+      }
+
+      function subscribeTable(table) {
+          let wasSubscribed = false;
+          sb.channel(`admin-${table}-rt`)
+            .on('postgres_changes', { event: '*', schema: 'public', table }, p => onRealtime(p, table))
+            .subscribe(status => {
+                _rt[table] = status === 'SUBSCRIBED';
+                // Si se cortó la conexión y volvió, pudimos perder eventos → una recarga completa
+                if (status === 'SUBSCRIBED' && wasSubscribed && _rt.lastFullLoad) loadAll({ force: true });
+                if (status === 'SUBSCRIBED') wasSubscribed = true;
+            });
+      }
+      subscribeTable('bookings');
+      subscribeTable('clients');
+
+      // Respaldo: recarga completa cada 30 min (antes 5 min / 20 s). El Realtime mantiene todo al día.
       setInterval(() => {
-          if (!document.hidden) _trackedLoadAll();
-      }, 300000); // 5 minutos en vez de 20 segundos
+          if (!document.hidden) loadAll({ force: true });
+      }, FULL_RELOAD_MAX_AGE);
 
-      // FIX 2: visibilitychange con cooldown de 2 minutos para no recargar todo al cambiar de pestaña
+      // Al volver a la pestaña: solo recarga completa si pasaron más de 15 min desde la última
       document.addEventListener('visibilitychange', () => {
-          if (!document.hidden && (Date.now() - _lastFullLoad) > 120000) {
-              _trackedLoadAll();
+          if (!document.hidden && (Date.now() - _rt.lastFullLoad) > 15 * 60000) {
+              loadAll({ force: true });
           }
       });
     })();
@@ -4975,7 +5041,9 @@
           // Si no encontró por teléfono, buscar por RUT
           if (!extClient && rut) {
             const normRut = rut.replace(/[.\-\s]/g, '').toUpperCase();
-            const { data: allCl } = await sb.from('clients').select('id, points, total_visits, rut, phone');
+            const rutBody = normRut.length > 1 ? normRut.slice(0, -1) : normRut;
+            const { data: allCl } = await sb.from('clients').select('id, points, total_visits, rut, phone')
+              .or(`rut.ilike.%${normRut}%,rut.ilike.%${rutBody}%`);
             extClient = (allCl || []).find(c =>
               c.rut && c.rut.replace(/[.\-\s]/g, '').toUpperCase() === normRut
             ) || null;

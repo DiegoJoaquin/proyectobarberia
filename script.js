@@ -171,13 +171,18 @@ async function getBookedTimesForBarber(dateStr, barberName) {
   return lsGetAll().filter(b => b.date === dateStr && b.barber === barberName).map(b => ({ time: b.time, duration: b.duration }));
 }
 
-// Suscripción Real-Time para que los slots se liberen/ocupen al instante
+// Antes cada visitante se suscribía por Realtime a TODOS los cambios de bookings y
+// re-consultaba los horarios en cada cambio (carga y egress multiplicados por visitante).
+// Ahora los horarios se refrescan al volver a la pestaña; la verificación anti-doble-reserva
+// antes de pagar (y la de la Edge Function) siguen protegiendo contra choques.
 if (SUPABASE_ON) {
-  sb.channel('bookings-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
-      if (state.date && state.barber) refreshTimePills();
-    })
-    .subscribe();
+  let lastSlotsRefresh = Date.now();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !state.date || !state.barber) return;
+    if (Date.now() - lastSlotsRefresh < 60000) return;
+    lastSlotsRefresh = Date.now();
+    refreshTimePills();
+  });
 }
 
 /**
