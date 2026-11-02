@@ -874,15 +874,20 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     // simultáneamente y ambos ven el horario como libre en la UI.
     confirmBtn.textContent = 'Verificando disponibilidad...';
     try {
-      const { count: slotCount } = await sb
+      const { data: slotRows } = await sb
         .from('bookings')
-        .select('*', { count: 'exact', head: true })
+        .select('status, created_at, phone')
         .eq('barber', booking.barber)
         .eq('date', booking.date)
         .eq('time', booking.time)
         .in('status', ['confirmed', 'waiting_payment', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente']);
 
-      if (slotCount && slotCount > 0) {
+      // Igual que los horarios mostrados y que el servidor: un pago pendiente de más de
+      // 20 min (o un intento anterior de este mismo cliente) no ocupa la hora.
+      const slotCount = (slotRows || []).filter(r => r.status !== 'waiting_payment' ||
+        ((Date.now() - new Date(r.created_at).getTime()) < 20 * 60000 && r.phone !== booking.phone)).length;
+
+      if (slotCount > 0) {
         showToast('⚠️ Lo sentimos, ese horario acaba de ser reservado. Por favor elige otro horario.');
         await refreshTimePills();
         state.time = null;
@@ -955,7 +960,14 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     }
 
     clearProgressTimers();
-    const { data, error } = result;
+    let { data, error } = result;
+
+    // Si la función responde con un código de error (ej. 409 horario ocupado), supabase-js
+    // deja data en null y pone la respuesta en error.context. Antes eso se mostraba como
+    // "No se pudo conectar con Webpay" y el cliente creía que el pago estaba roto.
+    if (error && !data && error.context && typeof error.context.json === 'function') {
+      try { data = await error.context.json(); } catch (_) { /* respuesta sin JSON */ }
+    }
 
     // Manejar error de conflicto (horario ocupado detectado en el servidor)
     if (data?.conflict) {
@@ -969,7 +981,7 @@ document.getElementById('s4-confirm').addEventListener('click', async () => {
     }
     
     if (error || !data?.token || !data?.url) {
-      throw new Error(error?.message || 'Error al conectar con Transbank');
+      throw new Error(data?.error || error?.message || 'Error al conectar con Transbank');
     }
 
     // Formulario oculto para redirigir al banco de forma segura (POST)

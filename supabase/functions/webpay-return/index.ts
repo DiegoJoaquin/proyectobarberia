@@ -25,8 +25,11 @@ serve(async (req) => {
     // A. ESCENARIO TIMEOUT / SESIÓN EXPIRADA
     if (!token && tbkSession) {
       console.log(`Timeout detectado para sesión: ${tbkSession}`);
-      // Liberar el cupo borrando la reserva temporal (usamos el ID que enviamos como session_id)
-      await supabaseClient.from('bookings').delete().eq('id', tbkSession)
+      // Liberar el cupo borrando la reserva temporal. El session_id NO es el id de la reserva
+      // (es Date.now()), por eso antes este borrado nunca encontraba nada y quedaban "fantasmas".
+      await supabaseClient.from('bookings').delete()
+        .eq('status', 'waiting_payment')
+        .ilike('notes', `%[TBK_SESSION:${tbkSession}]%`)
       return Response.redirect(`https://www.spartanbarber.cl/?payment=timeout`, 303)
     }
 

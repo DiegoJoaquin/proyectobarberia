@@ -40,12 +40,20 @@ serve(async (req) => {
     // Esta es la barrera definitiva: si el frontend falló en detectar el conflicto,
     // esta verificación lo detiene antes de cobrarle al cliente.
     if (booking.barber && booking.date && booking.time) {
-      const { count: existingCount, error: countError } = await supabaseClient
+      // Reservas "fantasma": pagos iniciados y nunca terminados (el cliente cerró Webpay).
+      // La página ya las muestra como libres pasados 20 min, así que el servidor debe
+      // tratarlas igual; si no, el cliente elige una hora "libre" y el pago se rechaza.
+      // También se libera un intento anterior del MISMO cliente (reintento tras timeout).
+      const staleIso = new Date(Date.now() - 20 * 60000).toISOString()
+      const slot = (q: any) => q.eq('barber', booking.barber).eq('date', booking.date).eq('time', booking.time)
+      await slot(supabaseClient.from('bookings').delete().eq('status', 'waiting_payment').lt('created_at', staleIso))
+      if (booking.phone) {
+        await slot(supabaseClient.from('bookings').delete().eq('status', 'waiting_payment').eq('phone', booking.phone))
+      }
+
+      const { count: existingCount, error: countError } = await slot(supabaseClient
         .from('bookings')
-        .select('*', { count: 'exact', head: true })
-        .eq('barber', booking.barber)
-        .eq('date', booking.date)
-        .eq('time', booking.time)
+        .select('*', { count: 'exact', head: true }))
         .in('status', ['confirmed', 'waiting_payment', 'Confirmado', 'Llegó', 'Atendido', 'Reserva Normal', 'Pendiente'])
 
       if (!countError && existingCount && existingCount > 0) {
@@ -123,7 +131,7 @@ serve(async (req) => {
       attended:        false,
       status:          'waiting_payment',
       created_at:      new Date().toISOString(), // SIEMPRE usar la hora del servidor (UTC) para evitar bugs de limpieza
-      notes: `${booking.notes || ''} | [TBK_TOKEN:${txData.token}] | [FRONT_URL:${fUrl}]`.trim(),
+      notes: `${booking.notes || ''} | [TBK_TOKEN:${txData.token}] | [TBK_SESSION:${sessionId}] | [FRONT_URL:${fUrl}]`.trim(),
     }
 
     const { data: dbData, error: dbError } = await supabaseClient.from('bookings').insert(bookingToInsert).select()
